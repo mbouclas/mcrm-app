@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "~root/*": ["src/*"],
+      "~cli/*": ["src/cli/*"],
+      "~shared/*": ["src/shared/*"],
+      "~helpers/*": ["src/helpers/*"],
+      "~admin/*": ["src/admin/*"],
+      "~crm/*": ["src/crm/*"],
+      "~change-log/*": ["src/change-log/*"],
+      "~cms/*": ["src/cms/*"],
+      "~user/*": ["src/user/*"],
+      "~catalogue/*": ["src/catalogue/*"],
+      "~eshop/*": ["src/eshop/*"],
+      "~dashboard/*": ["src/dashboard/*"],
+      "~models/*": ["src/models/*"]
+    }
+  }
+}

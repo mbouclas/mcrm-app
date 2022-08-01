@@ -1,0 +1,125 @@
+import { McmsDi } from "~helpers/mcms-component.decorator";
+import { Injectable } from "@nestjs/common";
+import { IGenericObject, IPagination } from "~models/general";
+import { store } from "~root/state";
+import { BaseModel } from "~models/base.model";
+import { {{ className }}Model } from "~{{ moduleName }}/models/{{ classNameLower }}.model";
+import { BaseNeoService } from "~shared/services/base-neo.service";
+import { extractFiltersFromObject } from "~helpers/extractFiltersFromObject";
+import { extractQueryParamsFilters, setupRelationShipsQuery } from "~helpers/extractQueryParamsFilters";
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { RecordDeleteFailedException } from "~shared/exceptions/record-delete-failed.exception";
+import {RecordStoreFailedException} from "~shared/exceptions/record-store-failed.exception";
+import {RecordUpdateFailedException} from "~shared/exceptions/record-update-failed-exception";
+import { OnEvent } from "@nestjs/event-emitter";
+import { uuid } from 'uuidv4';
+import { IsNotEmpty } from "class-validator";
+
+export class {{ className }}ModelDto {
+
+}
+
+@McmsDi({
+  id: '{{ className }}Service',
+  type: 'service'
+})
+@Injectable()
+export class {{ className }}Service extends BaseNeoService {
+  static updatedEventName = '{{ moduleName }}.{{ className }}.updated';
+  static createdEventName = '{{ moduleName }}.{{ classNam }}.created';
+  static deletedEventName = '{{ moduleName }}.{{ classNam }}.deleted';
+  protected relationships = [];
+  protected moduleName = '{{ moduleName }}';
+  private modelName = '{{ modelName | default: className }}';
+  protected model: typeof {{ className }}Model;
+
+  constructor() {
+    super();
+    this.model = store.getState().models.{{ | default: className }};
+  }
+
+  @OnEvent({{ classsName }}Service.createdEventName)
+  async onStore(payload: {{ modelName }}) {
+    console.log('In event',payload)
+  }
+
+  @OnEvent({{ classsName }}Service.updatedEventName)
+  async onUpdate(payload: {{ modelName }}) {
+
+  }
+
+  @OnEvent({{ classsName }}Service.deletedEventName)
+  async onDelete(payload: {{ modelName }}) {
+
+  }
+
+  async findOne(filter: IGenericObject, rels: string[] = []): Promise<{{ className }}Model> {
+    const filterQuery = extractFiltersFromObject(filter, this.model.modelConfig.as, this.model.fields);
+    let {filters,relationships} = extractQueryParamsFilters({ ...filter, ...{with: rels} }, this.model);
+    let {returnVars, matches} = setupRelationShipsQuery(this.model, filter, relationships, filters);
+
+    const query = `MATCH (${this.model.modelConfig.select}) where ${filterQuery}
+    WITH *
+    ${matches.join('\n')}
+    RETURN ${returnVars.join(',')}
+    `;
+
+    this.logger(query);
+    let result = await this.neo.readWithCleanUp(query, {});
+    if (relationships && relationships.length > 0) {
+      result = this.neo.mergeRelationshipsToParent(result[0], this.model.modelConfig.as);
+    }
+
+    if (!result || result.length === 0) {
+      throw new RecordNotFoundException(`Record Not Found`);
+    }
+
+
+
+    return result;
+  }
+
+  async find(params: IGenericObject = {}): Promise<IPagination<{{ className }}Model>> {
+        const model = this.model;
+    const modelConfig = model.modelConfig;
+    const modelAlias = modelConfig.as;
+    let {filters, way, limit, page, relationships, where} = extractQueryParamsFilters(params, model, model?.itemSelector);
+    const whereQuery = (where.length > 0) ? ` WHERE ${where.join(' AND ')}` : '';
+    let {returnVars, matches, returnAliases, orderBy} = setupRelationShipsQuery(model, params, relationships, filters);
+    const countQuery = `MATCH (${modelConfig.select}) ${whereQuery}
+                WITH ${modelAlias}
+        ${matches.join('\n')}
+        RETURN count(DISTINCT ${modelConfig.as}) as total`;
+
+    this.logger(countQuery);
+
+    const countRes = await this.neo.readWithCleanUp(countQuery, {});
+    const total = countRes[0].total;
+    const pages = Math.ceil(total / limit);
+    const skip = limit * (page - 1);
+
+    const query = `MATCH (${modelConfig.select}) ${whereQuery}
+        WITH ${modelAlias}
+        ${matches.join('\n')}
+        RETURN ${returnVars.join(',')} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
+
+    this.logger('-----------');
+    this.logger(query);
+    const res = await this.neo.readWithCleanUp(query, {});
+    const results = this.neo.extractResultsFromArray(res, this.model.modelConfig.as);
+
+    return this.createPaginationObject(results, limit, page, pages, total, skip);
+  }
+
+  async store(record: {{ className }}ModelDto, userId?: string) {
+
+  }
+
+  async update(uuid: string, record: {{ className }}ModelDto, userId?: string) {
+
+  }
+
+  async delete(uuid: string, userId?: string) {
+
+  }
+}

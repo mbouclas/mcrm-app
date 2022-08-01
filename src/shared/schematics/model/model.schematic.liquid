@@ -1,0 +1,31 @@
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
+import { McmsDi } from "~helpers/mcms-component.decorator";
+import { Injectable } from "@nestjs/common";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
+import { IItemSelectorConfig } from "~models/item-selector";
+import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
+
+const modelName = '{{ className }}';
+@McmsDi({
+  id: modelName,
+  type: 'model'
+})
+@Injectable()
+export class {{ className }}Model extends BaseModel {
+  public modelName = modelName;
+  public static modelName = modelName;
+  public static modelConfig: INeo4jModel = {
+    select: '{{ classNameLower }}:{{ className }}',
+    as: '{{ classNameLower }}',
+    relationships: {}
+  };
+  public static fields: IDynamicFieldConfigBlueprint[] = [];
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [];
+  //public static itemSelector: IItemSelectorConfig = {};
+
+  public static filterConfig: IBaseModelFilterConfig = {
+    filterParamName: 'q',
+    defaultOrderBy: 'createdAt',
+    defaultWay: 'DESC'
+  };
+}
