@@ -37,3 +37,4 @@ queries
 uploads
 ES-Queries
 src/submodules/*
+.env
