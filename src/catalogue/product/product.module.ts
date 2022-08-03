@@ -3,6 +3,7 @@ import { ProductModel } from './models/product.model';
 import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
 import { SharedModule } from "~shared/shared.module";
 import { ProductCategoryService } from './services/product-category.service';
+import { ProductService } from './services/product.service';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ProductCategoryService } from './services/product-category.service';
     ProductModel,
     ProductCategoryModel,
     ProductCategoryService,
+    ProductService,
 
   ]
 })

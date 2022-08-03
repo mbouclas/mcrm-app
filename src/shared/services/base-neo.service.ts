@@ -6,7 +6,11 @@ import { BaseModel, INeo4jModelRelationshipConfig } from "~models/base.model";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { SharedModule } from "~shared/shared.module";
 import { extractFiltersFromObject } from "~helpers/extractFiltersFromObject";
-import { extractQueryParamsFilters, setupRelationShipsQuery } from "~helpers/extractQueryParamsFilters";
+import {
+  extractQueryParamsFilters,
+  modelPostProcessing, modelsPostProcessing,
+  setupRelationShipsQuery
+} from "~helpers/extractQueryParamsFilters";
 import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
 import { v4 } from "uuid";
 import { RecordStoreFailedException } from "~shared/exceptions/record-store-failed.exception";
@@ -99,8 +103,8 @@ export class BaseNeoService  {
 
 
 
-    const record = Array.isArray(result) ? result[0] : result;
-
+    let record = Array.isArray(result) ? result[0] : result;
+    record = modelPostProcessing(record, this.model);
 
     return record;
 
@@ -188,8 +192,8 @@ export class BaseNeoService  {
       total
     };*/
 
-    const results = this.neo.extractResultsFromArray(res, this.model.modelConfig.as);
-
+    let results = this.neo.extractResultsFromArray(res, this.model.modelConfig.as);
+    results = modelsPostProcessing(results, this.model);
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 

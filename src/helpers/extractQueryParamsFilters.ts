@@ -260,3 +260,18 @@ export function buildWhereValueString(type: string, value: any) {
 
     return valueQuery;
 }
+
+export function modelPostProcessing(record: Record<any, any>, model: typeof BaseModel) {
+    Object.keys(model.modelConfig.relationships).forEach(key => {
+        const rel = model.modelConfig.relationships[key];
+        if (!rel.postProcessing || typeof rel.postProcessing !== 'function') {return;}
+
+        record = rel.postProcessing(record, model);
+    });
+
+    return record;
+}
+
+export function modelsPostProcessing(records: Record<any, any>[], model: typeof BaseModel) {
+    return records.map(rec => modelPostProcessing(rec, model));
+}

@@ -28,6 +28,7 @@ export interface INeo4jModel {
 
 export interface INeo4jModelRelationshipConfig {
   alias: string;
+  postProcessing?: Function;
   rel: string;
   model: string;
   modelAlias: string;
