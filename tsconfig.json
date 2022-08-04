@@ -27,6 +27,7 @@
       "~change-log/*": ["src/change-log/*"],
       "~cms/*": ["src/cms/*"],
       "~user/*": ["src/user/*"],
+      "~tag/*": ["src/tag/*"],
       "~catalogue/*": ["src/catalogue/*"],
       "~eshop/*": ["src/eshop/*"],
       "~dashboard/*": ["src/dashboard/*"],

@@ -2,10 +2,10 @@ import {  Injectable } from "@nestjs/common";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Neo4jService } from "~root/neo4j/neo4j.service";
 import { IGenericObject, IPagination } from "~models/general";
-import { BaseModel, INeo4jModelRelationshipConfig } from "~models/base.model";
+import { BaseModel, INeo4jModel, INeo4jModelRelationshipConfig } from "~models/base.model";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { SharedModule } from "~shared/shared.module";
-import { extractFiltersFromObject } from "~helpers/extractFiltersFromObject";
+import { extractFiltersFromObject, extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import {
   extractQueryParamsFilters,
   modelPostProcessing, modelsPostProcessing,
@@ -16,6 +16,7 @@ import { v4 } from "uuid";
 import { RecordStoreFailedException } from "~shared/exceptions/record-store-failed.exception";
 import { postedDataToUpdatesQuery } from "~helpers/postedDataToUpdatesQuery";
 import { RecordDeleteFailedException } from "~shared/exceptions/record-delete-failed.exception";
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 const debug = require('debug')('mcms:neo:query');
 
 @McmsDi({
@@ -25,7 +26,7 @@ const debug = require('debug')('mcms:neo:query');
 @Injectable()
 export class BaseNeoService  {
   neo: Neo4jService;
-  protected logQuery: debug.IDebugger = debug('mcms:neo:query');
+  protected logQuery: debug.IDebugger = debug("mcms:neo:query");
   logger = debug;
   protected eventEmitter: EventEmitter2;
   protected model: typeof BaseModel;
@@ -291,6 +292,7 @@ export class BaseNeoService  {
       this.eventEmitter.emit(this.constructor['updatedEventName'], res);
     }
 
+
   }
 
   async delete(uuid: string, userId?: string) {
@@ -309,6 +311,28 @@ export class BaseNeoService  {
     }
 
     return {success: true};
+  }
+
+  async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string) {
+    const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const relationship = sourceModel.modelConfig.relationships[relationshipName];
+
+    const query = `
+    MATCH (${sourceModel.modelConfig.select} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}')
+    MATCH (${destinationModel.modelConfig.select} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}')
+    MERGE (${sourceModel.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[r:${relationshipName}]${relationship.type === 'normal' ? '->' : '-'}(${destinationModel.modelConfig.as})
+    ON CREATE SET t.updatedAt = datetime(), t.createdAt = datetime()
+    ON MATCH SET t.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    try {
+      this.neo.write(query, {})
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
   }
 
 }

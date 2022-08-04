@@ -16,7 +16,6 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { BaseNeoTreeService } from './services/base-neo-tree.service';
 
 
-
 @Module({
   providers: [
     redisProvider,
