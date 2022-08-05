@@ -41,7 +41,11 @@ export let app: NestExpressApplication;
 async function bootstrap() {
   app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log'],
-    cors: true
+    cors: {
+      credentials: true,
+      origin: true,
+      exposedHeaders: ['x-sess-id'],
+    }
   });
 
 

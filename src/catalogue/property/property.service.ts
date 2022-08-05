@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { IBaseFilter } from "~models/general";
+import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 
 @Injectable()
 export class PropertyService extends BaseNeoService {
@@ -39,5 +40,42 @@ export class PropertyService extends BaseNeoService {
     });
 
     return ret;
+  }
+
+  public async getPropertyWithValues(filterBy: IBaseFilter, values?: string[]) {
+    const filter = extractSingleFilterFromObject(filterBy);
+    const query = `MATCH (property:Property {${filter.key}:'${filter.value}'})-[r:HAS_VALUE]->(value:PropertyValue)
+    return property, collect(DISTINCT value) as values;
+    `;
+
+    const res = await this.neo.readWithCleanUp(query, {});
+
+    const property = res[0].property;
+    // Return all
+
+    if (!Array.isArray(values) || values.length === 0) {
+      return {...property, ...{values: res[0].values}};
+    }
+
+
+    property.values = res[0].values.filter(val => values.indexOf(val.uuid) !== -1);
+
+    return property;
+  }
+
+  async getValues(uuids: string[], withProperty = false) {
+    const withPropertyQuery = (!withProperty) ? '' : `<-[r:HAS_VALUE]-(property:Property)`;
+    const query = `
+    UNWIND $uuids as id
+    MATCH (value:PropertyValue {uuid: id})${withPropertyQuery}
+    return *;   
+    `
+    const res = await this.neo.readWithCleanUp(query, {uuids});
+
+    return (!withProperty) ? res.map(record => record.value) : res.map(record => {
+      const temp = record.value;
+      return {...temp, ...{property: record.property}}
+    });
+
   }
 }

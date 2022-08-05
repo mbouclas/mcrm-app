@@ -27,6 +27,14 @@ export class ProductModel extends BaseModel implements OnModuleInit
     select: 'product:Product',
     as: 'product',
     relationships: {
+      variants: {
+        model: 'ProductVariant',
+        modelAlias: 'variants',
+        alias: 'productVariantRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_VARIANTS'
+      },
       category: {
         model: 'ProductCategory',
         modelAlias: 'productCategory',
@@ -142,6 +150,55 @@ export class ProductModel extends BaseModel implements OnModuleInit
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
+    {
+      varName: 'sku',
+      label: 'SKU',
+      placeholder: 'SKU',
+      type: 'text',
+      isSortable: true,
+      group: 'right',
+    },
+    {
+      varName: 'active',
+      label: 'Active',
+      placeholder: 'Active',
+      type: 'boolean',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'title',
+      label: 'Title',
+      placeholder: 'Title',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'slug',
+      label: 'Slug',
+      placeholder: 'Slug',
+      type: 'text',
+      group: 'hidden',
+      isSlug: true,
+      slugFrom: 'title'
+    },
+    {
+      varName: 'price',
+      label: 'Price',
+      placeholder: 'Price',
+      type: 'number',
+      isSortable: true,
+      group: 'right',
+    },
+    {
+      varName: 'quantity',
+      label: 'Quantity',
+      placeholder: 'Quantity',
+      type: 'number',
+      isSortable: true,
+      group: 'right',
+    },
     {
       varName: 'updatedAt',
       label: 'Updated At',

@@ -16,7 +16,7 @@ export class ChangeLogService extends BaseNeoService{
     return r;
   }
 
-  async find(params: IGenericObject = {},start?: Date, end?: Date) {
+  async find(params: IGenericObject = {}, rels: string[] = [],start?: Date, end?: Date) {
     const r = await super.find(params);
 
     return r;

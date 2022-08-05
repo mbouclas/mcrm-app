@@ -23,7 +23,9 @@ export class Oauth2Controller {
     try {
       const result = await this.server.token(request, response);
       // Make sure this matches the old one
-      session.user = result;
+      req.session.user = result;
+      res.header('x-sess-id', req.session.id);
+
       // Need to send the response like so cause we're injecting @Req and @Res
       res.json(result);
     }

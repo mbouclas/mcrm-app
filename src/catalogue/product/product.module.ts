@@ -4,6 +4,8 @@ import { ProductCategoryModel } from "~catalogue/product/models/product-category
 import { SharedModule } from "~shared/shared.module";
 import { ProductCategoryService } from './services/product-category.service';
 import { ProductService } from './services/product.service';
+import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
+import { ProductController } from './controllers/product.controller';
 
 @Module({
   imports: [
@@ -13,8 +15,10 @@ import { ProductService } from './services/product.service';
     ProductModel,
     ProductCategoryModel,
     ProductCategoryService,
+    ProductVariantModel,
     ProductService,
 
-  ]
+  ],
+  controllers: [ProductController]
 })
 export class ProductModule {}

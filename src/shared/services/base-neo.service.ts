@@ -111,12 +111,12 @@ export class BaseNeoService  {
 
   }
 
-  async find(params: IGenericObject = {}): Promise<IPagination<BaseModel>> {
+  async find(params: IGenericObject = {}, rels: string[] = []): Promise<IPagination<BaseModel>> {
     const model = this.model;
     const modelConfig = model.modelConfig;
     const modelAlias = modelConfig.as;
 
-    let {filters, way, limit, page, relationships, where} = extractQueryParamsFilters(params, model, model.itemSelector);
+    let {filters, way, limit, page, relationships, where} = extractQueryParamsFilters({ ...params, ...{with: rels} }, model, model.itemSelector);
 
     const whereQuery = (where.length > 0) ? ` WHERE ${where.join(' AND ')}` : '';
     let {returnVars, matches, returnAliases, orderBy} = setupRelationShipsQuery(model, params, relationships, filters);
@@ -129,7 +129,7 @@ export class BaseNeoService  {
     this.logger(countQuery);
 
     const countRes = await this.neo.readWithCleanUp(countQuery, {});
-    const total = countRes[0].total;
+    const total = countRes[0];
     const pages = Math.ceil(total / limit);
     const skip = limit * (page - 1);
 
@@ -194,7 +194,8 @@ export class BaseNeoService  {
     };*/
 
     let results = this.neo.extractResultsFromArray(res, this.model.modelConfig.as);
-    results = modelsPostProcessing(results, this.model);
+
+    // results = modelsPostProcessing(results, this.model);
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 

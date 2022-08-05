@@ -15,6 +15,7 @@ import { IsEmail, IsNotEmpty } from "class-validator";
 import { postedDataToUpdatesQuery } from "~helpers/postedDataToUpdatesQuery";
 import { ChangeLogService } from "~change-log/change-log.service";
 import { AuthService } from "~root/auth/auth.service";
+import { GateService } from "~root/auth/gate.service";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -78,8 +79,13 @@ export class UserService extends BaseNeoService {
 
   }
 
-  async findOne(filter: IGenericObject, rels: string[] = []): Promise<UserModel> {
+  async findOne(filter: IGenericObject, rels: string[] = [], extras: string[] = []): Promise<UserModel> {
     const r = await super.findOne(filter, rels);
+
+    if (extras.indexOf('gates') !== -1) {
+      r['gates'] = await (new GateService()).all(true, {uuid: r['uuid']});
+    }
+
 
     return r;
   }

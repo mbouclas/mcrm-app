@@ -78,7 +78,13 @@ export class OAuth2ModelService implements PasswordModel {
    */
   async getUser(username: string, password: string): Promise<User | Falsey> {
     debug(1)
-    const user = await (new UserService()).findOne({email: username, active: true});
+    let user;
+    try {
+      user = await (new UserService()).findOne({email: username, active: true}, ['role'], ['gates']);
+    }
+    catch (e) {
+      console.log(e)
+    }
 
     if (!user) {
       return false;

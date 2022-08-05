@@ -31,7 +31,6 @@ export class UserModel extends BaseModel {
         isCollection: true,
         rel: 'HAS_ROLE'
       },
-
     }
   };
 
