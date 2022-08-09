@@ -1,4 +1,5 @@
 import {IGenericObject} from "./general";
+import { IBaseModelFilterConfig } from "~models/base.model";
 
 export class BaseModel {
     public uuid?: string;
@@ -14,6 +15,12 @@ export class BaseModel {
 
         return this;
     }
+
+    public static filterConfig: IBaseModelFilterConfig = {
+        filterParamName: 'q',
+        defaultOrderBy: 'created_at',
+        defaultWay: 'DESC'
+    };
 }
 
 export class BaseTreeModel extends BaseModel {

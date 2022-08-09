@@ -94,6 +94,7 @@ export class BaseNeoService  {
 
     this.logger(query);
     let result = await this.neo.readWithCleanUp(query, {});
+
     if (relationships && relationships.length > 0) {
       result = this.neo.mergeRelationshipsToParent(result[0], this.model.modelConfig.as);
     }

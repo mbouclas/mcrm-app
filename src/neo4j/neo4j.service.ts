@@ -157,9 +157,10 @@ export class Neo4jService implements OnApplicationShutdown {
     mergeRelationshipsToParent(record: any, parentKey: string) {
         const obj: IGenericObject = record[parentKey];
 
+        if (!obj) {return record;}
         for (let key in record) {
-            if (key === parentKey) {continue;}
-            obj[key]= record[key];
+            if (key === parentKey ) {continue;}
+            obj[key] = record[key];
         }
 
         return obj;

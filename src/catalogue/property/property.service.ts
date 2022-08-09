@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { IBaseFilter } from "~models/general";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
+import { store } from "~root/state";
 
 @Injectable()
 export class PropertyService extends BaseNeoService {
+  constructor() {
+    super();
+    this.model = store.getState().models.Property;
+
+  }
 
   /**
    * Get all properties with their values assigned to this model

@@ -152,7 +152,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
     let orderByFound = false;
     let orderByCount = false;
-    let orderBy = `${modelConfig.as}.${model.filterConfig.defaultOrderBy}`;
+    let orderBy = `${modelConfig.as}.${model.filterConfig.defaultOrderBy || 'created_at'}`;
 
     if (params.orderBy) {
         orderByFound = model.isFieldSortable(params.orderBy, model.fields);

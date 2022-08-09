@@ -46,9 +46,9 @@ export class ProductService extends BaseNeoTreeService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const s = new ProductService();
-/*    const r = await s.findOne({slug: 'test'}, [
-      // 'properties',
+/*    const s = new ProductService();
+    const r = await s.findOne({slug: 'betty'}, [
+      'properties',
       'variants',
     ]);*/
 /*    const r = await s.generateVariantsFromProperty('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
@@ -57,7 +57,7 @@ export class ProductService extends BaseNeoTreeService {
       '7afde04d-3c9b-4b13-b504-dff3f9b45472',//medium
       '6bbe2127-58ff-4e24-92a2-30ab15d77a8b',//large
     ])*/
-    const r = await s.find({}, ['variants'])
+    // const r = await s.find({limit: 2}, ['variants', 'properties'])
     // console.log(r)
   }
 

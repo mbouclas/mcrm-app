@@ -208,12 +208,12 @@ export class ProductModel extends BaseModel implements OnModuleInit
       group: 'hidden',
     },
     {
-      varName: 'verifiedAt',
-      label: 'Verified At',
-      placeholder: 'Verified At',
-      type: 'date',
-      isSortable: true,
+      varName: 'fromImport',
+      label: 'fromImport',
+      placeholder: 'fromImport',
+      type: 'boolean',
       group: 'hidden',
+      default: false,
     },
   ];
 
