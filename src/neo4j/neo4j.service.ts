@@ -132,6 +132,9 @@ export class Neo4jService implements OnApplicationShutdown {
 
             return arr;
         }
+
+        if (!r) {return ;}
+
         const keys = Object.keys(r);
         if (isNode(r) || isRelationship(r)) {
             return (r.properties) ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);

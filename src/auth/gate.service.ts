@@ -4,9 +4,18 @@ import { UserService } from "~user/services/user.service";
 import { IGate } from "~admin/models/gates";
 import { OnEvent } from "@nestjs/event-emitter";
 import { IBaseFilter } from "~models/general";
+import { ChangeLogService } from "~change-log/change-log.service";
+import { store } from "~root/state";
 
 @Injectable()
 export class GateService extends BaseNeoService {
+
+  constructor() {
+    super();
+    this.model = store.getState().models.Gate;
+  }
+
+
   @OnEvent('app.loaded')
   async onAppLoaded() {
     // const s = new GateService();

@@ -18,7 +18,7 @@ export class BaseModel {
 
     public static filterConfig: IBaseModelFilterConfig = {
         filterParamName: 'q',
-        defaultOrderBy: 'created_at',
+        defaultOrderBy: 'createdAat',
         defaultWay: 'DESC'
     };
 }

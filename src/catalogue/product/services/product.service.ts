@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { BaseNeoTreeService } from "~shared/services/base-neo-tree.service";
 import { ChangeLogService } from "~change-log/change-log.service";
 import { store } from "~root/state";
 import { OnEvent } from "@nestjs/event-emitter";
@@ -13,6 +12,7 @@ import {groupBy} from 'lodash';
 import { combine } from "~helpers/array-permutations";
 import { tokenGenerator } from "~helpers/tokenGenerator";
 import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
+import { BaseNeoService } from "~shared/services/base-neo.service";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -32,7 +32,7 @@ export class ProductModelDto {
 }
 
 @Injectable()
-export class ProductService extends BaseNeoTreeService {
+export class ProductService extends BaseNeoService {
   protected changeLog: ChangeLogService;
   static updatedEventName = 'product.model.updated';
   static createdEventName = 'product.model.created';
@@ -126,7 +126,7 @@ export class ProductService extends BaseNeoTreeService {
     // attach an isVariant property and a rel to the parent product. The variant needs a rel to that value only. All other rels need to be inherited
     const query = `MATCH (product:Product {uuid: $uuid})
     MERGE (variant:ProductVariant {name:$variantName}) set variant.price = product.price, variant.title = product.title, variant.quantity = product.quantity, variant.variantId = $variantId,
-    variant.active = true, variant.created_at = datetime()
+    variant.active = true, variant.createdAt = datetime()
     WITH product,variant
     MERGE (product)-[r:HAS_VARIANTS]->(variant)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime()

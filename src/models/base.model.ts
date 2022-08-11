@@ -59,7 +59,7 @@ export class BaseModel {
   public static filterFields: IQueryBuilderFieldBlueprint[] = [];
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
-    defaultOrderBy: 'created_at',
+    defaultOrderBy: 'createdAt',
     defaultWay: 'DESC'
   };
 

@@ -72,6 +72,7 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
             .forEach((field: IQueryBuilderFieldBlueprint) => searchableFields.push(field.varName));
 
         // Look up for q
+
         if (model.filterConfig.filterParamName && typeof params[model.filterConfig.filterParamName] !== 'undefined' && params[model.filterConfig.filterParamName]) {
             toRemove.push(model.filterConfig.filterParamName);
             const paramValue = params[model.filterConfig.filterParamName];
@@ -152,7 +153,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
     let orderByFound = false;
     let orderByCount = false;
-    let orderBy = `${modelConfig.as}.${model.filterConfig.defaultOrderBy || 'created_at'}`;
+    let orderBy = `${modelConfig.as}.${model.filterConfig.defaultOrderBy || 'createdAt'}`;
 
     if (params.orderBy) {
         orderByFound = model.isFieldSortable(params.orderBy, model.fields);

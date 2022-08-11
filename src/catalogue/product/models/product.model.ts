@@ -184,6 +184,14 @@ export class ProductModel extends BaseModel implements OnModuleInit
       slugFrom: 'title'
     },
     {
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'richText',
+      isSortable: false,
+      group: 'main',
+    },
+    {
       varName: 'price',
       label: 'Price',
       placeholder: 'Price',
@@ -217,7 +225,16 @@ export class ProductModel extends BaseModel implements OnModuleInit
     },
   ];
 
-  public static filterFields: IQueryBuilderFieldBlueprint[] = [];
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'title',
+      label: 'Title',
+      type: 'text',
+      model: 'Product',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+  ];
 
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',

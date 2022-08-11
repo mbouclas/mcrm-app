@@ -1,4 +1,4 @@
-import { BaseModel } from "~models/base.model";
+import { BaseModel, INeo4jModel } from "~models/base.model";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Injectable } from "@nestjs/common";
 import { IDynamicFieldConfigBlueprint } from "./dynamicFields";
@@ -12,6 +12,13 @@ const modelName = 'Gate';
 export class GatesModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
+
+  public static modelConfig: INeo4jModel = {
+    select: 'gateRecord:Gate',
+    as: 'gateRecord',
+    relationships: {}
+  };
+
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
       varName: 'gate',
