@@ -19,9 +19,12 @@ export interface ITag {
 
 @Injectable()
 export class TagService extends BaseNeoService {
+  constructor() {
+    super();
+  }
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const s = new TagService();
+    // const s = new TagService();
 
     // const r = await s.quickAddTag('Product', 'shirts');
     // const r = await s.getModelTags('Product');

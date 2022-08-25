@@ -26,6 +26,7 @@ export class McmsDiContainer {
     }
 
     static add(obj: IMcmsDiRegistryItem) {
+        if (this.registry.includes(obj)) {return;}
         this.registry.push(obj);
     }
 

@@ -1,4 +1,4 @@
-import {  Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Neo4jService } from "~root/neo4j/neo4j.service";
 import { IGenericObject, IPagination } from "~models/general";
@@ -17,13 +17,14 @@ import { RecordStoreFailedException } from "~shared/exceptions/record-store-fail
 import { postedDataToUpdatesQuery } from "~helpers/postedDataToUpdatesQuery";
 import { RecordDeleteFailedException } from "~shared/exceptions/record-delete-failed.exception";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
+import { store } from "~root/state";
 const debug = require('debug')('mcms:neo:query');
 
 @McmsDi({
   id: 'BaseNeoService',
   type: 'service'
 })
-@Injectable()
+
 export class BaseNeoService  {
   neo: Neo4jService;
   protected logQuery: debug.IDebugger = debug("mcms:neo:query");
@@ -37,6 +38,12 @@ export class BaseNeoService  {
   ) {
       this.neo = new Neo4jService();
       this.eventEmitter = SharedModule.eventEmitter;
+  }
+
+  setModel(model: typeof BaseModel) {
+    this.model = model;
+
+    return this;
   }
 
   /**

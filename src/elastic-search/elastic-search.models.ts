@@ -1,5 +1,5 @@
 import { IGenericObject } from "../models/general";
-
+import { PropertyModel } from "~catalogue/property/property.model";
 export interface IElasticSearchOptions {
   index?: string;
   aggregationFields?: IElasticSearchFilterMap[];
@@ -8,7 +8,11 @@ export interface IElasticSearchOptions {
 
 export interface IElasticSearchAggregation {
   [key: string] : {
-    terms: {
+    range?: {
+      ranges: IElasticSearchRangeOption[];
+      field: string;
+    },
+    terms?: {
       field: string;
     }
   }
@@ -71,12 +75,35 @@ export interface IElasticSearchPoint {
   lon: number;
 }
 
+export interface IElasticSearchRangeOption {
+  from?: number;
+  to?: number;
+}
+
 export interface IElasticSearchFilterMap {
   name: string;
-  type: 'nested'|'simple',
+  type: 'nested'|'simple'|'range',
   key?: string,
   multilingual?: boolean;
   buckets?: string[];
   isKeyword?: boolean;
   inAutoComplete?: string[];
+  size?: number;
+  field?: string;
+  ranges?: IElasticSearchRangeOption[];
+  dataType?: 'number'|'boolean'|'string';
+  boost?: number;
+}
+
+
+export interface IBaseModelEs {
+  title: string;
+  name?: string;
+  uuid: string;
+  slug: string;
+
+  property?: PropertyModel[];
+  createdAt: Date;
+  updatedAt: Date;
+  [key: string]: any;
 }

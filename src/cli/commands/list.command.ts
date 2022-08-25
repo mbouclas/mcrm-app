@@ -1,7 +1,7 @@
 import { CliCommand, CommandArguments } from "../decorators/cli-command";
 import { CommandMeta } from "../meta-data/command-meta";
 import { _cli } from "../helpers/_cli";
-import * as chalk from "chalk";
+import chalk from 'chalk';
 
 @CliCommand('list', {
   desc: 'List Available Commands',

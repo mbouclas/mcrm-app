@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { IGenericObject, IPagination } from "~models/general";
+import { store } from "~root/state";
 const humanObjectDiff = require("human-object-diff");
 
 export interface IBaseLogEntry {
@@ -10,6 +11,11 @@ export interface IBaseLogEntry {
 
 @Injectable()
 export class ChangeLogService extends BaseNeoService{
+  constructor() {
+    super();
+    this.model = store.getState().models['LogEntry']
+  }
+
   async findOne(filter: IGenericObject, rels: string[] = []) {
     const r = await super.findOne(filter, rels);
 

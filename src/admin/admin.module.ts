@@ -19,7 +19,7 @@ import { BootService } from './boot.service';
 })
 export class AdminModule implements OnModuleInit {
   static moduleRef: ModuleRef;
-  constructor(private m: ModuleRef) {
+  constructor(public m: ModuleRef) {
 
   }
 

@@ -15,7 +15,10 @@ export class ProductModel extends BaseModel implements OnModuleInit
 {
   public modelName = modelName;
   public static modelName = modelName;
-
+  public static defaultAggregationSize = 30;
+  public title: string;
+  public price = 0;
+  public slug;
 
   async onModuleInit() {
 
@@ -146,6 +149,15 @@ export class ProductModel extends BaseModel implements OnModuleInit
         defaultProperty: 'firstName.lastName',
         addRelationshipData: true,
       },
+      cart: {
+        rel: 'HAS_PRODUCTS',
+        alias: 'cartRelationship',
+        model: 'Cart',
+        modelAlias: 'cart',
+        type: 'inverse',
+        isCollection: true,
+        defaultProperty: 'id',
+      },
     }
   };
 
@@ -157,6 +169,9 @@ export class ProductModel extends BaseModel implements OnModuleInit
       type: 'text',
       isSortable: true,
       group: 'right',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
     },
     {
       varName: 'active',
@@ -173,6 +188,9 @@ export class ProductModel extends BaseModel implements OnModuleInit
       type: 'text',
       isSortable: true,
       group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
     },
     {
       varName: 'slug',
@@ -190,6 +208,9 @@ export class ProductModel extends BaseModel implements OnModuleInit
       type: 'richText',
       isSortable: false,
       group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
     },
     {
       varName: 'price',
@@ -198,6 +219,24 @@ export class ProductModel extends BaseModel implements OnModuleInit
       type: 'number',
       isSortable: true,
       group: 'right',
+      searchIndexSettings: {
+        isAutoCompleteField: false,
+        aggregationFieldSettings: {
+          name: 'price',
+          type: "range",
+          isKeyword: false,
+          size: ProductModel.defaultAggregationSize,
+          field: 'price',
+          ranges: [
+            { to: 60000.0 },
+            { from: 60000.0, to: 100000.0 },
+            { from: 100000.0, to: 500000.0 },
+            { from: 500000.0, to: 1000000.0 },
+            { from: 1000000.0 }
+          ],
+          boost: 2,
+        }
+      },
     },
     {
       varName: 'quantity',
@@ -205,6 +244,25 @@ export class ProductModel extends BaseModel implements OnModuleInit
       placeholder: 'Quantity',
       type: 'number',
       isSortable: true,
+      group: 'right',
+    },
+    {
+      varName: 'thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
+      type: 'image',
+      imageSettings: {
+        multiple: false,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        quality: 70,
+      },
       group: 'right',
     },
     {

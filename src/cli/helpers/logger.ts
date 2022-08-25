@@ -1,10 +1,11 @@
-import * as chalk from "chalk";
+import * as chalk from 'chalk';
 import Table = require("cli-table3");
 
 export class Logger {
   /**
    * Use this method to print an information line
    * @param msg
+   * @param color
    * @returns void
    */
   public static info(msg: string, color?: string): void {

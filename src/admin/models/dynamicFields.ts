@@ -10,6 +10,13 @@ export interface IDynamicFieldConfigImageSettingsBluePrint extends IDynamicField
     width?: number;
     height?: number;
     quality?: number;
+    maxFileSize?: number;
+    accept?: string;//File accept, same as form accept
+    multiple?: boolean;//Select more than one image
+    selectFromMediaLibrary?: boolean;//If true, we need to show the library tab
+    showPreview?: boolean;//If true, show the uploaded image
+    addFromUrl?: boolean;//If true, add a tab to paste a url and retrieve it
+    defaultCopy?: string;//Which copy to show on the preview. By default, we show the first on the list
 }
 
 export interface IDynamicFieldConfigSelectSettingsBluePrint extends IDynamicFieldConfigSettingsBluePrint {
@@ -29,6 +36,29 @@ export interface IDynamicFieldItemSelectorConfig {
     tabs?: string[];
     resultDisplayField?: string;// What to show once a value of object was selected
     translatable?: boolean; // If it's a translatable field show default translation
+}
+
+export interface IRangeSettings {
+    from?: number;
+    to?: number;
+}
+
+export interface IAggregationFieldSettings {
+    name: string;
+    field: string;
+    boost?: number;
+    multilingual?: boolean;
+    type: "nested"|"simple"|"range",
+    key?: string;
+    buckets?: string[];//['name.keyword', 'slug']
+    isKeyword: boolean;
+    size: number;
+    ranges?: IRangeSettings[];
+}
+
+export interface ISearchIndexSettings {
+    isAutoCompleteField: boolean;
+    aggregationFieldSettings?: IAggregationFieldSettings;
 }
 
 export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
@@ -55,6 +85,8 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
     slugFrom?: string;
     setDefaultTranslationInModel?: boolean;
     isDisplayedColumn?: boolean;
+    searchIndexSettings?: ISearchIndexSettings;
+    imageSettings?: IDynamicFieldConfigImageSettingsBluePrint
     [key: string]: any;
 }
 

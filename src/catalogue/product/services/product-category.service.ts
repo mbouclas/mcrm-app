@@ -23,7 +23,7 @@ export class ProductCategoryService extends BaseNeoTreeService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const s = new ProductCategoryService();
+    // const s = new ProductCategoryService();
     // const r = await s.findAncestors('05e7a5f1-6fe8-4360-b566-afa0b4b79b14');
     // const r = await s.findDescendants('0bc0a5c5-8ee8-495c-8851-d673f1129f4f');
     // const r = await s.getParentAndChildren('0bc0a5c5-8ee8-495c-8851-d673f1129f4f');

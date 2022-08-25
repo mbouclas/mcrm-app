@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { BaseModel, INeo4jModel } from "~models/base.model";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 
 const modelName = 'Property';
 @McmsDi({
@@ -18,4 +19,17 @@ export class PropertyModel extends BaseModel
     as: 'property',
     relationships: {},
   }
+
+  public static fields: IDynamicFieldConfigBlueprint[] = [
+    {
+      varName: 'searchIndexSettings',
+      label: 'Search Index Settings',
+      placeholder: 'Search Index Settings',
+      type: 'textarea',
+      isSortable: false,
+      group: 'main',
+    }
+  ];
+
+
 }

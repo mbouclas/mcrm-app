@@ -1,7 +1,6 @@
-import { createDriver } from "~root/neo4j/neo4j.util";
+import { createDriver } from "~neo4j/neo4j.util";
 
 require('dotenv').config();
-
 import { Liquid } from "liquidjs";
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

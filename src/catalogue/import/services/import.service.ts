@@ -237,7 +237,7 @@ export class ImportService implements OnApplicationBootstrap {
 
         delete r.categories;
         delete r.properties;
-        product.variants.push(Object.assign({...{name: name.join(' - '), variantId, price: r.price, image: r.image || null, properties}}, r));
+        product.variants.push(Object.assign({...{name: name.join(' - '), variantId, price: r.price || 0, image: r.image || null, properties}}, r));
       });
 
 

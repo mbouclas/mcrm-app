@@ -23,8 +23,8 @@ import { BaseNeoTreeService } from './services/base-neo-tree.service';
     ServiceSchematic,
     BaseNeoService,
     LocationModel,
-    LocationService,
-    BaseNeoTreeService,
+    // LocationService,
+    // BaseNeoTreeService,
   ],
   imports: [
     CacheModule.register({
@@ -64,8 +64,11 @@ import { BaseNeoTreeService } from './services/base-neo-tree.service';
 export class SharedModule implements OnModuleInit {
   static eventEmitter: EventEmitter2;
   static moduleRef: ModuleRef;
-  constructor(private m: ModuleRef) {
-
+  constructor(
+    private m: ModuleRef,
+    private eventEmitter: EventEmitter2,
+  ) {
+    SharedModule.eventEmitter = eventEmitter;
   }
 
   onModuleInit(): any {

@@ -13,6 +13,8 @@ import { combine } from "~helpers/array-permutations";
 import { tokenGenerator } from "~helpers/tokenGenerator";
 import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
 import { BaseNeoService } from "~shared/services/base-neo.service";
+import { ProductModel } from "~catalogue/product/models/product.model";
+import { IGenericObject } from "~models/general";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -41,6 +43,8 @@ export class ProductService extends BaseNeoService {
   constructor() {
     super();
     this.model = store.getState().models.Product;
+
+
     this.changeLog = new ChangeLogService();
   }
 
@@ -59,6 +63,10 @@ export class ProductService extends BaseNeoService {
     ])*/
     // const r = await s.find({limit: 2}, ['variants', 'properties'])
     // console.log(r)
+  }
+
+  async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
+    return await super.findOne(filter, rels) as unknown as ProductModel;
   }
 
   async store(record: ProductModelDto, userId?: string) {

@@ -20,6 +20,10 @@ export class Neo4jService implements OnApplicationShutdown {
         this.driver = Neo4jService.driverInstance;
     }
 
+    setDriver(driver: Driver) {
+        this.driver = driver;
+    }
+
     getDriver(): Driver {
         return this.driver;
     }

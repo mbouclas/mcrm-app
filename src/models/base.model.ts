@@ -51,7 +51,7 @@ export class BaseModel {
   protected readonly logger = new Logger(BaseModel.name);
   public static modelName: string;
   public modelName: string;
-  public name: string;
+  public name;
   public test = 1;
   public static modelConfig: INeo4jModel;
   public static fields: IDynamicFieldConfigBlueprint[] = [];

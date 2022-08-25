@@ -27,9 +27,11 @@
       "~change-log/*": ["src/change-log/*"],
       "~cms/*": ["src/cms/*"],
       "~user/*": ["src/user/*"],
+      "~neo4j/*": ["src/neo4j/*"],
       "~tag/*": ["src/tag/*"],
       "~catalogue/*": ["src/catalogue/*"],
       "~eshop/*": ["src/eshop/*"],
+      "~es/*": ["src/elastic-search/*"],
       "~dashboard/*": ["src/dashboard/*"],
       "~models/*": ["src/models/*"]
     }

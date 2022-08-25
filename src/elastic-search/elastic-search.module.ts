@@ -5,6 +5,7 @@ import { Client } from "@elastic/elasticsearch";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { ConfigModule } from "@nestjs/config";
+import { ImportService } from './import.service';
 
 export const ELASTIC_SEARCH_DRIVER = "ELASTIC_SEARCH_DRIVER";
 export const ELASTIC_SEARCH_CONFIG = "ELASTIC_SEARCH_CONFIG";
@@ -20,6 +21,7 @@ const connectionFactory = {
   providers: [
     connectionFactory,
     ElasticSearchService,
+    ImportService,
   ],
   exports: [
     ElasticSearchService,
@@ -81,8 +83,7 @@ async function createElasticSearchDriver(config: IElasticSearchOptions) {
         id: process.env.ELASTIC_SEARCH_API_KEY_ID
       }
     },
-    ssl: {
-      // ca: readFileSync(join(__dirname, "../../", process.env.ELASTIC_SEARCH_CERT as string)),
+    tls: {
       rejectUnauthorized: false
     }
   });
