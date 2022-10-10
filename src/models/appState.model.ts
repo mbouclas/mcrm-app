@@ -131,4 +131,5 @@ export interface AppStateModel extends State {
     defaultLanguageCode: string;
     activeComponents: IMcmsComponent[];
     exportProviders: IExportProviderConfig[];
+    configs: {[key: string]: typeof BaseModel};
 }

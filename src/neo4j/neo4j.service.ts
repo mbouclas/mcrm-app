@@ -76,6 +76,17 @@ export class Neo4jService implements OnApplicationShutdown {
         });
     }
 
+    async writeWithCleanUp(cypher: string, params?: Record<string, any>,  databaseOrTransaction?: string | Transaction) {
+        const res = await this.write(cypher, params, databaseOrTransaction);
+        if (Array.isArray(res.records) && res.records.length === 0) {
+            return [];
+        }
+
+        return res.records.map(rec => {
+            return Neo4jService.processRecord(rec);
+        });
+    }
+
 
     write(cypher: string, params?: Record<string, any>,  databaseOrTransaction?: string | Transaction): Result {
         if ( databaseOrTransaction instanceof TransactionImpl ) {
@@ -149,6 +160,7 @@ export class Neo4jService implements OnApplicationShutdown {
         // This is for the case where we return nested objects. e.g [{category: {}}] instead of [{something: sd}]
         else if (keys.length === 1) {
             const masterKey = keys[0];
+            if (!r[masterKey]) {return null;}
             return (r[masterKey].properties) ? Neo4jService.parseNeoProperties(r[masterKey].properties) : Neo4jService.parseNeoProperties(r);
         }
         else {

@@ -93,6 +93,15 @@ export class ProductModel extends BaseModel implements OnModuleInit
         isCollection: false,
         isCount: true,
       },
+      related: {
+        rel: 'IS_RELATED_TO',
+        alias: 'relatedRelationship',
+        model: 'product',
+        modelAlias: 'related',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'title',
+      },
       properties: {
         rel: 'HAS_PROPERTY',
         alias: 'propertyRelationship',
@@ -252,7 +261,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
       placeholder: 'Thumbnail',
       type: 'image',
       imageSettings: {
-        multiple: false,
+        multiple: true,
         accept: 'image/*',
         addFromUrl: true,
         selectFromMediaLibrary: true,
@@ -261,6 +270,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
         height: 250,
         defaultCopy: 'thumb',
         maxFileSize: 5000,
+        fileLimit: 5,
         quality: 70,
       },
       group: 'right',

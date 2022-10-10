@@ -6,6 +6,8 @@ import { ProductCategoryService } from './services/product-category.service';
 import { ProductService } from './services/product.service';
 import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
 import { ProductController } from './controllers/product.controller';
+import { ProductVariantService } from './services/product-variant.service';
+import { ProductCategoryController } from './controllers/product-category.controller';
 
 @Module({
   imports: [
@@ -17,8 +19,9 @@ import { ProductController } from './controllers/product.controller';
     ProductCategoryService,
     ProductVariantModel,
     ProductService,
+    ProductVariantService,
 
   ],
-  controllers: [ProductController]
+  controllers: [ProductController, ProductCategoryController]
 })
 export class ProductModule {}

@@ -33,6 +33,10 @@ import { DashboardModule } from "~dashboard/dashboard.module";
 import { WebsiteModule } from './website/website.module';
 import { ChangeLogModule } from "~change-log/change-log.module";
 import { TagModule } from "~tag/tag.module";
+import { CartMiddleware } from "~eshop/middleware/cart.middleware";
+import { UploadModule } from './upload/upload.module';
+import { ImageModule } from './image/image.module';
+import { loadConfigs } from "~helpers/load-config";
 const Lang = require('mcms-node-localization');
 export let Translate;
 export let Test = {token: null};
@@ -65,6 +69,8 @@ export let Test = {token: null};
     WebsiteModule,
     ChangeLogModule,
     TagModule,
+    UploadModule,
+    ImageModule,
   ],
   exports: [
     SharedModule,
@@ -90,6 +96,14 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
       .forRoutes(
         { path: "api*", method: RequestMethod.ALL }
       );
+
+    consumer
+      .apply(
+        CartMiddleware,
+      )
+      .forRoutes(
+        { path: "cart*", method: RequestMethod.ALL }
+      );
   }
 
   /**
@@ -110,6 +124,9 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
       directory : resolve(__dirname, '../../', 'lang'),
       locales : store.getState().languages.map(lang => lang.code),
     }).add();
+
+    // Lets load all configs
+    await loadConfigs();
 
     this.eventEmitter.emit('app.loaded', {success: true});
   }

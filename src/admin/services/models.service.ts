@@ -26,7 +26,7 @@ export class ModelsService {
 
   async mergeModels() {
     // First add the models on file to the store
-    McmsDiContainer.all().forEach(model => {
+    McmsDiContainer.all().filter(model => model.type === 'model').forEach(model => {
       AppStateActions.setModel(model.id, model.reference);
     });
 

@@ -1,7 +1,6 @@
-import { Inject, Injectable } from "@nestjs/common";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Neo4jService } from "~root/neo4j/neo4j.service";
-import { IGenericObject, IPagination } from "~models/general";
+import { IBaseFilter, IGenericObject, IPagination } from "~models/general";
 import { BaseModel, INeo4jModel, INeo4jModelRelationshipConfig } from "~models/base.model";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { SharedModule } from "~shared/shared.module";
@@ -207,7 +206,7 @@ export class BaseNeoService  {
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 
-  async store(record: IGenericObject, userId?: string) {
+  async store(record: IGenericObject, userId?: string): Promise<any> {
     const uuid = v4();
     const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
@@ -239,11 +238,10 @@ export class BaseNeoService  {
       this.eventEmitter.emit(this.constructor['createdEventName'], ret);
     }
 
-
-    return ret;
+    return ret[0];
   }
 
-  async update(uuid: string, record: IGenericObject, userId?: string) {
+  async update(uuid: string, record: IGenericObject, userId?: string): Promise<any> {
     let firstTimeQuery = '';
     let addressStr = '';
 
@@ -280,7 +278,7 @@ export class BaseNeoService  {
         RETURN *;
         `;
 
-    const res = await this.neo.write(query, {
+    const res = await this.neo.writeWithCleanUp(query, {
       ...record, ...{uuid}
     });
 
@@ -302,6 +300,7 @@ export class BaseNeoService  {
     }
 
 
+    return res;
   }
 
   async delete(uuid: string, userId?: string) {
@@ -324,15 +323,15 @@ export class BaseNeoService  {
 
   async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string) {
     const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
-    const destinationFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
     const relationship = sourceModel.modelConfig.relationships[relationshipName];
 
     const query = `
-    MATCH (${sourceModel.modelConfig.select} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}')
-    MATCH (${destinationModel.modelConfig.select} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}')
-    MERGE (${sourceModel.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[r:${relationshipName}]${relationship.type === 'normal' ? '->' : '-'}(${destinationModel.modelConfig.as})
-    ON CREATE SET t.updatedAt = datetime(), t.createdAt = datetime()
-    ON MATCH SET t.updatedAt = datetime()
+    MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
+    MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'}(n2)
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime()
+    ON MATCH SET r.updatedAt = datetime()
     RETURN *;
     `;
 
@@ -342,6 +341,26 @@ export class BaseNeoService  {
     catch (e) {
       throw new RecordUpdateFailedException(e);
     }
+
+    return this;
   }
 
+  async detachOneModelFromAnother(sourceModelName: string, sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter, relationshipName: string) {
+    const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
+
+    const query = `
+    MATCH (n1:${sourceModelName} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})-[r:${relationshipName}]-(n2:${sourceModelName} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    DELETE r;
+    `;
+
+    try {
+      await this.neo.write(query);
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return this;
+  }
 }

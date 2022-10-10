@@ -11,8 +11,11 @@ import { UserModel } from "~user/models/user.model";
 import { OnEvent } from "@nestjs/event-emitter";
 import { store } from "~root/state";
 import { ProductService } from "~catalogue/product/services/product.service";
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 
 export interface ICartItem {
+  uuid?: string;
   quantity: number;
   price: number;
   id: string;
@@ -25,6 +28,7 @@ export interface ICart {
   id: string;
   total: number;
   subTotal: number;
+  numberOfItems?: number;
   items: ICartItem[];
   vatRate: number;
   metaData?: IGenericObject;
@@ -50,34 +54,35 @@ export class CartService extends BaseNeoService {
 
   @OnEvent("app.loaded")
   async onAppLoaded() {
-    const s = new CartService();
-    const cart = new Cart();
-    const product = await (new ProductService()).findOne({ slug: "betty" });
-    // Get the cart id from the Session. On the first run, add the id to the session
-    await cart.initialize("94dce94a-f3ab-460f-ab1b-c6ac3dc5e08b");
-    const cartItem = {
-      id: product["uuid"],
-      title: product.title,
-      price: product.price,
-      quantity: 1,
-      metaData: {
-        slug: product.slug
-      }
-    };
+    this.model = store.getState().models.Cart;
+/*        const s = new CartService();
+        const cart = new Cart();
+        const product = await (new ProductService()).findOne({ slug: "betty" });
+        // Get the cart id from the Session. On the first run, add the id to the session
+        await cart.initialize("1JfqkZXK9-H1iaVD_HIfs5VbwD4xSwtE");
+        const cartItem = {
+          id: product["uuid"],
+          title: product.title,
+          price: product.price,
+          quantity: 1,
+          metaData: {
+            slug: product.slug
+          }
+        };
 
-    // cart.add(cartItem);
-    // cart.add(cartItem);
-    // cart.add(cartItem);
+        // cart.add(cartItem);
+        // cart.add(cartItem);
+        // cart.add(cartItem);
 
-    try {
-      // await s.save(cart);
-    }
-    catch (e) {
-      console.log(e)
-    }
+        try {
+          // await s.save(cart);
+        }
+        catch (e) {
+          console.log(e)
+        }
 
 
-    // setTimeout(() => console.log(cart.toObject()), 600)
+        setTimeout(() => console.log(cart.toObject()), 600)*/
 
   }
 
@@ -101,7 +106,42 @@ export class CartService extends BaseNeoService {
     return this;
   }
 
+  /**
+   * Will create a valid cart item from a productId.
+   * Calculates product price based on any conditions this user may have on them
+   * @param id
+   * @param quantity
+   * @param variantId
+   * @param userId
+   */
+  async createCartItemFromProductId(id: string, quantity = 1, variantId?:string, userId?: string): Promise<ICartItem> {
+    let product;
+
+    try {
+      product = await (new ProductService()).findOne({uuid: id}, ['variants']);
+
+    }
+    catch (e) {
+      throw new RecordNotFoundException(e);
+    }
+
+    let price = product.price;
+    if (variantId) {
+      const variant = ProductService.findVariant(product, {uuid: variantId});
+      price = variant.price;
+    }
+
+    return {
+      id,
+      quantity,
+      price,
+      title: product.title
+    }
+  }
+
   async save(cart: Cart) {
+    // need the userId to associate to the user
+
     let existingCart;
     try {
       existingCart = await this.findOne({ id: cart.id });
@@ -127,6 +167,20 @@ export class CartService extends BaseNeoService {
     const query = `MERGE (n:Cart {uuid:$uuid}) SET ${fieldsQuery} RETURN *`;
 
     return this.neo.write(query, {...objToStore, ...{uuid: objToStore.id}});
+  }
+
+  async findUserCart(filter: IBaseFilter) {
+    const {key, value} = extractSingleFilterFromObject(filter);
+    const query = `MATCH (user:User {${key}: '${value}'})-[r:HAS_CART]->(cart:Cart)
+    return *;
+    `;
+
+    const cartResult = await this.neo.readWithCleanUp(query);
+    if (cartResult.length === 0) {
+      throw new RecordNotFoundException('NoCartFound');
+    }
+
+    return cartResult[0].cart;
   }
 
 }

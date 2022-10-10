@@ -16,7 +16,6 @@ export class McmsDiContainer {
     static registry: IMcmsDiRegistryItem[] = [];
 
     static get(filter: IGenericObject) {
-
         const idx = findIndex(this.registry, filter);
         if (idx === -1) {
             return null;

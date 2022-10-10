@@ -84,4 +84,9 @@ export class PropertyService extends BaseNeoService {
     });
 
   }
+
+  async getAllPropertyValues() {
+    return await this.neo.readWithCleanUp(`
+    MATCH (value:PropertyValue) return value`)
+  }
 }

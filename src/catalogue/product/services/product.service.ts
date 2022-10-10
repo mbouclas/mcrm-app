@@ -14,7 +14,11 @@ import { tokenGenerator } from "~helpers/tokenGenerator";
 import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { ProductModel } from "~catalogue/product/models/product.model";
-import { IGenericObject } from "~models/general";
+import { IBaseFilter, IGenericObject } from "~models/general";
+import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
+import { ImageService } from "~image/image.service";
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
+import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -39,6 +43,7 @@ export class ProductService extends BaseNeoService {
   static updatedEventName = 'product.model.updated';
   static createdEventName = 'product.model.created';
   static deletedEventName = 'product.model.deleted';
+  protected imageService: ImageService;
 
   constructor() {
     super();
@@ -46,15 +51,19 @@ export class ProductService extends BaseNeoService {
 
 
     this.changeLog = new ChangeLogService();
+    this.imageService = new ImageService();
   }
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-/*    const s = new ProductService();
-    const r = await s.findOne({slug: 'betty'}, [
-      'properties',
-      'variants',
-    ]);*/
+    const s = new ProductService();
+/*
+    const r = await s.findOne({slug: 'cretus'}, [
+      // 'properties',
+      // 'variants',
+    ]);
+    console.log(r)
+*/
 /*    const r = await s.generateVariantsFromProperty('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
       'a094c109-2adf-4ef8-ab19-aac83033ed6a',//red
       '616bce82-457a-4547-b56c-f80d81a13c7a',//blue
@@ -63,10 +72,17 @@ export class ProductService extends BaseNeoService {
     ])*/
     // const r = await s.find({limit: 2}, ['variants', 'properties'])
     // console.log(r)
+
+    // await s.removeRelated({slug: 'betty'}, 'Product', {slug: 'trebol'})
+
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
-    return await super.findOne(filter, rels) as unknown as ProductModel;
+    const item = await super.findOne(filter, rels) as unknown as ProductModel;
+    item['images'] = await this.imageService.getItemImages('Product', item['uuid']);
+    item['thumb'] = item['images'].find(img => img.type === 'main') || null;
+
+    return item;
   }
 
   async store(record: ProductModelDto, userId?: string) {
@@ -146,5 +162,58 @@ export class ProductService extends BaseNeoService {
     const res = this.neo.write(query, {variantName, variantId, uuid: product['uuid']});
 
     return res;
+  }
+
+  async editVariant(variantFilter: IBaseFilter, data: any) {
+    const filter = extractSingleFilterFromObject(variantFilter);
+    const s = new ProductVariantService();
+    const variant = s.findOne(variantFilter);
+    return await s.update(variant['uuid'], data);
+  }
+
+  async removeVariant(productFilter: IBaseFilter, variantFilter: IBaseFilter) {
+    const filter = extractSingleFilterFromObject(variantFilter);
+
+    const query = `
+      MATCH (n:ProductVariant {${filter.key}: '${filter.value}'})
+      DETACH DELETE n;
+    `;
+
+    try {
+      await this.neo.write(query);
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return this;
+  }
+
+  async addRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
+    try {
+      await this.attachModelToAnotherModel(store.getState().models['Product'], sourceFilter , store.getState().models[destinationModelName], destinationFilter, 'related');
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    return this;
+  }
+
+  async removeRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
+    const rel = store.getState().models['Product'].modelConfig.relationships['related'].rel;
+    await this.detachOneModelFromAnother('Product', sourceFilter, destinationModelName, destinationFilter, rel);
+  }
+
+
+  static findVariant(product: ProductModel, filter: IBaseFilter) {
+    if (!Array.isArray(product['variants'])) {
+      return null;
+    }
+
+    const {key, value} = extractSingleFilterFromObject(filter);
+
+    return product['variants'].find(item => item[key] === value);
+
   }
 }

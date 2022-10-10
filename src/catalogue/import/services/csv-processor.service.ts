@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseProcessorService } from "~catalogue/import/services/base-processor";
 import {createReadStream} from 'fs';
 import { IImportSchema, IProcessorResult, ITransformerResult } from "~catalogue/import/services/import.service";
-const csv = require('csv-parser')
+const csv = require('csv-parser');
 
 @Injectable()
 export class CsvProcessorService extends BaseProcessorService {

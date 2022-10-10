@@ -29,6 +29,8 @@
       "~user/*": ["src/user/*"],
       "~neo4j/*": ["src/neo4j/*"],
       "~tag/*": ["src/tag/*"],
+      "~image/*": ["src/image/*"],
+      "~config/*": ["src/config/*"],
       "~catalogue/*": ["src/catalogue/*"],
       "~eshop/*": ["src/eshop/*"],
       "~es/*": ["src/elastic-search/*"],

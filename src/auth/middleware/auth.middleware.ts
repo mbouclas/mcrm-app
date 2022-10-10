@@ -4,12 +4,7 @@ import OAuth2Server from "oauth2-server";
 import {Request as ExpressRequest, Response as ExpressResponse} from 'express';
 import {Request as Oauth2Request, Response as Oauth2Response} from 'oauth2-server';
 import { CacheService } from "~shared/services/cache.service";
-declare module 'express-session' {
-  export interface SessionData {
-    lang: string;
-    user: any;
-  }
-}
+
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {

@@ -105,11 +105,10 @@ export class BaseNeoTreeService extends BaseNeoService {
                         WHERE NOT (a)<-[:HAS_CHILD]-()
                         CALL apoc.cypher.run('
                         WITH $a as a
-                        OPTIONAL
-                        match (a)-[:HAS_CHILD*1..5]->(b:${this.model.modelName})
+                        OPTIONAL MATCH (a)-[:HAS_CHILD*1..5]->(b:${this.model.modelName})
                         with b
  
-                        return b as category ORDER BY $a.name ${limitQuery}
+                        return coalesce(b) as category ORDER BY $a.name ${limitQuery}
                         ',{a:a}) YIELD value
 
           return a, collect(distinct value) as children;`;
@@ -120,6 +119,10 @@ export class BaseNeoTreeService extends BaseNeoService {
       let category = r.a;
 
       const children = r['children'];
+      // This stupid check is for when there's no children and the query returns children: [{category: null}]. It happens on root categories mainly
+      if (children.length === 1 && !children[0]) {
+        return category;
+      }
 
       category.children = sortBy(children, 'order');
 
@@ -202,6 +205,11 @@ export class BaseNeoTreeService extends BaseNeoService {
 
 
     return res.records.map(rec => Neo4jService.processRecord(rec));
+  }
+
+  async moveNode(filter: IBaseFilter, parentFilter?: IBaseFilter) {
+    // locate the node and delete the old relationship to either parent or child
+    // Add the node to the new parent, can be root if no parent is given
   }
 
   flattenTree(array: any[]) {

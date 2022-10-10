@@ -68,3 +68,8 @@ export interface IBaseTranslation {
 export interface IBaseFilter {
     [key: string]: string|number|boolean
 }
+
+
+export interface IBaseMultiLingualField {
+    [key: string]: string;
+}

@@ -6,6 +6,7 @@ import { ImportController } from './controllers/import.controller';
 import {resolve} from "path";
 import { BaseProcessorService } from "~catalogue/import/services/base-processor";
 import { CsvProcessorService } from "~catalogue/import/services/csv-processor.service";
+import { PropertiesService } from "~catalogue/import/services/properties.service";
 
 
 
@@ -13,13 +14,14 @@ import { CsvProcessorService } from "~catalogue/import/services/csv-processor.se
   providers: [
     ImportQueueService,
     ImportService,
+    PropertiesService,
     BaseProcessorService,
     CsvProcessorService,
   ],
   imports: [
     MulterModule.registerAsync({
       useFactory: () => ({
-        dest: resolve(require('path').resolve('./'), '../upload'),
+        dest: resolve(require('path').resolve('./'), './upload'),
       }),
     }),
   ],

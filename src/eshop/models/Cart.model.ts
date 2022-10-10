@@ -42,6 +42,14 @@ export class CartModel extends BaseModel implements OnModuleInit {
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
+      varName: 'id',
+      label: 'Id',
+      placeholder: 'Id',
+      type: 'string',
+      isSortable: true,
+      group: 'hidden',
+    },
+    {
       varName: 'price',
       label: 'Price',
       placeholder: 'Price',

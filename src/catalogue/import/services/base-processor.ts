@@ -11,6 +11,8 @@ export interface IImportProcessorFieldMap {
   relationships?: string[];//graph rels. If present they must be the ones present on the model
   validations?: Function[],// list of validations to run, each entry is a function
   isSlugFor?: string;
+  matchSourceValue?: string;
+  matchTargetValue?: string;
 }
 
 @Injectable()
@@ -63,11 +65,13 @@ export class BaseProcessorService {
         }
 
         if (field.type === 'category') {
-          data['categories'] = rowData[key].trim().split(',');
+
+          data['categories'] = slug(rowData[key].trim(), {lower: true}).split(',');
         }
 
         if (field.type === 'property') {
-          data['properties'].push({key, value: rowData[key]});
+          if (['N/A'].indexOf(rowData[key]) !== -1) {return;}
+          data['properties'].push({key: key.replace('property.', ''), value: rowData[key]});
         }
 
         if (field.isSlugFor) {

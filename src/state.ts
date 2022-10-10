@@ -12,6 +12,7 @@ export const store = create<AppStateModel>(() => ({
   languages: [],
   exportProviders: [],
   models: {},
+  configs: {},
 }));
 
 export const AppStateActions = {
@@ -24,5 +25,10 @@ export const AppStateActions = {
     models.forEach(model => {
       AppStateActions.setModel(model.name, model)
     });
-  }
+  },
+  setConfig: (name: string, config: any) => {
+    const configs = store.getState().configs;
+    configs[name] = config;
+    store.setState({configs});
+  },
 };

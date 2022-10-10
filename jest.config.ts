@@ -25,6 +25,7 @@ export default {
     '~change-log/(.*)$': '<rootDir>/src/change-log/$1',
     '~tag/(.*)$': '<rootDir>/src/tag/$1',
     '~dashboard/(.*)$': '<rootDir>/src/dashboard/$1',
+    '~image/(.*)$': '<rootDir>/src/image/$1',
     '~neo4j/(.*)$': '<rootDir>/src/neo4j/$1',
   } ,
   // Stop running tests after `n` failures
