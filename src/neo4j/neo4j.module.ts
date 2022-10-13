@@ -1,10 +1,8 @@
-import { Module, DynamicModule, Provider } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { Module } from '@nestjs/common';
 import { Neo4jService } from './neo4j.service';
 import { Neo4jConfig, Neo4jScheme } from "./neo4j-config.interface";
 import { NEO4J_CONFIG, NEO4J_DRIVER } from './neo4j.constants';
 import { createDriver } from './neo4j.util';
-import { Neo4jTransactionInterceptor } from './neo4j-transaction.interceptor';
 import { ModuleRef } from "@nestjs/core";
 
 export const defaultNeo4JConfig = {

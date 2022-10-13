@@ -22,6 +22,26 @@ export class PropertyModel extends BaseModel
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
+      varName: 'title',
+      label: 'Title',
+      placeholder: 'Title',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
+    },
+    {
+      varName: 'slug',
+      label: 'Slug',
+      placeholder: 'Slug',
+      type: 'text',
+      group: 'hidden',
+      isSlug: true,
+      slugFrom: 'title'
+    },
+    {
       varName: 'searchIndexSettings',
       label: 'Search Index Settings',
       placeholder: 'Search Index Settings',

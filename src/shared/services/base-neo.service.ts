@@ -218,7 +218,7 @@ export class BaseNeoService  {
       throw new RecordStoreFailedException(e);
     }
 
-    const withUserIdQuery = (userId) ? `MATCH (${this.model.modelConfig.select} {uuid:'${userId}'}) CREATE (u)-[r:HAS_CREATED {createdAt: datetime()}]->(${this.model.modelConfig.as})` : '';
+    const withUserIdQuery = (userId) ? `MATCH (u:User {uuid:'${userId}'}) CREATE (u)-[r:HAS_CREATED {createdAt: datetime()}]->(${this.model.modelConfig.as})` : '';
     const tempUserQuery = `MATCH (${this.model.modelConfig.select} {tempUuid:$tempUuid})
             ${withUserIdQuery} 
         return ${this.model.modelConfig.as}.uuid as uuid`;
