@@ -1,6 +1,9 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel } from "~models/base.model";
+import { BaseModel, INeo4jModel } from "~models/base.model";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
+import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
+
 
 const modelName = 'PageCategory';
 @McmsDi({
@@ -8,12 +11,46 @@ const modelName = 'PageCategory';
   type: 'model'
 })
 @Injectable()
-export class PageCategoryModel extends BaseModel implements OnModuleInit
+export class PageCategoryModel extends BaseModel
 {
   public modelName = modelName;
   public static modelName = modelName;
+  public children: PageCategoryModel[] = [];
 
-  async onModuleInit() {
+  public static modelConfig: INeo4jModel = {
+    select: 'pageCategory:PageCategory',
+    as: 'pageCategory',
+    relationships: {
+      page: {
+        rel: 'HAS_CATEGORY',
+        alias: 'pageCategoryRelationship',
+        model: 'Page',
+        modelAlias: 'page',
+        type: 'inverse',
+        isCollection: true,
+      },
+    }
+  };
 
-  }
+  public static fields: IDynamicFieldConfigBlueprint[] = [
+    {
+      varName: 'title',
+      label: 'Title',
+      placeholder: 'Title',
+      type: 'text',
+      translatable: true,
+      required: true,
+      setDefaultTranslationInModel: true,
+      isSlug: true,
+      group: 'main'
+    },
+    {
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'text',
+      translatable: true,
+      group: 'main'
+    },
+  ];
 }
