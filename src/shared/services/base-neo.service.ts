@@ -232,7 +232,14 @@ export class BaseNeoService  {
     record.tempUuid = uuid;
     record.uuid = newUuid;
     this.eventEmitter.emit('ChangeLog.add', {model: this.model.modelName, uuid, action: 'added',obj: null, userId});
-    const ret = await this.update(newUuid, record, userId);
+    let ret;
+
+    try {
+      ret = await this.update(newUuid, record, userId);
+    }
+    catch (e) {
+      console.log('Query Error 501', e)
+    }
 
     if (this.constructor['createdEventName']) {
       this.eventEmitter.emit(this.constructor['createdEventName'], ret);

@@ -27,9 +27,9 @@ export class PageModelDto {
 @Injectable()
 export class PageService extends BaseNeoService {
   protected changeLog: ChangeLogService;
-  static updatedEventName = 'product.model.updated';
-  static createdEventName = 'product.model.created';
-  static deletedEventName = 'product.model.deleted';
+  static updatedEventName = 'page.model.updated';
+  static createdEventName = 'page.model.created';
+  static deletedEventName = 'page.model.deleted';
   protected imageService: ImageService;
 
   constructor() {
@@ -70,10 +70,11 @@ export class PageService extends BaseNeoService {
   }
 
   async update(uuid:string, record:PageModelDto, userId?:string) {
+    const r = await super.update(uuid, record, userId);
         // Handle Categories
     if (Array.isArray(record.categories)) {
       const pageCategoryService = new PageCategoryService();
-      // await productCategoryService.
+      // await pageCategoryService.
     }
 
     // Handle Tags
@@ -85,6 +86,7 @@ export class PageService extends BaseNeoService {
 
     // Handle images
 
+    return r;
   }
 
   async addRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
