@@ -44,28 +44,13 @@ export class PageService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     const s = new PageService();
-/*
-    const r = await s.findOne({slug: 'cretus'}, [
-      // 'properties',
-      // 'variants',
-    ]);
-    console.log(r)
-*/
-/*    const r = await s.generateVariantsFromProperty('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
-      'a094c109-2adf-4ef8-ab19-aac83033ed6a',//red
-      '616bce82-457a-4547-b56c-f80d81a13c7a',//blue
-      '7afde04d-3c9b-4b13-b504-dff3f9b45472',//medium
-      '6bbe2127-58ff-4e24-92a2-30ab15d77a8b',//large
-    ])*/
-    // const r = await s.find({limit: 2}, ['variants', 'properties'])
-    // console.log(r)
-
-    // await s.removeRelated({slug: 'betty'}, 'Product', {slug: 'trebol'})
 
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<PageModel> {
     const item = await super.findOne(filter, rels) as unknown as PageModel;
+    item['images'] = await this.imageService.getItemImages('Page', item['uuid']);
+    item['thumb'] = item['images'].find(img => img.type === 'main') || null;
 
     return item;
   }
@@ -91,21 +76,10 @@ export class PageService extends BaseNeoService {
       await tagService.updateModelTags(uuid, record.tags, this.model.modelConfig);
     }
 
-    // Handle properties
-
     // Handle images
 
   }
 
-  /**
-   * Given a property and it's values, generate product variants.
-   * For example, generate variants for the colors blue and black.
-   * The variants are links to the product that the user can edit their prices, quantities etc
-   * Variants are generated as combos. If we select color + size, then we get variants like Red - SM, Red - M, Red - L
-   * Variants are included in the product model but are not shown on search results
-   * @param uuid
-   * @param propertyValues
-   */
   async addRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
     try {
       await this.attachModelToAnotherModel(store.getState().models['Page'], sourceFilter , store.getState().models[destinationModelName], destinationFilter, 'related');

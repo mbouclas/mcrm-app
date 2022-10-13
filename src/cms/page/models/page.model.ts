@@ -3,7 +3,6 @@ import { McmsDi } from "~helpers/mcms-component.decorator";
 import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
 import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
-import { PropertyService } from "~catalogue/property/property.service";
 
 const modelName = 'Page';
 @McmsDi({
@@ -93,35 +92,6 @@ export class PageModel extends BaseModel implements OnModuleInit
         isCollection: true,
         defaultProperty: 'title',
       },
-      properties: {
-        rel: 'HAS_PROPERTY',
-        alias: 'propertyRelationship',
-        model: 'Property',
-        modelAlias: 'property',
-        type: 'normal',
-        isCollection: true,
-        isSortableCount: true,
-        sortableCountDefaultAlias: 'property',
-        defaultProperty: 'title',
-        postProcessing: async (record: Record<any, any>, model: PageModel) => {
-          if (record.property) {
-            record.property = await (new PropertyService).propertiesWithValuesByModel(modelName, record.uuid, record.property.map(p => p.uuid));
-          }
-
-          return record;
-        }
-      },
-      propertyValues: {
-        rel: 'HAS_PROPERTY_VALUE',
-        alias: 'propertyValueRelationship',
-        model: 'PropertyValue',
-        modelAlias: 'propertyValue',
-        type: 'normal',
-        isCollection: true,
-        isSortableCount: true,
-        sortableCountDefaultAlias: 'propertyValue',
-        defaultProperty: 'name',
-      },
       extraField: {
         rel: 'HAS_EXTRA_FIELD',
         alias: 'extraFieldRelationship',
@@ -191,6 +161,26 @@ export class PageModel extends BaseModel implements OnModuleInit
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
+    },
+    {
+      varName: 'thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
+      type: 'image',
+      imageSettings: {
+        multiple: true,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        fileLimit: 5,
+        quality: 70,
+      },
+      group: 'right',
     },
     {
       varName: 'updatedAt',
