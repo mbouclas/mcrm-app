@@ -45,6 +45,13 @@ export class PageService extends BaseNeoService {
   async onAppLoaded() {
     const s = new PageService();
 
+    const d =await s.store({
+        title: 'test',
+        slug: 'test'
+    })
+
+    console.log(d)
+
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<PageModel> {
