@@ -42,17 +42,7 @@ export class PageService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {
-    const s = new PageService();
-
-    const d =await s.store({
-        title: 'test',
-        slug: 'test'
-    })
-
-    console.log(d)
-
-  }
+  async onAppLoaded() {}
 
   async findOne(filter: IGenericObject, rels = []): Promise<PageModel> {
     const item = await super.findOne(filter, rels) as unknown as PageModel;
