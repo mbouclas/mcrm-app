@@ -18,18 +18,15 @@ describe('PageService', () => {
   let service:PageService;
 
   const pageItem = {
-    id: '94dce94a-f3ab-460f-ab1b-c6ac3dc5e08b',
-    title: 'Betty',
-    price: 10,
-    quantity: 1,
-    metaData: {
-      slug: 'betty'
-    }
+    title: 'My page',
+    slug: 'My page'
   };
 
+  let page;
 
-
-
+  afterAll(async () => {
+    page?.uuid && await service.delete(page.uuid);
+  })
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -90,16 +87,13 @@ describe('PageService', () => {
     expect(service).toBeDefined();
   });
 
-  it("should save the cart to db", () => {
+  it("should save the page to db", async () => {
+    const createdPage = await service.store(pageItem); 
 
+    page = await service.findOne({ uuid: createdPage.uuid }); 
+    expect(page.title).toEqual(pageItem.title);
+    expect(page.slug).toEqual('my-page');
   });
 
-  it("should remove the cart from db", () => {
-
-  });
-
-  it("should remove the cart from db", () => {
-
-  });
 });
 
