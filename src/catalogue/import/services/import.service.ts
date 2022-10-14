@@ -126,6 +126,16 @@ export class ImportService implements OnApplicationBootstrap {
     }
   ];
 
+  static setFieldMap(fields: IImportProcessorFieldMap[]) {
+    this.defaultFieldMap = fields;
+    return this;
+  }
+
+  setFieldMap(fields: IImportProcessorFieldMap[]) {
+    ImportService.defaultFieldMap = fields;
+    return this;
+  }
+
   async onApplicationBootstrap() {
     ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.queueName);
     ImportQueueService.addWorker(this.processImageFromImport, ImportQueueService.imageProcessingQueueName);

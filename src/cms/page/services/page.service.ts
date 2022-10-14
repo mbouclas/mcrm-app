@@ -43,14 +43,6 @@ export class PageService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const s = new PageService();
-
-    const d =await s.store({
-        title: 'test',
-        slug: 'test'
-    })
-
-    console.log(d)
 
   }
 

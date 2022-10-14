@@ -1,10 +1,13 @@
-import { Controller, Post, UploadedFile, UseInterceptors, Body, Get, Param } from "@nestjs/common";
+import { Controller, Post, UploadedFile, UseInterceptors, Body, Get, Param, Query } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ImportService } from "~catalogue/import/services/import.service";
 import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
 import {resolve} from 'path';
 import { stat } from "fs/promises";
 
+export class AnalyzerQueryParamsDTO {
+  template?: string;
+}
 @Controller('api/import')
 export class ImportController {
   @Post('upload')
@@ -29,7 +32,12 @@ export class ImportController {
 
   @Post('analyze')
   @UseInterceptors(FileInterceptor('file'))
-  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File) {
+  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
+    if (queryParams.template) {
+      //Get the template and load it into the import service
+    }
+
+
     const res = await (new ImportService()).analyzeFile(file);
 
     return {...res, file : { filename: file.filename, mimetype: file.mimetype }};
