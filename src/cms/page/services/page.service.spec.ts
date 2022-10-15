@@ -115,12 +115,25 @@ describe('PageService', () => {
     await crudOperator.deletePage();
   });
 
+  it("should save and update the page in db", async () => {
+    const crudOperator = createCrudOperator(pageItem);
+    const createdPage = await crudOperator.createPage();
+    await crudOperator.updatePage(createdPage.uuid, { title: 'Updated title'});
+
+    const foundPage = await crudOperator.findOne(createdPage.uuid); 
+    expect(foundPage.title).toEqual('Updated title');
+    expect(foundPage.slug).toEqual('my-page');
+
+    await crudOperator.deletePage();
+  });
+
 
   const createCrudOperator = (item) => {
     const parsedItem = cloneItem(item);
 
     return {
       createPage: async () => createPage(parsedItem),
+      updatePage: async (uuid, item) => updatePage(uuid, item),
       deletePage: async () => deletePage(parsedItem),
       findOne: async (uuid) => findOnePage(uuid),
     }
@@ -128,6 +141,10 @@ describe('PageService', () => {
   }
   const createPage = async(item) => {
     return await service.store(item);
+  }
+
+  const updatePage = async(uuid, item) => {
+    return await service.update(uuid, item);
   }
 
   const deletePage = async (item) => {
