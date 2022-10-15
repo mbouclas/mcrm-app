@@ -106,9 +106,9 @@ describe('PageService', () => {
 
   it("should save and find the page in db", async () => {
     const crudOperator = createCrudOperator(pageItem);
-    const createdPage = await crudOperator.createPage();
+    await crudOperator.createPage();
 
-    const foundPage = await crudOperator.findOne(createdPage.uuid); 
+    const foundPage = await crudOperator.findOne(); 
     expect(foundPage.title).toEqual(pageItem.title);
     expect(foundPage.slug).toEqual('my-page');
 
@@ -117,10 +117,10 @@ describe('PageService', () => {
 
   it("should save and update the page in db", async () => {
     const crudOperator = createCrudOperator(pageItem);
-    const createdPage = await crudOperator.createPage();
-    await crudOperator.updatePage(createdPage.uuid, { title: 'Updated title'});
+    await crudOperator.createPage();
+    await crudOperator.updatePage({ title: 'Updated title'});
 
-    const foundPage = await crudOperator.findOne(createdPage.uuid); 
+    const foundPage = await crudOperator.findOne(); 
     expect(foundPage.title).toEqual('Updated title');
     expect(foundPage.slug).toEqual('my-page');
 
@@ -132,10 +132,10 @@ describe('PageService', () => {
     const parsedItem = cloneItem(item);
 
     return {
-      createPage: async () => createPage(parsedItem),
-      updatePage: async (uuid, item) => updatePage(uuid, item),
+      createPage: async () =>  createPage(parsedItem),
+      updatePage: async (item) => updatePage(parsedItem.uuid, item),
       deletePage: async () => deletePage(parsedItem),
-      findOne: async (uuid) => findOnePage(uuid),
+      findOne: async () => findOnePage(parsedItem.uuid),
     }
 
   }
