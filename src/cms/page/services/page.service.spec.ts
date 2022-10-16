@@ -17,16 +17,12 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
 describe('PageService', () => {
   let service:PageService;
 
-  const pageItem = {
+  const pageItem = Object.freeze({
     title: 'My page',
     slug: 'My page'
-  };
+  });
 
-  let page;
 
-  afterAll(async () => {
-    page?.uuid && await service.delete(page.uuid);
-  })
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -87,13 +83,82 @@ describe('PageService', () => {
     expect(service).toBeDefined();
   });
 
-  it("should save the page to db", async () => {
-    const createdPage = await service.store(pageItem); 
 
-    page = await service.findOne({ uuid: createdPage.uuid }); 
-    expect(page.title).toEqual(pageItem.title);
-    expect(page.slug).toEqual('my-page');
+  it("should save page to db", async () => {
+    const crudOperator = createCrudOperator(pageItem);
+    const createdPage = await crudOperator.createPage();
+
+    expect(createdPage.title).toEqual(pageItem.title);
+    expect(createdPage.slug).toEqual('my-page');
+
+    await crudOperator.deletePage();
   });
+
+  
+  it("should delete the page to db", async () => {
+    const crudOperator = createCrudOperator(pageItem);
+    await crudOperator.createPage();
+    const deletedPage = await crudOperator.deletePage();
+
+    expect(deletedPage.success).toEqual(true);
+  });
+
+
+  it("should save and find the page in db", async () => {
+    const crudOperator = createCrudOperator(pageItem);
+    await crudOperator.createPage();
+
+    const foundPage = await crudOperator.findOne(); 
+    expect(foundPage.title).toEqual(pageItem.title);
+    expect(foundPage.slug).toEqual('my-page');
+
+    await crudOperator.deletePage();
+  });
+
+  it("should save and update the page in db", async () => {
+    const crudOperator = createCrudOperator(pageItem);
+    await crudOperator.createPage();
+    await crudOperator.updatePage({ title: 'Updated title'});
+
+    const foundPage = await crudOperator.findOne(); 
+    expect(foundPage.title).toEqual('Updated title');
+    expect(foundPage.slug).toEqual('my-page');
+
+    await crudOperator.deletePage();
+  });
+
+
+  const createCrudOperator = (item) => {
+    const parsedItem = cloneItem(item);
+
+    return {
+      createPage: async () =>  createPage(parsedItem),
+      updatePage: async (item) => updatePage(parsedItem.uuid, item),
+      deletePage: async () => deletePage(parsedItem),
+      findOne: async () => findOnePage(parsedItem.uuid),
+    }
+
+  }
+  const createPage = async(item) => {
+    return await service.store(item);
+  }
+
+  const updatePage = async(uuid, item) => {
+    return await service.update(uuid, item);
+  }
+
+  const deletePage = async (item) => {
+    return await service.delete(item.uuid);
+  }
+
+  const findOnePage = async (uuid) => {
+    return await service.findOne({ uuid })
+  }
+
+
+  const cloneItem  = (item) => {
+    return JSON.parse(JSON.stringify(item));
+  }
 
 });
 
