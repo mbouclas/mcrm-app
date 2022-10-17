@@ -41,8 +41,16 @@ export class PageCategoryModel extends BaseModel
       translatable: true,
       required: true,
       setDefaultTranslationInModel: true,
-      isSlug: false,
       group: 'main'
+    },
+    {
+      varName: 'slug',
+      label: 'Slug',
+      placeholder: 'Slug',
+      type: 'text',
+      group: 'hidden',
+      isSlug: true,
+      slugFrom: 'title'
     },
     {
       varName: 'description',
