@@ -343,13 +343,16 @@ export class BaseNeoService  {
     `;
 
     try {
-      this.neo.write(query, {})
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false }
+      }
     }
     catch (e) {
       throw new RecordUpdateFailedException(e);
     }
 
-    return this;
+    return { success: true };
   }
 
   async detachOneModelFromAnother(sourceModelName: string, sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter, relationshipName: string) {
