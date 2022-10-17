@@ -4,6 +4,7 @@ require('dotenv').config();
 import { Neo4jService } from "~root/neo4j/neo4j.service";
 import { Test, TestingModule } from '@nestjs/testing';
 import { PageService } from './page.service';
+import { PageCategoryService } from './page-category.service';
 import { ModelsService } from "~admin/services/models.service";
 import { NEO4J_CONFIG, NEO4J_DRIVER } from "~root/neo4j/neo4j.constants";
 import { defaultNeo4JConfig } from "~root/neo4j/neo4j.module";
@@ -13,16 +14,21 @@ import { createDriver } from "~root/neo4j/neo4j.util";
 import { PageModel } from "../models/page.model";
 import { SharedModule } from "~shared/shared.module";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { PageCategoryModel } from "../models/page-category.model";
 
 describe('PageService', () => {
-  let service:PageService;
+  let service: PageService;
+  let pageCategoryService: PageCategoryService;
 
   const pageItem = Object.freeze({
     title: 'My page',
     slug: 'My page'
   });
 
-
+  const pageCategoryItem = Object.freeze({
+    title: 'My category',
+    description: 'My description'
+  });
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +57,7 @@ describe('PageService', () => {
         Neo4jService,
         ModelsService,
         PageModel,
+        PageCategoryModel,
         SharedModule,
       ]
     }).compile();
@@ -71,87 +78,114 @@ describe('PageService', () => {
       ],
       providers: [
         PageService,
+        PageCategoryService
       ],
     }).compile();
 
 
     service = module.get<PageService>(PageService);
+    pageCategoryService = module.get<PageCategoryService>(PageCategoryService);
     service.setModel(store.getState().models['Page']);
+    pageCategoryService.setModel(store.getState().models['PageCategory']);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  // it('should be defined', () => {
+  //   expect(service).toBeDefined();
+  // });
+
+
+  // it("should save page to db", async () => {
+  //   const crudOperator = createCrudOperator(service, pageItem);
+  //   const createdPage = await crudOperator.create();
+
+  //   expect(createdPage.title).toEqual(pageItem.title);
+  //   expect(createdPage.slug).toEqual('my-page');
+
+  //   await crudOperator.delete();
+  // });
+
+  // 
+  // it("should delete the page to db", async () => {
+  //   const crudOperator = createCrudOperator(service, pageItem);
+  //   await crudOperator.create();
+  //   const deletedPage = await crudOperator.delete();
+
+  //   expect(deletedPage.success).toEqual(true);
+  // });
+
+
+  // it("should save and find the page in db", async () => {
+  //   const crudOperator = createCrudOperator(service, pageItem);
+  //   await crudOperator.create();
+
+  //   const foundPage = await crudOperator.findOne(); 
+  //   expect(foundPage.title).toEqual(pageItem.title);
+  //   expect(foundPage.slug).toEqual('my-page');
+
+  //   await crudOperator.delete();
+  // });
+
+  // it("should save and update the page in db", async () => {
+  //   const crudOperator = createCrudOperator(service, pageItem);
+  //   await crudOperator.create();
+  //   await crudOperator.update({ title: 'Updated title'});
+
+  //   const foundPage = await crudOperator.findOne(); 
+  //   expect(foundPage.title).toEqual('Updated title');
+  //   expect(foundPage.slug).toEqual('my-page');
+
+  //   await crudOperator.delete();
+  // });
+
+  it("should save page with category in db", async () => {
+    const crudOperator = createCrudOperator(service, pageItem);
+    const crudCategoryOperator = createCrudOperator(pageCategoryService, pageCategoryItem);
+    const page = await crudOperator.create();
+    const pageCategory = await crudCategoryOperator.create();
+
+    const relationship = await service.attachModelToAnotherModel(
+      store.getState().models['Page'], 
+      {
+        uuid: page.uuid
+      },
+      store.getState().models["PageCategory"], 
+      {
+        uuid: pageCategory.uuid
+      }, 'category'
+    );
+    
+    expect(relationship.success).toBe(true);
+
+    await crudOperator.delete();
+    await crudCategoryOperator.delete();
   });
 
 
-  it("should save page to db", async () => {
-    const crudOperator = createCrudOperator(pageItem);
-    const createdPage = await crudOperator.createPage();
 
-    expect(createdPage.title).toEqual(pageItem.title);
-    expect(createdPage.slug).toEqual('my-page');
-
-    await crudOperator.deletePage();
-  });
-
-  
-  it("should delete the page to db", async () => {
-    const crudOperator = createCrudOperator(pageItem);
-    await crudOperator.createPage();
-    const deletedPage = await crudOperator.deletePage();
-
-    expect(deletedPage.success).toEqual(true);
-  });
-
-
-  it("should save and find the page in db", async () => {
-    const crudOperator = createCrudOperator(pageItem);
-    await crudOperator.createPage();
-
-    const foundPage = await crudOperator.findOne(); 
-    expect(foundPage.title).toEqual(pageItem.title);
-    expect(foundPage.slug).toEqual('my-page');
-
-    await crudOperator.deletePage();
-  });
-
-  it("should save and update the page in db", async () => {
-    const crudOperator = createCrudOperator(pageItem);
-    await crudOperator.createPage();
-    await crudOperator.updatePage({ title: 'Updated title'});
-
-    const foundPage = await crudOperator.findOne(); 
-    expect(foundPage.title).toEqual('Updated title');
-    expect(foundPage.slug).toEqual('my-page');
-
-    await crudOperator.deletePage();
-  });
-
-
-  const createCrudOperator = (item) => {
+  const createCrudOperator = (service, item) => {
     const parsedItem = cloneItem(item);
 
     return {
-      createPage: async () =>  createPage(parsedItem),
-      updatePage: async (item) => updatePage(parsedItem.uuid, item),
-      deletePage: async () => deletePage(parsedItem),
-      findOne: async () => findOnePage(parsedItem.uuid),
+      create: async () =>  createPage(service, parsedItem),
+      update: async (item) => updatePage(service, parsedItem.uuid, item),
+      delete: async () => deletePage(service, parsedItem),
+      findOne: async () => findOnePage(service, parsedItem.uuid),
     }
 
   }
-  const createPage = async(item) => {
+  const createPage = async(service, item) => {
     return await service.store(item);
   }
 
-  const updatePage = async(uuid, item) => {
+  const updatePage = async(service, uuid, item) => {
     return await service.update(uuid, item);
   }
 
-  const deletePage = async (item) => {
+  const deletePage = async (service, item) => {
     return await service.delete(item.uuid);
   }
 
-  const findOnePage = async (uuid) => {
+  const findOnePage = async (service, uuid) => {
     return await service.findOne({ uuid })
   }
 

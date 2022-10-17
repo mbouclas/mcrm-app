@@ -41,7 +41,7 @@ export class PageCategoryModel extends BaseModel
       translatable: true,
       required: true,
       setDefaultTranslationInModel: true,
-      isSlug: true,
+      isSlug: false,
       group: 'main'
     },
     {
