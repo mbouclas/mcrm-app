@@ -13,6 +13,7 @@ import { Neo4jConfig } from "~root/neo4j/neo4j-config.interface";
 import { createDriver } from "~root/neo4j/neo4j.util";
 import { PageModel } from "../models/page.model";
 import { SharedModule } from "~shared/shared.module";
+import { crudOperator } from "~helpers/crudOperator";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { PageCategoryModel } from "../models/page-category.model";
 
@@ -89,58 +90,58 @@ describe('PageService', () => {
     pageCategoryService.setModel(store.getState().models['PageCategory']);
   });
 
-  // it('should be defined', () => {
-  //   expect(service).toBeDefined();
-  // });
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
 
 
-  // it("should save page to db", async () => {
-  //   const crudOperator = createCrudOperator(service, pageItem);
-  //   const createdPage = await crudOperator.create();
+  it("should save page to db", async () => {
+    const pageCrudOperator = crudOperator(service, pageItem);
+    const createdPage = await pageCrudOperator.create();
 
-  //   expect(createdPage.title).toEqual(pageItem.title);
-  //   expect(createdPage.slug).toEqual('my-page');
+    expect(createdPage.title).toEqual(pageItem.title);
+    expect(createdPage.slug).toEqual('my-page');
 
-  //   await crudOperator.delete();
-  // });
+    await pageCrudOperator.delete();
+  });
 
-  // 
-  // it("should delete the page to db", async () => {
-  //   const crudOperator = createCrudOperator(service, pageItem);
-  //   await crudOperator.create();
-  //   const deletedPage = await crudOperator.delete();
+  
+  it("should delete the page to db", async () => {
+    const pageCrudOperator = crudOperator(service, pageItem);
+    await pageCrudOperator.create();
+    const deletedPage = await pageCrudOperator.delete();
 
-  //   expect(deletedPage.success).toEqual(true);
-  // });
+    expect(deletedPage.success).toEqual(true);
+  });
 
 
-  // it("should save and find the page in db", async () => {
-  //   const crudOperator = createCrudOperator(service, pageItem);
-  //   await crudOperator.create();
+  it("should save and find the page in db", async () => {
+    const pageCrudOperator = crudOperator(service, pageItem);
+    await pageCrudOperator.create();
 
-  //   const foundPage = await crudOperator.findOne(); 
-  //   expect(foundPage.title).toEqual(pageItem.title);
-  //   expect(foundPage.slug).toEqual('my-page');
+    const foundPage = await pageCrudOperator.findOne(); 
+    expect(foundPage.title).toEqual(pageItem.title);
+    expect(foundPage.slug).toEqual('my-page');
 
-  //   await crudOperator.delete();
-  // });
+    await pageCrudOperator.delete();
+  });
 
-  // it("should save and update the page in db", async () => {
-  //   const crudOperator = createCrudOperator(service, pageItem);
-  //   await crudOperator.create();
-  //   await crudOperator.update({ title: 'Updated title'});
+  it("should save and update the page in db", async () => {
+    const pageCrudOperator = crudOperator(service, pageItem);
+    await pageCrudOperator.create();
+    await pageCrudOperator.update({ title: 'Updated title'});
 
-  //   const foundPage = await crudOperator.findOne(); 
-  //   expect(foundPage.title).toEqual('Updated title');
-  //   expect(foundPage.slug).toEqual('my-page');
+    const foundPage = await pageCrudOperator.findOne(); 
+    expect(foundPage.title).toEqual('Updated title');
+    expect(foundPage.slug).toEqual('my-page');
 
-  //   await crudOperator.delete();
-  // });
+    await pageCrudOperator.delete();
+  });
 
   it("should save page with category in db", async () => {
-    const crudOperator = createCrudOperator(service, pageItem);
-    const crudCategoryOperator = createCrudOperator(pageCategoryService, pageCategoryItem);
-    const page = await crudOperator.create();
+    const pageCrudOperator  = crudOperator(service, pageItem);
+    const crudCategoryOperator = crudOperator(pageCategoryService, pageCategoryItem);
+    const page = await pageCrudOperator.create();
     const pageCategory = await crudCategoryOperator.create();
 
     const relationship = await service.attachModelToAnotherModel(
@@ -156,43 +157,8 @@ describe('PageService', () => {
     
     expect(relationship.success).toBe(true);
 
-    await crudOperator.delete();
+    await pageCrudOperator.delete();
     await crudCategoryOperator.delete();
   });
-
-
-
-  const createCrudOperator = (service, item) => {
-    const parsedItem = cloneItem(item);
-
-    return {
-      create: async () =>  createPage(service, parsedItem),
-      update: async (item) => updatePage(service, parsedItem.uuid, item),
-      delete: async () => deletePage(service, parsedItem),
-      findOne: async () => findOnePage(service, parsedItem.uuid),
-    }
-
-  }
-  const createPage = async(service, item) => {
-    return await service.store(item);
-  }
-
-  const updatePage = async(service, uuid, item) => {
-    return await service.update(uuid, item);
-  }
-
-  const deletePage = async (service, item) => {
-    return await service.delete(item.uuid);
-  }
-
-  const findOnePage = async (service, uuid) => {
-    return await service.findOne({ uuid })
-  }
-
-
-  const cloneItem  = (item) => {
-    return JSON.parse(JSON.stringify(item));
-  }
-
 });
 
