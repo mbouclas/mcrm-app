@@ -36,6 +36,14 @@ export class PageModel extends BaseModel implements OnModuleInit
         isCollection: true,
         rel: 'HAS_CATEGORY'
       },
+      image: {
+        model: 'Image',
+        modelAlias: 'image',
+        alias: 'imageRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_IMAGE'
+      },
       categoryFilter: {
         rel: 'HAS_CATEGORY',
         alias: 'categoryFilterRelationship',
