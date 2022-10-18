@@ -161,68 +161,131 @@ describe('PageService', () => {
   //   await crudCategoryOperator.delete();
   // });
 
-  it("should delete category from page", async () => {
-    const pageCrudOperator  = crudOperator(service, pageItem);
-    const categoryCrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
-    const category2CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
+  // it("should delete category from page", async () => {
+  //   const pageCrudOperator  = crudOperator(service, pageItem);
+  //   const categoryCrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
+  //   const category2CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
 
-    const page = await pageCrudOperator.create();
-    const pageCategory = await categoryCrudOperator.create();
-    const pageCategory2 = await category2CrudOperator.create();
+  //   const page = await pageCrudOperator.create();
+  //   const pageCategory = await categoryCrudOperator.create();
+  //   const pageCategory2 = await category2CrudOperator.create();
 
-    await service.attachModelToAnotherModel(
-      store.getState().models['Page'], 
-      {
-        uuid: page.uuid
-      },
-      store.getState().models["PageCategory"], 
-      {
-        uuid: pageCategory.uuid
-      }, 'category'
-    );
+  //   await service.attachModelToAnotherModel(
+  //     store.getState().models['Page'], 
+  //     {
+  //       uuid: page.uuid
+  //     },
+  //     store.getState().models["PageCategory"], 
+  //     {
+  //       uuid: pageCategory.uuid
+  //     }, 'category'
+  //   );
 
-    await service.attachModelToAnotherModel(
-      store.getState().models['Page'], 
-      {
-        uuid: page.uuid
-      },
-      store.getState().models["PageCategory"], 
-      {
-        uuid: pageCategory2.uuid
-      }, 'category'
-    );
+  //   await service.attachModelToAnotherModel(
+  //     store.getState().models['Page'], 
+  //     {
+  //       uuid: page.uuid
+  //     },
+  //     store.getState().models["PageCategory"], 
+  //     {
+  //       uuid: pageCategory2.uuid
+  //     }, 'category'
+  //   );
  
 
-    const deletedRelationShip1 = await service.detachOneModelFromAnother(
-      'Page',
+  //   const deletedRelationShip1 = await service.detachOneModelFromAnother(
+  //     'Page',
+  //     {
+  //       uuid: page.uuid
+  //     },
+  //     "PageCategory", 
+  //     {
+  //       uuid: pageCategory.uuid
+  //     }, 'HAS_CATEGORY'
+  //   );
+
+  //   const deletedRelationShip2 = await service.detachOneModelFromAnother(
+  //     'Page',
+  //     {
+  //       uuid: page.uuid
+  //     },
+  //     "PageCategory", 
+  //     {
+  //       uuid: pageCategory2.uuid
+  //     }, 'HAS_CATEGORY'
+  //   );
+
+
+  //   expect(deletedRelationShip1.deletedCount).toBe(1);
+  //   expect(deletedRelationShip2.deletedCount).toBe(1);
+  //   expect(page.title).toBe(pageItem.title);
+
+  //   await pageCrudOperator.delete();
+  //   await categoryCrudOperator.delete();
+  //   await category2CrudOperator.delete();
+  // });
+
+it("should create related from page", async () => {
+    const pageCrudOperator  = crudOperator(service, pageItem);
+    const page2CrudOperator  = crudOperator(service, pageItem);
+
+    const page = await pageCrudOperator.create();
+    const page2 = await page2CrudOperator.create();
+
+    const relationship = await service.attachModelToAnotherModel(
+      store.getState().models['Page'], 
       {
         uuid: page.uuid
       },
-      "PageCategory", 
+      store.getState().models["Page"], 
       {
-        uuid: pageCategory.uuid
-      }, 'HAS_CATEGORY'
+        uuid: page2.uuid
+      }, 'related'
     );
 
-    const deletedRelationShip2 = await service.detachOneModelFromAnother(
-      'Page',
-      {
-        uuid: page.uuid
-      },
-      "PageCategory", 
-      {
-        uuid: pageCategory2.uuid
-      }, 'HAS_CATEGORY'
-    );
-
-
-    expect(deletedRelationShip1.deletedCount).toBe(1);
-    expect(deletedRelationShip2.deletedCount).toBe(1);
+    expect(relationship.success).toBe(true);
     expect(page.title).toBe(pageItem.title);
+    expect(page2.title).toBe(pageItem.title);
 
     await pageCrudOperator.delete();
-    await categoryCrudOperator.delete();
-    await category2CrudOperator.delete();
+    await page2CrudOperator.delete();
+  });
+
+  it("should delete related from page", async () => {
+    const pageCrudOperator  = crudOperator(service, pageItem);
+    const page2CrudOperator  = crudOperator(service, pageItem);
+
+    const page = await pageCrudOperator.create();
+    const page2 = await page2CrudOperator.create();
+
+    await service.attachModelToAnotherModel(
+      store.getState().models['Page'], 
+      {
+        uuid: page.uuid
+      },
+      store.getState().models["Page"], 
+      {
+        uuid: page2.uuid
+      }, 'related'
+    );
+
+    const deletedRelationShip = await service.detachOneModelFromAnother(
+      'Page',
+      {
+        uuid: page.uuid
+      },
+      "Page", 
+      {
+        uuid: page2.uuid
+      }, 'IS_RELATED_TO'
+    );
+
+    expect(deletedRelationShip.deletedCount).toBe(1);
+    expect(page.title).toBe(pageItem.title);
+    expect(page2.title).toBe(pageItem.title);
+
+    await pageCrudOperator.delete();
+    await page2CrudOperator.delete();
   });
 });
 
