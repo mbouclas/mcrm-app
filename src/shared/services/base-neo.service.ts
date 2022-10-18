@@ -360,17 +360,17 @@ export class BaseNeoService  {
     const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
 
     const query = `
-    MATCH (n1:${sourceModelName} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})-[r:${relationshipName}]-(n2:${sourceModelName} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    DELETE r;
+    MATCH (n1:${sourceModelName} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})-[r:${relationshipName}]-(n2:${destinationModelName} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    DELETE r RETURN r;
     `;
 
     try {
-      await this.neo.write(query);
+      const res = await this.neo.write(query);
+
+      return { deletedCount: res.records.length }
     }
     catch (e) {
       throw new RecordUpdateFailedException(e);
     }
-
-    return this;
   }
 }

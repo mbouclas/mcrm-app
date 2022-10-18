@@ -90,61 +90,87 @@ describe('PageService', () => {
     pageCategoryService.setModel(store.getState().models['PageCategory']);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+  // it('should be defined', () => {
+  //   expect(service).toBeDefined();
+  // });
 
 
-  it("should save page to db", async () => {
-    const pageCrudOperator = crudOperator(service, pageItem);
-    const createdPage = await pageCrudOperator.create();
+  // it("should save page to db", async () => {
+  //   const pageCrudOperator = crudOperator(service, pageItem);
+  //   const createdPage = await pageCrudOperator.create();
 
-    expect(createdPage.title).toEqual(pageItem.title);
-    expect(createdPage.slug).toEqual('my-page');
+  //   expect(createdPage.title).toEqual(pageItem.title);
+  //   expect(createdPage.slug).toEqual('my-page');
 
-    await pageCrudOperator.delete();
-  });
+  //   await pageCrudOperator.delete();
+  // });
 
-  
-  it("should delete the page to db", async () => {
-    const pageCrudOperator = crudOperator(service, pageItem);
-    await pageCrudOperator.create();
-    const deletedPage = await pageCrudOperator.delete();
+  // 
+  // it("should delete the page to db", async () => {
+  //   const pageCrudOperator = crudOperator(service, pageItem);
+  //   await pageCrudOperator.create();
+  //   const deletedPage = await pageCrudOperator.delete();
 
-    expect(deletedPage.success).toEqual(true);
-  });
+  //   expect(deletedPage.success).toEqual(true);
+  // });
 
 
-  it("should save and find the page in db", async () => {
-    const pageCrudOperator = crudOperator(service, pageItem);
-    await pageCrudOperator.create();
+  // it("should save and find the page in db", async () => {
+  //   const pageCrudOperator = crudOperator(service, pageItem);
+  //   await pageCrudOperator.create();
 
-    const foundPage = await pageCrudOperator.findOne(); 
-    expect(foundPage.title).toEqual(pageItem.title);
-    expect(foundPage.slug).toEqual('my-page');
+  //   const foundPage = await pageCrudOperator.findOne(); 
+  //   expect(foundPage.title).toEqual(pageItem.title);
+  //   expect(foundPage.slug).toEqual('my-page');
 
-    await pageCrudOperator.delete();
-  });
+  //   await pageCrudOperator.delete();
+  // });
 
-  it("should save and update the page in db", async () => {
-    const pageCrudOperator = crudOperator(service, pageItem);
-    await pageCrudOperator.create();
-    await pageCrudOperator.update({ title: 'Updated title'});
+  // it("should save and update the page in db", async () => {
+  //   const pageCrudOperator = crudOperator(service, pageItem);
+  //   await pageCrudOperator.create();
+  //   await pageCrudOperator.update({ title: 'Updated title'});
 
-    const foundPage = await pageCrudOperator.findOne(); 
-    expect(foundPage.title).toEqual('Updated title');
-    expect(foundPage.slug).toEqual('my-page');
+  //   const foundPage = await pageCrudOperator.findOne(); 
+  //   expect(foundPage.title).toEqual('Updated title');
+  //   expect(foundPage.slug).toEqual('my-page');
 
-    await pageCrudOperator.delete();
-  });
+  //   await pageCrudOperator.delete();
+  // });
 
-  it("should save page with category in db", async () => {
+  // it("should save page with category in db", async () => {
+  //   const pageCrudOperator  = crudOperator(service, pageItem);
+  //   const crudCategoryOperator = crudOperator(pageCategoryService, pageCategoryItem);
+  //   const page = await pageCrudOperator.create();
+  //   const pageCategory = await crudCategoryOperator.create();
+
+  //   const relationship = await service.attachModelToAnotherModel(
+  //     store.getState().models['Page'], 
+  //     {
+  //       uuid: page.uuid
+  //     },
+  //     store.getState().models["PageCategory"], 
+  //     {
+  //       uuid: pageCategory.uuid
+  //     }, 'category'
+  //   );
+  //   
+  //   expect(relationship.success).toBe(true);
+
+  //   await pageCrudOperator.delete();
+  //   await crudCategoryOperator.delete();
+  // });
+
+  it("should delete category from page", async () => {
     const pageCrudOperator  = crudOperator(service, pageItem);
-    const crudCategoryOperator = crudOperator(pageCategoryService, pageCategoryItem);
-    const page = await pageCrudOperator.create();
-    const pageCategory = await crudCategoryOperator.create();
+    const categoryCrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
+    const category2CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
 
-    const relationship = await service.attachModelToAnotherModel(
+    const page = await pageCrudOperator.create();
+    const pageCategory = await categoryCrudOperator.create();
+    const pageCategory2 = await category2CrudOperator.create();
+
+    await service.attachModelToAnotherModel(
       store.getState().models['Page'], 
       {
         uuid: page.uuid
@@ -154,11 +180,49 @@ describe('PageService', () => {
         uuid: pageCategory.uuid
       }, 'category'
     );
-    
-    expect(relationship.success).toBe(true);
+
+    await service.attachModelToAnotherModel(
+      store.getState().models['Page'], 
+      {
+        uuid: page.uuid
+      },
+      store.getState().models["PageCategory"], 
+      {
+        uuid: pageCategory2.uuid
+      }, 'category'
+    );
+ 
+
+    const deletedRelationShip1 = await service.detachOneModelFromAnother(
+      'Page',
+      {
+        uuid: page.uuid
+      },
+      "PageCategory", 
+      {
+        uuid: pageCategory.uuid
+      }, 'HAS_CATEGORY'
+    );
+
+    const deletedRelationShip2 = await service.detachOneModelFromAnother(
+      'Page',
+      {
+        uuid: page.uuid
+      },
+      "PageCategory", 
+      {
+        uuid: pageCategory2.uuid
+      }, 'HAS_CATEGORY'
+    );
+
+
+    expect(deletedRelationShip1.deletedCount).toBe(1);
+    expect(deletedRelationShip2.deletedCount).toBe(1);
+    expect(page.title).toBe(pageItem.title);
 
     await pageCrudOperator.delete();
-    await crudCategoryOperator.delete();
+    await categoryCrudOperator.delete();
+    await category2CrudOperator.delete();
   });
 });
 
