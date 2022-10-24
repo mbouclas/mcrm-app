@@ -11,8 +11,7 @@ const modelName = 'PageCategory';
   type: 'model'
 })
 @Injectable()
-export class PageCategoryModel extends BaseModel
-{
+export class PageCategoryModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
   public children: PageCategoryModel[] = [];
@@ -28,6 +27,15 @@ export class PageCategoryModel extends BaseModel
         modelAlias: 'page',
         type: 'inverse',
         isCollection: true,
+      },
+      related: {
+        rel: 'IS_RELATED_TO',
+        alias: 'relatedRelationship',
+        model: 'pageCategory',
+        modelAlias: 'related',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'title',
       },
     }
   };

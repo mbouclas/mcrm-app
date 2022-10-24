@@ -7,15 +7,20 @@ import { isInt } from "neo4j-driver";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import { BaseTreeModel } from "~models/generic.model";
 import { Neo4jService } from "~root/neo4j/neo4j.service";
+import { BaseModel } from "../../models/base.model";
 
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
+
+  async createTree(sourceModel: typeof BaseModel, tree: BaseTreeModel, relationship: string) {
+    return true;
+  }
 
   async findAncestors(uuid: string) {
     const query = `MATCH (${this.model.modelConfig.select} {uuid: $uuid}) 
         WITH ${this.model.modelConfig.as}, [(${this.model.modelConfig.as})<-[:HAS_CHILD*]-(x) | x] as ancestors
         return *`;
-    const res = await this.neo.readWithCleanUp(query, {uuid});
+    const res = await this.neo.readWithCleanUp(query, { uuid });
 
     const ancestors = res[0]['ancestors'];
     if (!ancestors.length || ancestors.length === 0) {
@@ -30,7 +35,7 @@ export class BaseNeoTreeService extends BaseNeoService {
         WITH ${this.model.modelConfig.as},[(x)<-[:HAS_CHILD*]-(${this.model.modelConfig.as}) | x] as descendants
         return *`;
 
-    const res = await this.neo.readWithCleanUp(query, {uuid});
+    const res = await this.neo.readWithCleanUp(query, { uuid });
     const descendants = res[0]['descendants'];
     if (!descendants.length || descendants.length === 0) {
       return [];
@@ -44,7 +49,7 @@ export class BaseNeoTreeService extends BaseNeoService {
         WITH parent, [(x)<-[:HAS_CHILD*]-(parent) | x] as descendants
         return parent, descendants`;
 
-    const res = await this.neo.readWithCleanUp(query, {uuid});
+    const res = await this.neo.readWithCleanUp(query, { uuid });
 
     let descendants = res[0].descendants;
     let parent = res[0].parent;
@@ -64,15 +69,15 @@ export class BaseNeoTreeService extends BaseNeoService {
     const extraQuery = `MATCH (a:${this.model.modelName}) WHERE a.uuid IN $uuids
 
         RETURN a`;
-    const extrasResult = await this.neo.readWithCleanUp(extraQuery, {uuids});
+    const extrasResult = await this.neo.readWithCleanUp(extraQuery, { uuids });
     const extras = sortBy(extrasResult.map((r: any) => {
       let category = r.a;
       return category;
     }), 'order');
 
     flatList.forEach((item, index) => {
-      const idx = findIndex(extras, {uuid: item.uuid});
-      if (idx === -1) {flatList.splice(index, 1); return;}
+      const idx = findIndex(extras, { uuid: item.uuid });
+      if (idx === -1) { flatList.splice(index, 1); return; }
       try {
         Object.keys(extras[idx]).forEach(key => item[key] = extras[idx][key]);// Overwrite keys
       }
@@ -84,7 +89,7 @@ export class BaseNeoTreeService extends BaseNeoService {
 
     const sortTree = (tree: any) => {
       tree.forEach((child: any) => {
-        if (isInt(child.order)) {child.order = child.order.toNumber();}
+        if (isInt(child.order)) { child.order = child.order.toNumber(); }
         if (Array.isArray(child.children)) {
           child.children = sortTree(child.children);
         }
@@ -135,10 +140,10 @@ export class BaseNeoTreeService extends BaseNeoService {
     const buildChildQueries = (children: BaseTreeModel[], parent: BaseTreeModel, idx = 0) => {
 
       let queries: string[] = [];
-      const parentVarName = parent.uuid.replace(/-/g,'_');
+      const parentVarName = parent.uuid.replace(/-/g, '_');
       queries.push(`MATCH (p_${parentVarName}:${this.model.modelName} {slug:'${parent.slug}'}) SET p_${parentVarName}.order = ${idx} WITH *`);
       children.forEach((child, index) => {
-        const childVarName = child.uuid.replace(/-/g,'_');
+        const childVarName = child.uuid.replace(/-/g, '_');
         queries.push(`MATCH (c_${childVarName}:${this.model.modelName} {slug:'${child.slug}'}) 
                MERGE (p_${parentVarName})-[r_${childVarName}:HAS_CHILD]->(c_${childVarName})
                ON CREATE SET r_${childVarName}.createdAt = datetime(), c_${childVarName}.order = ${index}
@@ -146,7 +151,7 @@ export class BaseNeoTreeService extends BaseNeoService {
                `);
         queries.push(' WITH * ')
         if (Array.isArray(child.children) && child.children.length > 0) {
-          queries = [...queries, ...buildChildQueries(child.children, child, idx+1)];
+          queries = [...queries, ...buildChildQueries(child.children, child, idx + 1)];
         }
       });
 
@@ -159,7 +164,7 @@ export class BaseNeoTreeService extends BaseNeoService {
         if (Array.isArray(node.children)) {
           q = [...q, ...buildChildQueries(node.children, node, index)];
         } else {
-          const parentVarName = node.uuid.replace(/-/g,'_');
+          const parentVarName = node.uuid.replace(/-/g, '_');
           // These are orphan nodes
           q.push(`MATCH (p_${parentVarName}:${this.model.modelName} {uuid:'${node.uuid}'}) SET p_${parentVarName}.order = ${index} WITH *`);
         }
@@ -214,7 +219,7 @@ export class BaseNeoTreeService extends BaseNeoService {
 
   flattenTree(array: any[]) {
     let result: IGenericObject[] = [];
-    array.forEach(function (a) {
+    array.forEach(function(a) {
       result.push(a);
       if (Array.isArray(a.children)) {
         result = result.concat(this.flattenTree(a.children));
