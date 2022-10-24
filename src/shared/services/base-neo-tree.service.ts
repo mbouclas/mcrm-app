@@ -13,6 +13,27 @@ import { BaseModel } from "../../models/base.model";
 export class BaseNeoTreeService extends BaseNeoService {
 
   async createTree(sourceModel: typeof BaseModel, tree: BaseTreeModel, relationship: string) {
+    const { children, set, ...item } = tree;
+    await this.store(item);
+
+
+    let currentChildren = children;
+    let currentIndex = 0;
+
+
+    let nextChildren = [];
+
+    while (currentIndex < currentChildren.length) {
+      const currentChild = currentChildren[currentIndex];
+      const { children, set, ...currentChildItem } = currentChild;
+
+      await this.store(currentChildItem);
+
+      currentIndex += 1;
+
+      nextChildren = [...nextChildren, ...children];
+    }
+
     return true;
   }
 

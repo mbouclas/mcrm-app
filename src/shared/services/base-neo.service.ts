@@ -24,7 +24,7 @@ const debug = require('debug')('mcms:neo:query');
   type: 'service'
 })
 
-export class BaseNeoService  {
+export class BaseNeoService {
   neo: Neo4jService;
   protected logQuery: debug.IDebugger = debug("mcms:neo:query");
   logger = debug;
@@ -35,8 +35,8 @@ export class BaseNeoService  {
   constructor(
 
   ) {
-      this.neo = new Neo4jService();
-      this.eventEmitter = SharedModule.eventEmitter;
+    this.neo = new Neo4jService();
+    this.eventEmitter = SharedModule.eventEmitter;
   }
 
   setModel(model: typeof BaseModel) {
@@ -60,11 +60,11 @@ export class BaseNeoService  {
    */
   async getLastUniqueNumericId(model: string): Promise<number> {
     const query = `MATCH (n:UniqueIdCounter {model: $model}) RETURN n.count as counter`;
-    const countRes = await this.neo.read(query, {model});
+    const countRes = await this.neo.read(query, { model });
 
     const res = countRes.records;
 
-    return  (res.length > 0) ? res[0].get('counter') : 0;
+    return (res.length > 0) ? res[0].get('counter') : 0;
   }
 
   async getCurrentState(filter: IGenericObject, relationships: IGenericObject<INeo4jModelRelationshipConfig>, findFunction: Function) {
@@ -76,7 +76,7 @@ export class BaseNeoService  {
     return await findFunction(filter, relationshipsToQuery);
   }
 
-  createPaginationObject(data: IGenericObject[], limit: number, page: number, pages: number, total: number, skip: number ): IPagination<any> {
+  createPaginationObject(data: IGenericObject[], limit: number, page: number, pages: number, total: number, skip: number): IPagination<any> {
     return {
       data,
       limit,
@@ -89,8 +89,8 @@ export class BaseNeoService  {
 
   async findOne(filter: IGenericObject, rels: string[] = []): Promise<BaseModel> {
     const filterQuery = extractFiltersFromObject(filter, this.model.modelConfig.as, this.model.fields);
-    let {filters,relationships} = extractQueryParamsFilters({ ...filter, ...{with: rels} }, this.model);
-    let {returnVars, matches} = setupRelationShipsQuery(this.model, filter, relationships, filters);
+    let { filters, relationships } = extractQueryParamsFilters({ ...filter, ...{ with: rels } }, this.model);
+    let { returnVars, matches } = setupRelationShipsQuery(this.model, filter, relationships, filters);
 
     const query = `MATCH (${this.model.modelConfig.select}) where ${filterQuery}
     WITH *
@@ -123,10 +123,10 @@ export class BaseNeoService  {
     const modelConfig = model.modelConfig;
     const modelAlias = modelConfig.as;
 
-    let {filters, way, limit, page, relationships, where} = extractQueryParamsFilters({ ...params, ...{with: rels} }, model, model.itemSelector);
+    let { filters, way, limit, page, relationships, where } = extractQueryParamsFilters({ ...params, ...{ with: rels } }, model, model.itemSelector);
 
     const whereQuery = (where.length > 0) ? ` WHERE ${where.join(' AND ')}` : '';
-    let {returnVars, matches, returnAliases, orderBy} = setupRelationShipsQuery(model, params, relationships, filters);
+    let { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(model, params, relationships, filters);
 
     const countQuery = `MATCH (${modelConfig.select}) ${whereQuery}
                 WITH ${modelAlias}
@@ -149,56 +149,56 @@ export class BaseNeoService  {
 
     const res = await this.neo.readWithCleanUp(query, {});
 
-/*    const data = res.records.map(item => {
-      const record = item.get(modelAlias).properties;
+    /*    const data = res.records.map(item => {
+          const record = item.get(modelAlias).properties;
+    
+          returnAliases.forEach(variable => {
+            if (variable === modelAlias) {
+              return;
+            }
+    
+            const tmp = item.get(variable);
+            if (!tmp) {
+              return;
+            }
+    
+            // collection
+    
+            if (Array.isArray(tmp)) {
+              record[variable] = tmp
+                .filter(item => {
+                  if (item.properties) {return true;}
+                  // In case we have added the relationship data along with the model
+                  return item.model && item.relationship;
+                })
+                .map(item => {
+                  if (item.properties) {
+                    return item.properties;
+                  }
+                  const ret: IGenericObject = {};
+                  // Assume nested object
+                  Object.keys(item).forEach(key => {
+                    if (item[key]) {
+                      ret[key] = item[key].properties;
+                    }
+                  });
+    
+                  return ret;
+                });
+              return;
+            }
+    
+            record[variable] = (tmp.low) ? tmp.low : tmp.properties;
+          });
+        });*/
 
-      returnAliases.forEach(variable => {
-        if (variable === modelAlias) {
-          return;
-        }
-
-        const tmp = item.get(variable);
-        if (!tmp) {
-          return;
-        }
-
-        // collection
-
-        if (Array.isArray(tmp)) {
-          record[variable] = tmp
-            .filter(item => {
-              if (item.properties) {return true;}
-              // In case we have added the relationship data along with the model
-              return item.model && item.relationship;
-            })
-            .map(item => {
-              if (item.properties) {
-                return item.properties;
-              }
-              const ret: IGenericObject = {};
-              // Assume nested object
-              Object.keys(item).forEach(key => {
-                if (item[key]) {
-                  ret[key] = item[key].properties;
-                }
-              });
-
-              return ret;
-            });
-          return;
-        }
-
-        record[variable] = (tmp.low) ? tmp.low : tmp.properties;
-      });
-    });*/
-
-/*    return {
-      data,
-      limit,
-      page,
-      pages,
-      total
-    };*/
+    /*    return {
+          data,
+          limit,
+          page,
+          pages,
+          total
+        };*/
 
     let results = this.neo.extractResultsFromArray(res, this.model.modelConfig.as);
 
@@ -211,7 +211,7 @@ export class BaseNeoService  {
     const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
     try {
-      await this.neo.write(query, {uuid});
+      await this.neo.write(query, { uuid });
     }
     catch (e) {
       this.logger(e)
@@ -231,7 +231,7 @@ export class BaseNeoService  {
     const newUuid = res.records[0].get('uuid');
     record.tempUuid = uuid;
     record.uuid = newUuid;
-    this.eventEmitter.emit('ChangeLog.add', {model: this.model.modelName, uuid, action: 'added',obj: null, userId});
+    this.eventEmitter.emit('ChangeLog.add', { model: this.model.modelName, uuid, action: 'added', obj: null, userId });
     let ret;
 
     try {
@@ -286,7 +286,7 @@ export class BaseNeoService  {
         `;
 
     const res = await this.neo.writeWithCleanUp(query, {
-      ...record, ...{uuid}
+      ...record, ...{ uuid }
     });
 
 
@@ -313,7 +313,7 @@ export class BaseNeoService  {
   async delete(uuid: string, userId?: string) {
     const query = `MATCH (${this.model.modelConfig.select} {uuid: $uuid}) DETACH DELETE ${this.model.modelConfig.as} RETURN *`;
     try {
-      await this.neo.write(query, {uuid});
+      await this.neo.write(query, { uuid });
     }
     catch (e) {
       throw new RecordDeleteFailedException(`Could not delete ${this.model.modelName} ${uuid}`);
@@ -325,7 +325,7 @@ export class BaseNeoService  {
       this.eventEmitter.emit(this.constructor['deletedEventName'], uuid);
     }
 
-    return {success: true};
+    return { success: true };
   }
 
   async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string) {
