@@ -136,7 +136,11 @@ describe('PageCategoryService', () => {
       children: [{
         ...pageCategoryItem,
         set,
-        children: []
+        children: [{
+          ...pageCategoryItem,
+          set,
+          children: []
+        }]
       }, {
         ...pageCategoryItem,
         set,

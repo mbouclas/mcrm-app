@@ -8,30 +8,83 @@ import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject
 import { BaseTreeModel } from "~models/generic.model";
 import { Neo4jService } from "~root/neo4j/neo4j.service";
 import { BaseModel } from "../../models/base.model";
+import { store } from "~root/state";
 
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
 
   async createTree(sourceModel: typeof BaseModel, tree: BaseTreeModel, relationship: string) {
-    const { children, set, ...item } = tree;
-    await this.store(item);
-
-
-    let currentChildren = children;
     let currentIndex = 0;
+    let queue: any = [tree];
+
+    let nextQueue = [];
+
+    while (queue && queue.length) {
+      const currentChild = queue[currentIndex];
+      let { children, set, ...currentChildItem } = currentChild;
+      let parentUuid;
+
+      if (currentChildItem.parentUuid) {
+        parentUuid = currentChildItem.parentUuid;
+        delete currentChildItem.parentUuid;
+      }
+
+      if (currentChildItem.uuid) {
+        const item = await this.findOne({ uuid: currentChildItem.uuid });
+
+        if (!item) {
+          currentChildItem = await this.store(currentChildItem);
+
+          if (parentUuid) {
+            await this.attachModelToAnotherModel(
+              sourceModel,
+              {
+                uuid: parentUuid
+              },
+              sourceModel,
+              {
+                uuid: currentChildItem.uuid
+              }, relationship
+            );
+          }
+        }
+      } else {
+        currentChildItem = await this.store(currentChildItem);
+        if (parentUuid) {
+          await this.attachModelToAnotherModel(
+            sourceModel,
+            {
+              uuid: parentUuid
+            },
+            sourceModel,
+            {
+              uuid: currentChildItem.uuid
+            }, relationship
+          );
+        }
+
+      }
 
 
-    let nextChildren = [];
+      if (children && children.length) {
+        children.forEach(child => {
+          nextQueue.push({
+            ...child,
+            parentUuid: currentChildItem.uuid
 
-    while (currentIndex < currentChildren.length) {
-      const currentChild = currentChildren[currentIndex];
-      const { children, set, ...currentChildItem } = currentChild;
+          })
+        })
+      }
 
-      await this.store(currentChildItem);
+      if (currentIndex === queue.length - 1) {
+        queue = nextQueue;
+        nextQueue = [];
+        currentIndex = 0;
 
-      currentIndex += 1;
+      } else {
+        currentIndex += 1;
+      }
 
-      nextChildren = [...nextChildren, ...children];
     }
 
     return true;
