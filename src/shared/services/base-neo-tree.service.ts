@@ -12,6 +12,11 @@ import { store } from "~root/state";
 
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
+  async cleanTree() {
+    const query = `MATCH (${this.model.modelConfig.select}) DETACH DELETE ${this.model.modelConfig.as} RETURN *`;
+    await this.neo.write(query);
+    return true;
+  }
 
   async createTree(sourceModel: typeof BaseModel, tree: BaseTreeModel, relationship: string) {
     let currentIndex = 0;

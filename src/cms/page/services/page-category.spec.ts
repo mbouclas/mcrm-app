@@ -91,41 +91,6 @@ describe('PageCategoryService', () => {
 
 
   it("should save page category and override tree", async () => {
-    // const pageCategoryCrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
-    // const pageCategory2CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
-    // const pageCategory3CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
-    // const pageCategory4CrudOperator = crudOperator(pageCategoryService, pageCategoryItem);
-
-    // const page = await pageCategoryCrudOperator.create();
-    // const page2 = await pageCategory2CrudOperator.create();
-    // const page3 = await pageCategory3CrudOperator.create();
-    // const page4 = await pageCategory4CrudOperator.create();
-
-    // await pageCategoryService.attachModelToAnotherModel(
-    //   store.getState().models['PageCategory'],
-    //   {
-    //     uuid: page.uuid
-    //   },
-    //   store.getState().models["PageCategory"],
-    //   {
-    //     uuid: page2.uuid
-    //   }, 'related'
-    // );
-
-
-    // await pageCategoryService.attachModelToAnotherModel(
-    //   store.getState().models['PageCategory'],
-    //   {
-    //     uuid: page.uuid
-    //   },
-    //   store.getState().models["PageCategory"],
-    //   {
-    //     uuid: page3.uuid
-    //   }, 'related'
-    // );
-
-
-
     const set = (obj: IGenericObject) => {
       return this;
     };
@@ -156,11 +121,7 @@ describe('PageCategoryService', () => {
 
     expect(createdTree).toBe(true);
 
-
-    // await pageCategoryCrudOperator.delete();
-    // await pageCategory2CrudOperator.delete();
-    // await pageCategory3CrudOperator.delete();
-    // await pageCategory4CrudOperator.delete();
+    await pageCategoryService.cleanTree();
   });
 });
 
