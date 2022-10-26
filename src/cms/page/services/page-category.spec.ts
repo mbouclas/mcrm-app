@@ -17,6 +17,8 @@ import { PageCategoryModel } from "../models/page-category.model";
 import { BaseTreeModel } from "~models/generic.model";
 import { BaseModel } from "~models/base.model";
 import { IGenericObject } from "~models/general";
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+
 
 describe('PageCategoryService', () => {
   let pageCategoryService: PageCategoryService;
@@ -90,7 +92,46 @@ describe('PageCategoryService', () => {
   });
 
 
-  it("should save page category and override tree", async () => {
+  // it("should save page category and override tree", async () => {
+  //   const set = (obj: IGenericObject) => {
+  //     return this;
+  //   };
+
+  //   const newTree: BaseTreeModel = {
+  //     ...pageCategoryItem,
+  //     set,
+  //     children: [{
+  //       ...pageCategoryItem,
+  //       set,
+  //       children: [{
+  //         ...pageCategoryItem,
+  //         set,
+  //         children: []
+  //       }]
+  //     }, {
+  //       ...pageCategoryItem,
+  //       set,
+  //       children: []
+  //     }]
+  //   }
+
+  //   const createdTree = await pageCategoryService.createTree(
+  //     store.getState().models['PageCategory'],
+  //     newTree,
+  //     'related'
+  //   );
+
+  //   expect(createdTree).toBe(true);
+
+  //   await pageCategoryService.cleanTree();
+  // });
+
+
+  it("should save page category and override tree with deleting orphan", async () => {
+    const crudCategoryOperator = crudOperator(pageCategoryService, pageCategoryItem);
+
+    const pageCategory = await crudCategoryOperator.create();
+
     const set = (obj: IGenericObject) => {
       return this;
     };
@@ -119,9 +160,16 @@ describe('PageCategoryService', () => {
       'related'
     );
 
+
+
+    await expect(async () => {
+      await crudCategoryOperator.findOne()
+    }).rejects.toBeInstanceOf(RecordNotFoundException);;
+
     expect(createdTree).toBe(true);
 
     await pageCategoryService.cleanTree();
   });
+
 });
 
