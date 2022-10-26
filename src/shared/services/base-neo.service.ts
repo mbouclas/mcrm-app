@@ -328,6 +328,19 @@ export class BaseNeoService {
     return { success: true };
   }
 
+
+  async deleteExcept(exceptionUuids: string[]) {
+    const query = `MATCH (${this.model.modelConfig.select}) WHERE NOT ${this.model.modelConfig.as}.uuid IN $exceptionUuids DETACH DELETE ${this.model.modelConfig.as} RETURN *`;
+    try {
+      await this.neo.write(query, { exceptionUuids });
+    }
+    catch (e) {
+      throw new RecordDeleteFailedException(`Could not delete ${this.model.modelName} all exceptions from ${exceptionUuids}`);
+    }
+
+    return { success: true };
+  }
+
   async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string) {
     const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
     const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);

@@ -18,11 +18,13 @@ export class BaseNeoTreeService extends BaseNeoService {
     let queue: any = [tree];
 
     let nextQueue = [];
+    let allTreeUuids = [];
 
     while (queue && queue.length) {
       const currentChild = queue[currentIndex];
       let { children, set, ...currentChildItem } = currentChild;
       let parentUuid;
+
 
       if (currentChildItem.parentUuid) {
         parentUuid = currentChildItem.parentUuid;
@@ -65,6 +67,7 @@ export class BaseNeoTreeService extends BaseNeoService {
 
       }
 
+      allTreeUuids = [...allTreeUuids, currentChildItem.uuid];
 
       if (children && children.length) {
         children.forEach(child => {
@@ -86,6 +89,9 @@ export class BaseNeoTreeService extends BaseNeoService {
       }
 
     }
+
+
+    await this.deleteExcept(allTreeUuids);
 
     return true;
   }
