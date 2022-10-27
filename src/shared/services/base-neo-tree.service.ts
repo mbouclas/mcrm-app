@@ -39,18 +39,16 @@ export class BaseNeoTreeService extends BaseNeoService {
 
       currentChildItem = currentChildItem.uuid ? currentChildItem : await this.store(currentChildItem)
 
-      if (parentUuid) {
-        await this.attachModelToAnotherModel(
-          sourceModel,
-          {
-            uuid: parentUuid
-          },
-          sourceModel,
-          {
-            uuid: currentChildItem.uuid
-          }, relationship
-        );
-      }
+      parentUuid && await this.attachModelToAnotherModel(
+        sourceModel,
+        {
+          uuid: parentUuid
+        },
+        sourceModel,
+        {
+          uuid: currentChildItem.uuid
+        }, relationship
+      );
 
       allTreeUuids = [...allTreeUuids, currentChildItem.uuid];
 
