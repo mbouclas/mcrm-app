@@ -36,40 +36,20 @@ export class BaseNeoTreeService extends BaseNeoService {
         delete currentChildItem.parentUuid;
       }
 
-      if (currentChildItem.uuid) {
-        const item = await this.findOne({ uuid: currentChildItem.uuid });
 
-        if (!item) {
-          currentChildItem = await this.store(currentChildItem);
+      currentChildItem = currentChildItem.uuid ? currentChildItem : await this.store(currentChildItem)
 
-          if (parentUuid) {
-            await this.attachModelToAnotherModel(
-              sourceModel,
-              {
-                uuid: parentUuid
-              },
-              sourceModel,
-              {
-                uuid: currentChildItem.uuid
-              }, relationship
-            );
-          }
-        }
-      } else {
-        currentChildItem = await this.store(currentChildItem);
-        if (parentUuid) {
-          await this.attachModelToAnotherModel(
-            sourceModel,
-            {
-              uuid: parentUuid
-            },
-            sourceModel,
-            {
-              uuid: currentChildItem.uuid
-            }, relationship
-          );
-        }
-
+      if (parentUuid) {
+        await this.attachModelToAnotherModel(
+          sourceModel,
+          {
+            uuid: parentUuid
+          },
+          sourceModel,
+          {
+            uuid: currentChildItem.uuid
+          }, relationship
+        );
       }
 
       allTreeUuids = [...allTreeUuids, currentChildItem.uuid];

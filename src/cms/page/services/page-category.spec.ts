@@ -92,39 +92,39 @@ describe('PageCategoryService', () => {
   });
 
 
-  // it("should save page category and override tree", async () => {
-  //   const set = (obj: IGenericObject) => {
-  //     return this;
-  //   };
+  it("should save page category and override tree", async () => {
+    const set = (obj: IGenericObject) => {
+      return this;
+    };
 
-  //   const newTree: BaseTreeModel = {
-  //     ...pageCategoryItem,
-  //     set,
-  //     children: [{
-  //       ...pageCategoryItem,
-  //       set,
-  //       children: [{
-  //         ...pageCategoryItem,
-  //         set,
-  //         children: []
-  //       }]
-  //     }, {
-  //       ...pageCategoryItem,
-  //       set,
-  //       children: []
-  //     }]
-  //   }
+    const newTree: BaseTreeModel = {
+      ...pageCategoryItem,
+      set,
+      children: [{
+        ...pageCategoryItem,
+        set,
+        children: [{
+          ...pageCategoryItem,
+          set,
+          children: []
+        }]
+      }, {
+        ...pageCategoryItem,
+        set,
+        children: []
+      }]
+    }
 
-  //   const createdTree = await pageCategoryService.createTree(
-  //     store.getState().models['PageCategory'],
-  //     newTree,
-  //     'related'
-  //   );
+    const createdTree = await pageCategoryService.createTree(
+      store.getState().models['PageCategory'],
+      newTree,
+      'related'
+    );
 
-  //   expect(createdTree).toBe(true);
+    expect(createdTree).toBe(true);
 
-  //   await pageCategoryService.cleanTree();
-  // });
+    await pageCategoryService.cleanTree();
+  });
 
 
   it("should save page category and override tree with deleting orphan", async () => {
