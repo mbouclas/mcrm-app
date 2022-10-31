@@ -54,16 +54,16 @@ export class OrderService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
 
-     const s = new OrderService();
+     // const s = new OrderService();
 
-     const r = await s.store({
-       orderId: 'orderid12',
-       total: 40,
-       shippingMethod: 'ship1',
-       paymentMethod: 'payment1',
-     });
+     // const r = await s.store({
+     //   orderId: 'orderid12',
+     //   total: 40,
+     //   shippingMethod: 'ship1',
+     //   paymentMethod: 'payment1',
+     // });
 
-     console.log(r)
+     // console.log(r)
 
     // console.log(r['property'][0])
 

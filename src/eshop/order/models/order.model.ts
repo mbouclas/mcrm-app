@@ -50,7 +50,46 @@ export class OrderModel extends BaseModel implements OnModuleInit
     }
   };
 
-  public static fields: IDynamicFieldConfigBlueprint[] = [];
+  public static fields: IDynamicFieldConfigBlueprint[] = [
+    {
+      varName: 'orderId',
+      label: 'OrderId',
+      placeholder: 'OrderId',
+      type: 'text',
+      isSortable: true,
+      group: 'main'
+    },
+    {
+      varName: 'total',
+      label: 'Total',
+      placeholder: 'Total',
+      type: 'number',
+      isSortable: true,
+      group: 'main'
+    },
+    {
+      varName: 'status',
+      label: 'Status',
+      placeholder: 'Status',
+      type: 'number',
+      isSortable: true,
+      group: 'main'
+    },
+    {
+      varName: 'shippingMethod',
+      label: 'ShippingMethod',
+      placeholder: 'SlugMethod',
+      type: 'text',
+      group: 'main'
+    },
+    {
+      varName: 'paymentMethod',
+      label: 'PaymentMethod',
+      placeholder: 'PaymentNethod',
+      type: 'text',
+      group: 'main'
+    }
+  ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [];
 
