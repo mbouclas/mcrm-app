@@ -11,8 +11,9 @@ export class OrderModelDto {
   uuid?: string;
   orderId?: string;
   total?: number;
-  shippingMethod: string;
-  paymentMethod: string;
+  shippingMethod?: string;
+  paymentMethod?: string;
+  notes?: string;
 
   static status: [
     {
@@ -53,20 +54,17 @@ export class OrderService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
+    // const s = new OrderService();
 
-     // const s = new OrderService();
+    // const r = await s.store({
+    //   orderId: 'orderid12',
+    //   total: 40,
+    //   shippingMethod: 'ship1',
+    //   paymentMethod: 'payment1',
+    //   notes: 'user note'
+    // });
 
-     // const r = await s.store({
-     //   orderId: 'orderid12',
-     //   total: 40,
-     //   shippingMethod: 'ship1',
-     //   paymentMethod: 'payment1',
-     // });
-
-     // console.log(r)
-
-    // console.log(r['property'][0])
-
+    // console.log(r);
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
@@ -75,7 +73,6 @@ export class OrderService extends BaseNeoService {
   }
 
   async store(record: OrderModelDto, userId?: string) {
-    console.log('record for create' ,record);
     const r = await super.store(record, userId);
     return r;
   }

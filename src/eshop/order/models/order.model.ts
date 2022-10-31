@@ -16,10 +16,6 @@ export class OrderModel extends BaseModel implements OnModuleInit
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public orderId: string;
-  public total: number;
-  public status: number;
-  public shippingMethod: string;
-  public paymentMethod: string;
 
   async onModuleInit() {
 
@@ -78,7 +74,7 @@ export class OrderModel extends BaseModel implements OnModuleInit
     {
       varName: 'shippingMethod',
       label: 'ShippingMethod',
-      placeholder: 'SlugMethod',
+      placeholder: 'ShippingMethod',
       type: 'text',
       group: 'main'
     },
@@ -86,6 +82,13 @@ export class OrderModel extends BaseModel implements OnModuleInit
       varName: 'paymentMethod',
       label: 'PaymentMethod',
       placeholder: 'PaymentNethod',
+      type: 'text',
+      group: 'main'
+    },
+    {
+      varName: 'notes',
+      label: 'Notes',
+      placeholder: 'Notes',
       type: 'text',
       group: 'main'
     }
