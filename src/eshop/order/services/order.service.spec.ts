@@ -157,10 +157,10 @@ describe('OrderService', () => {
   it('should save order with user and product in db', async () => {
     const orderCrudOperator = crudOperator(service, orderItem);
     const userCrudOperator = crudOperator(userService, userItem);
-    //const productCrudOperator = crudOperator(productService, productItem);
+    const productCrudOperator = crudOperator(productService, productItem);
     const order = await orderCrudOperator.create();
     const user = await userCrudOperator.create();
-    //const product = await productCrudOperator.create();
+    const product = await productCrudOperator.create();
 
     const relationship = await service.attachModelToAnotherModel(
       store.getState().models['Order'],
@@ -174,23 +174,23 @@ describe('OrderService', () => {
       'user',
     );
 
-    // const relationship2 = await service.attachModelToAnotherModel(
-    //   store.getState().models['Order'],
-    //   {
-    //     uuid: order.uuid,
-    //   },
-    //   store.getState().models['Product'],
-    //   {
-    //     uuid: product.uuid,
-    //   },
-    //   'product',
-    // );
+    const relationship2 = await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['Product'],
+      {
+        uuid: product.uuid,
+      },
+      'product',
+    );
 
     expect(relationship.success).toBe(true);
-    //expect(relationship2.success).toBe(true);
+    expect(relationship2.success).toBe(true);
 
     await orderCrudOperator.delete();
     await userCrudOperator.delete();
-    //await productCrudOperator.delete();
+    await productCrudOperator.delete();
   });
 });
