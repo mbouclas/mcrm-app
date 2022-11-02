@@ -40,6 +40,7 @@ describe('OrderService', () => {
   const productItem = Object.freeze({
     title: 'Product1',
     slug: 'product1',
+    sku: '0001'
   });
 
   beforeAll(async () => {
@@ -161,7 +162,6 @@ describe('OrderService', () => {
     const order = await orderCrudOperator.create();
     const user = await userCrudOperator.create();
     const product = await productCrudOperator.create();
-
     const relationship = await service.attachModelToAnotherModel(
       store.getState().models['Order'],
       {

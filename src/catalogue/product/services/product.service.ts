@@ -97,7 +97,7 @@ export class ProductService extends BaseNeoService {
     if (!record.sku) {
         record.sku = tokenGenerator(6);
     }
-
+    const r = await super.update(uuid, record, userId);
     // Handle Categories
     if (Array.isArray(record.categories)) {
       const productCategoryService = new ProductCategoryService();
@@ -114,7 +114,7 @@ export class ProductService extends BaseNeoService {
     // Handle properties
 
     // Handle images
-
+    return r;
   }
 
   /**
