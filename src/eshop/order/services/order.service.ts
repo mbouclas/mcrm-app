@@ -9,6 +9,7 @@ import { RecordStoreFailedException } from '~shared/exceptions/record-store-fail
 import { v4 } from 'uuid';
 
 export class OrderModelDto {
+  orderId?: string;
   tempUuid?: string;
   uuid?: string;
   total?: number;
@@ -85,7 +86,9 @@ export class OrderService extends BaseNeoService {
     }
 
     const orderId = v4();
-    const r = await super.store({ ...record, orderId }, userId);
+    record.orderId = orderId;
+
+    const r = await super.store(record, userId);
     return r;
   }
 
