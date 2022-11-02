@@ -40,7 +40,6 @@ describe('OrderService', () => {
   const productItem = Object.freeze({
     title: 'Product1',
     slug: 'product1',
-    sku: '0001'
   });
 
   beforeAll(async () => {
@@ -105,55 +104,55 @@ describe('OrderService', () => {
     productService.setModel(store.getState().models['Product']);
   });
 
-  // it('should be defined', () => {
-  //   expect(service).toBeDefined();
-  // });
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
 
-  // it('should save order to db', async () => {
-  //   const orderCrudOperator = crudOperator(service, orderItem);
-  //   const createdOrder = await orderCrudOperator.create();
+  it('should save order to db', async () => {
+    const orderCrudOperator = crudOperator(service, orderItem);
+    const createdOrder = await orderCrudOperator.create();
 
-  //   expect(createdOrder.total).toEqual(orderItem.total);
-  //   expect(orderItem.paymentMethod).toEqual(orderItem.paymentMethod);
-  //   expect(orderItem.shippingMethod).toEqual(orderItem.shippingMethod);
+    expect(createdOrder.total).toEqual(orderItem.total);
+    expect(orderItem.paymentMethod).toEqual(orderItem.paymentMethod);
+    expect(orderItem.shippingMethod).toEqual(orderItem.shippingMethod);
 
-  //   await orderCrudOperator.delete();
-  // });
+    await orderCrudOperator.delete();
+  });
 
-  // it('should delete the order from db', async () => {
-  //   const orderCrudOperator = crudOperator(service, orderItem);
-  //   await orderCrudOperator.create();
-  //   const deletedOrder = await orderCrudOperator.delete();
+  it('should delete the order from db', async () => {
+    const orderCrudOperator = crudOperator(service, orderItem);
+    await orderCrudOperator.create();
+    const deletedOrder = await orderCrudOperator.delete();
 
-  //   expect(deletedOrder.success).toEqual(true);
-  // });
+    expect(deletedOrder.success).toEqual(true);
+  });
 
-  // it('should save and find the order in db', async () => {
-  //   const orderCrudOperator = crudOperator(service, orderItem);
-  //   await orderCrudOperator.create();
+  it('should save and find the order in db', async () => {
+    const orderCrudOperator = crudOperator(service, orderItem);
+    await orderCrudOperator.create();
 
-  //   const foundOrder = await orderCrudOperator.findOne();
+    const foundOrder = await orderCrudOperator.findOne();
 
-  //   expect(foundOrder.total).toEqual(orderItem.total);
-  //   expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
-  //   expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
+    expect(foundOrder.total).toEqual(orderItem.total);
+    expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
+    expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
 
-  //   await orderCrudOperator.delete();
-  // });
+    await orderCrudOperator.delete();
+  });
 
-  // it('should save and update the order in db', async () => {
-  //   const orderCrudOperator = crudOperator(service, orderItem);
-  //   await orderCrudOperator.create();
-  //   await orderCrudOperator.update({ total: 50 });
+  it('should save and update the order in db', async () => {
+    const orderCrudOperator = crudOperator(service, orderItem);
+    await orderCrudOperator.create();
+    await orderCrudOperator.update({ total: 50 });
 
-  //   const foundOrder = await orderCrudOperator.findOne();
+    const foundOrder = await orderCrudOperator.findOne();
 
-  //   expect(foundOrder.total).toEqual(50);
-  //   expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
-  //   expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
+    expect(foundOrder.total).toEqual(50);
+    expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
+    expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
 
-  //   await orderCrudOperator.delete();
-  // });
+    await orderCrudOperator.delete();
+  });
 
   it('should save order with user and product in db', async () => {
     const orderCrudOperator = crudOperator(service, orderItem);
@@ -162,6 +161,7 @@ describe('OrderService', () => {
     const order = await orderCrudOperator.create();
     const user = await userCrudOperator.create();
     const product = await productCrudOperator.create();
+
     const relationship = await service.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
