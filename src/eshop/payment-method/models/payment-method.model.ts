@@ -8,59 +8,50 @@ import {
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
-const modelName = 'Order';
+const modelName = 'PaymentMethod';
 @McmsDi({
   id: modelName,
   type: 'model',
 })
 @Injectable()
-export class OrderModel extends BaseModel implements OnModuleInit {
+export class PaymentMethodModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
-  public orderId: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = [];
 
   public static modelConfig: INeo4jModel = {
-    select: 'order:Order',
-    as: 'order',
+    select: 'paymentMethod:PaymentMethod',
+    as: 'paymentMethod',
     relationships: {
-      product: {
-        model: 'Product',
-        modelAlias: 'product',
-        alias: 'productRelationship',
+      shippingMethod: {
+        model: 'ShippingMethod',
+        modelAlias: 'shippingMethod',
+        alias: 'shippingMethodRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_PRODUCT',
-      },
-      user: {
-        model: 'User',
-        modelAlias: 'user',
-        alias: 'userRelationship',
-        type: 'inverse',
-        isCollection: true,
-        rel: 'HAS_USER',
+        rel: 'HAS_SHIPPING_METHOD',
       },
     },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
-      varName: 'orderId',
-      label: 'OrderId',
-      placeholder: 'OrderId',
+      varName: 'title',
+      label: 'Title',
+      placeholder: 'Title',
       type: 'text',
       isSortable: true,
       group: 'main',
     },
     {
-      varName: 'total',
-      label: 'Total',
-      placeholder: 'Total',
-      type: 'number',
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'text',
       isSortable: true,
       group: 'main',
     },
@@ -68,29 +59,40 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       varName: 'status',
       label: 'Status',
       placeholder: 'Status',
+      type: 'boolean',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'logo',
+      label: 'Logo',
+      placeholder: 'Logo',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'surcharge',
+      label: 'Supercharge',
+      placeholder: 'Supercharge',
       type: 'number',
       isSortable: true,
       group: 'main',
     },
     {
-      varName: 'shippingMethod',
-      label: 'ShippingMethod',
-      placeholder: 'ShippingMethod',
+      varName: 'surcharge_type',
+      label: 'SuperchargeType',
+      placeholder: 'SuperchargeType',
       type: 'text',
+      isSortable: true,
       group: 'main',
     },
     {
-      varName: 'paymentMethod',
-      label: 'PaymentMethod',
-      placeholder: 'PaymentMethod',
+      varName: 'settings',
+      label: 'Settings',
+      placeholder: 'Settings',
       type: 'text',
-      group: 'main',
-    },
-    {
-      varName: 'notes',
-      label: 'Notes',
-      placeholder: 'Notes',
-      type: 'text',
+      isSortable: true,
       group: 'main',
     },
   ];

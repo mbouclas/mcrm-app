@@ -55,21 +55,7 @@ export class OrderService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {
-    // try {
-    //   const s = new OrderService();
-    //   const r = await s.store({
-    //     total: 40,
-    //     shippingMethod: 'ship1',
-    //     paymentMethod: 'payment1',
-    //     notes: 'user note',
-    //     status: 3,
-    //   });
-    //   console.log(r);
-    // } catch (e) {
-    //   console.log(e);
-    // }
-  }
+  async onAppLoaded() {}
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;
