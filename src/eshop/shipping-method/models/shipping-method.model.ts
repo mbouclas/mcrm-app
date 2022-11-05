@@ -26,16 +26,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
   public static modelConfig: INeo4jModel = {
     select: 'shippingMethod:ShippingMethod',
     as: 'shippingMethod',
-    relationships: {
-      shippingMethod: {
-        model: 'ShippingMethod',
-        modelAlias: 'shippingMethod',
-        alias: 'shippingMethodRelationship',
-        type: 'normal',
-        isCollection: true,
-        rel: 'HAS_SHIPPING_METHOD',
-      },
-    },
+    relationships: {},
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -96,7 +87,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'weight_min',
+      varName: 'weightMin',
       label: 'WeightMin',
       placeholder: 'WeightMin',
       type: 'number',
@@ -104,7 +95,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'weight_limit',
+      varName: 'weightLimit',
       label: 'WeightLimit',
       placeholder: 'WeightLimit',
       type: 'number',
@@ -112,7 +103,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'base_cost',
+      varName: 'baseCost',
       label: 'BaseCost',
       placeholder: 'BaseCost',
       type: 'number',
