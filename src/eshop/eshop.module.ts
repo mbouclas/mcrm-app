@@ -5,11 +5,19 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { CartModule } from './cart/cart.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
-
+import { ShippingMethodModule } from './shipping-method/shipping-method.module';
 
 @Module({
-  imports: [OrderModule, CustomerModule, DashboardModule, PromotionsModule, CartModule, PaymentMethodModule],
+  imports: [
+    OrderModule,
+    CustomerModule,
+    DashboardModule,
+    PromotionsModule,
+    CartModule,
+    PaymentMethodModule,
+    ShippingMethodModule,
+  ],
   providers: [],
-  controllers: []
+  controllers: [],
 })
-export class EshopModule { }
+export class EshopModule {}

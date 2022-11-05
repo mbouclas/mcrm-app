@@ -8,13 +8,13 @@ import {
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
-const modelName = 'PaymentMethod';
+const modelName = 'ShippingMethod';
 @McmsDi({
   id: modelName,
   type: 'model',
 })
 @Injectable()
-export class PaymentMethodModel extends BaseModel implements OnModuleInit {
+export class ShippingMethodModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
@@ -24,8 +24,8 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
   public static displayedColumns = [];
 
   public static modelConfig: INeo4jModel = {
-    select: 'paymentMethod:PaymentMethod',
-    as: 'paymentMethod',
+    select: 'shippingMethod:ShippingMethod',
+    as: 'shippingMethod',
     relationships: {
       shippingMethod: {
         model: 'ShippingMethod',
@@ -56,6 +56,38 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
+      varName: 'shippingTime',
+      label: 'ShippingTime',
+      placeholder: 'ShippingTime',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'destination',
+      label: 'Destination',
+      placeholder: 'Destination',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'code',
+      label: 'Code',
+      placeholder: 'Code',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'parentId',
+      label: 'ParentId',
+      placeholder: 'parentId',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
       varName: 'status',
       label: 'Status',
       placeholder: 'Status',
@@ -64,26 +96,26 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'logo',
-      label: 'Logo',
-      placeholder: 'Logo',
-      type: 'text',
-      isSortable: true,
-      group: 'main',
-    },
-    {
-      varName: 'surcharge',
-      label: 'Supercharge',
-      placeholder: 'Supercharge',
+      varName: 'weight_min',
+      label: 'WeightMin',
+      placeholder: 'WeightMin',
       type: 'number',
       isSortable: true,
       group: 'main',
     },
     {
-      varName: 'supercharge_type',
-      label: 'SuperchargeType',
-      placeholder: 'SuperchargeType',
-      type: 'text',
+      varName: 'weight_limit',
+      label: 'WeightLimit',
+      placeholder: 'WeightLimit',
+      type: 'number',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'base_cost',
+      label: 'BaseCost',
+      placeholder: 'BaseCost',
+      type: 'number',
       isSortable: true,
       group: 'main',
     },
@@ -91,7 +123,7 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
       varName: 'settings',
       label: 'Settings',
       placeholder: 'Settings',
-      type: 'text',
+      type: 'string',
       isSortable: true,
       group: 'main',
     },
