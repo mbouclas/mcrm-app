@@ -4,6 +4,10 @@ require('dotenv').config();
 import { Neo4jService } from '~root/neo4j/neo4j.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentMethodService } from './payment-method.service';
+
+import { ShippingMethodModel } from '~root/eshop/shipping-method/models/shipping-method.model';
+import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
+
 import { ModelsService } from '~admin/services/models.service';
 import { NEO4J_CONFIG, NEO4J_DRIVER } from '~root/neo4j/neo4j.constants';
 import { defaultNeo4JConfig } from '~root/neo4j/neo4j.module';
@@ -17,10 +21,17 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 
 describe('PaymentMethodService', () => {
   let service: PaymentMethodService;
+  let shippingMethodService: ShippingMethodService;
 
   const paymentMethodItem = Object.freeze({
     title: 'Payment method title',
     description: 'Payment method descripton',
+    status: true,
+  });
+
+  const shippingMethodItem = Object.freeze({
+    title: 'Shipping method title',
+    description: 'Shipping method descripton',
     status: true,
   });
 
@@ -52,6 +63,8 @@ describe('PaymentMethodService', () => {
         ModelsService,
         PaymentMethodModel,
         PaymentMethodService,
+        ShippingMethodModel,
+        ShippingMethodService,
         SharedModule,
       ],
     }).compile();
@@ -69,11 +82,16 @@ describe('PaymentMethodService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot()],
-      providers: [PaymentMethodService],
+      providers: [PaymentMethodService, ShippingMethodService],
     }).compile();
 
     service = module.get<PaymentMethodService>(PaymentMethodService);
     service.setModel(store.getState().models['PaymentMethod']);
+
+    shippingMethodService = module.get<ShippingMethodService>(
+      ShippingMethodService,
+    );
+    shippingMethodService.setModel(store.getState().models['ShippingMethod']);
   });
 
   it('should be defined', () => {
@@ -135,5 +153,32 @@ describe('PaymentMethodService', () => {
     expect(foundPaymentMethod.status).toEqual(paymentMethodItem.status);
 
     await paymentMethodCrudOperator.delete();
+  });
+
+  it('should save order with user and product in db', async () => {
+    const paymentMethodCrudOperator = crudOperator(service, paymentMethodItem);
+    const shippingMethodCrudOperator = crudOperator(
+      shippingMethodService,
+      shippingMethodItem,
+    );
+    const paymentMethod = await paymentMethodCrudOperator.create();
+    const shippingMethod = await shippingMethodCrudOperator.create();
+
+    const relationship = await service.attachModelToAnotherModel(
+      store.getState().models['PaymentMethod'],
+      {
+        uuid: paymentMethod.uuid,
+      },
+      store.getState().models['ShippingMethod'],
+      {
+        uuid: shippingMethod.uuid,
+      },
+      'shippingMethod',
+    );
+
+    expect(relationship.success).toBe(true);
+
+    await paymentMethodCrudOperator.delete();
+    await shippingMethodCrudOperator.delete();
   });
 });
