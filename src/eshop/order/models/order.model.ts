@@ -44,6 +44,24 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         rel: 'HAS_USER',
       },
+
+      paymentMethod: {
+        model: 'PaymentMethod',
+        modelAlias: 'paymentMethod',
+        alias: 'paymentMethodRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_PAYMENT_METHOD',
+      },
+
+      shippingMethod: {
+        model: 'ShippingMethod',
+        modelAlias: 'shippingMethod',
+        alias: 'shippingMethodRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_SHIPPING_METHOD',
+      },
     },
   };
 

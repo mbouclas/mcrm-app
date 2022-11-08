@@ -13,6 +13,10 @@ import { createDriver } from '~root/neo4j/neo4j.util';
 import { OrderModel } from '../models/order.model';
 import { UserModel } from '~root/user/models/user.model';
 import { UserService } from '~root/user/services/user.service';
+import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
+import { PaymentMethodModel } from '~root/eshop/payment-method/models/payment-method.model';
+import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
+import { ShippingMethodModel } from '~root/eshop/shipping-method/models/shipping-method.model';
 import { ProductService } from '~root/catalogue/product/services/product.service';
 import { ProductModel } from '~root/catalogue/product/models/product.model';
 import { SharedModule } from '~shared/shared.module';
@@ -23,6 +27,9 @@ describe('OrderService', () => {
   let service: OrderService;
   let userService: UserService;
   let productService: ProductService;
+
+  let paymentMethodService: PaymentMethodService;
+  let shippingMethodService: ShippingMethodService;
 
   const orderItem = Object.freeze({
     total: 40,
@@ -40,6 +47,18 @@ describe('OrderService', () => {
   const productItem = Object.freeze({
     title: 'Product1',
     slug: 'product1',
+  });
+
+  const paymentMethodItem = Object.freeze({
+    title: 'Payment method title',
+    description: 'Payment method descripton',
+    status: true,
+  });
+
+  const shippingMethodItem = Object.freeze({
+    title: 'Shipping method title',
+    description: 'Shipping method descripton',
+    status: true,
   });
 
   beforeAll(async () => {
@@ -75,6 +94,10 @@ describe('OrderService', () => {
         ProductService,
         ProductModel,
         SharedModule,
+        PaymentMethodService,
+        PaymentMethodModel,
+        ShippingMethodService,
+        ShippingMethodModel,
       ],
     }).compile();
 
@@ -91,7 +114,13 @@ describe('OrderService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot()],
-      providers: [OrderService, UserService, ProductService],
+      providers: [
+        OrderService,
+        UserService,
+        ProductService,
+        PaymentMethodService,
+        ShippingMethodService,
+      ],
     }).compile();
 
     service = module.get<OrderService>(OrderService);
@@ -102,6 +131,15 @@ describe('OrderService', () => {
 
     productService = module.get<ProductService>(ProductService);
     productService.setModel(store.getState().models['Product']);
+
+    paymentMethodService =
+      module.get<PaymentMethodService>(PaymentMethodService);
+    paymentMethodService.setModel(store.getState().models['PaymentMethod']);
+
+    shippingMethodService = module.get<ShippingMethodService>(
+      ShippingMethodService,
+    );
+    shippingMethodService.setModel(store.getState().models['ShippingMethod']);
   });
 
   it('should be defined', () => {
@@ -192,5 +230,51 @@ describe('OrderService', () => {
     await orderCrudOperator.delete();
     await userCrudOperator.delete();
     await productCrudOperator.delete();
+  });
+
+  it('should save order with user and product in db', async () => {
+    const orderCrudOperator = crudOperator(service, orderItem);
+    const paymentMethodCrudOperator = crudOperator(
+      paymentMethodService,
+      paymentMethodItem,
+    );
+    const shippingMethodCrudOperator = crudOperator(
+      shippingMethodService,
+      shippingMethodItem,
+    );
+    const order = await orderCrudOperator.create();
+    const paymentMethod = await paymentMethodCrudOperator.create();
+    const shippingMethod = await shippingMethodCrudOperator.create();
+
+    const relationship = await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['PaymentMethod'],
+      {
+        uuid: paymentMethod.uuid,
+      },
+      'paymentMethod',
+    );
+
+    const relationship2 = await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['ShippingMethod'],
+      {
+        uuid: shippingMethod.uuid,
+      },
+      'shippingMethod',
+    );
+
+    expect(relationship.success).toBe(true);
+    expect(relationship2.success).toBe(true);
+
+    // await orderCrudOperator.delete();
+    // await paymentMethodCrudOperator.delete();
+    // await shippingMethodCrudOperator.delete();
   });
 });
