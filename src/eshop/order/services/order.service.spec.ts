@@ -273,8 +273,8 @@ describe('OrderService', () => {
     expect(relationship.success).toBe(true);
     expect(relationship2.success).toBe(true);
 
-    // await orderCrudOperator.delete();
-    // await paymentMethodCrudOperator.delete();
-    // await shippingMethodCrudOperator.delete();
+    await orderCrudOperator.delete();
+    await paymentMethodCrudOperator.delete();
+    await shippingMethodCrudOperator.delete();
   });
 });
