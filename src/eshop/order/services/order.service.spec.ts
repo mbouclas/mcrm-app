@@ -270,6 +270,11 @@ describe('OrderService', () => {
       'shippingMethod',
     );
 
+    await orderCrudOperator.update({
+      shippingMethod: shippingMethod.title,
+      paymentMethod: paymentMethod.title,
+    });
+
     expect(relationship.success).toBe(true);
     expect(relationship2.success).toBe(true);
 
