@@ -4,50 +4,50 @@ import {
   Module,
   OnApplicationBootstrap,
   OnModuleInit,
-  RequestMethod
-} from "@nestjs/common";
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerModule } from './logger/logger.module';
 import { MailModule } from './mail/mail.module';
-import { SharedModule } from "~shared/shared.module";
-import { UserModule } from "~user/user.module";
-import { CrmModule } from "~crm/crm.module";
-import { CmsModule } from "~cms/cms.module";
+import { SharedModule } from '~shared/shared.module';
+import { UserModule } from '~user/user.module';
+import { CrmModule } from '~crm/crm.module';
+import { CmsModule } from '~cms/cms.module';
 import { MarketingManagerModule } from './marketing-manager/marketing-manager.module';
 import { PublicModule } from './public/public.module';
 import { ServiceDeskModule } from './service-desk/service-desk.module';
-import { AdminModule } from "~admin/admin.module";
+import { AdminModule } from '~admin/admin.module';
 import { CommonModule } from './common/common.module';
-import { ConfigModule } from "@nestjs/config";
-import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter";
+import { ConfigModule } from '@nestjs/config';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
-import { ViewEngine } from "./main";
-import { resolve } from "path";
-import { store } from "./state";
-import { ModelsService } from "~admin/services/models.service";
-import { AuthMiddleware } from "./auth/middleware/auth.middleware";
-import { CatalogueModule } from "~catalogue/catalogue.module";
-import { EshopModule } from "~eshop/eshop.module";
-import { DashboardModule } from "~dashboard/dashboard.module";
+import { ViewEngine } from './main';
+import { resolve } from 'path';
+import { store } from './state';
+import { ModelsService } from '~admin/services/models.service';
+import { AuthMiddleware } from './auth/middleware/auth.middleware';
+import { CatalogueModule } from '~catalogue/catalogue.module';
+import { EshopModule } from '~eshop/eshop.module';
+import { DashboardModule } from '~dashboard/dashboard.module';
 import { WebsiteModule } from './website/website.module';
-import { ChangeLogModule } from "~change-log/change-log.module";
-import { TagModule } from "~tag/tag.module";
-import { CartMiddleware } from "~eshop/middleware/cart.middleware";
+import { ChangeLogModule } from '~change-log/change-log.module';
+import { TagModule } from '~tag/tag.module';
+import { CartMiddleware } from '~eshop/middleware/cart.middleware';
 import { UploadModule } from './upload/upload.module';
 import { ImageModule } from './image/image.module';
-import { loadConfigs } from "~helpers/load-config";
+import { loadConfigs } from '~helpers/load-config';
 const Lang = require('mcms-node-localization');
 export let Translate;
-export let Test = {token: null};
+export let Test = { token: null };
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     EventEmitterModule.forRoot({
       wildcard: true,
-      delimiter: ".",
-      verboseMemoryLeak: true
+      delimiter: '.',
+      verboseMemoryLeak: true,
     }),
     SharedModule,
     LoggerModule,
@@ -72,37 +72,25 @@ export let Test = {token: null};
     UploadModule,
     ImageModule,
   ],
-  exports: [
-    SharedModule,
-  ],
-  controllers: [
-    AppController,
-  ],
-  providers: [
-    AppService,
-  ],
+  exports: [SharedModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(AppModule.name);
 
-  constructor(private eventEmitter: EventEmitter2) {
-  }
+  constructor(private eventEmitter: EventEmitter2) {}
 
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(
-        AuthMiddleware,
-      )
-      .forRoutes(
-        { path: "api*", method: RequestMethod.ALL }
-      );
+      .apply(AuthMiddleware)
+      .forRoutes({ path: 'api*', method: RequestMethod.ALL });
 
     consumer
-      .apply(
-        CartMiddleware,
-      )
+      .apply(CartMiddleware)
       .forRoutes(
-        { path: "cart*", method: RequestMethod.ALL }
+        { path: 'cart*', method: RequestMethod.ALL },
+        { path: 'api/order/order-simulation', method: RequestMethod.ALL },
       );
   }
 
@@ -114,27 +102,29 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
     // const models = await this.modelService.getModels();
     const modelService: ModelsService = AdminModule.getService(ModelsService);
     await modelService.mergeModels();
-// Object.keys(store.getState().models).forEach(model => console.log(model))
-//     console.log(store.getState().models['Product']);
+    // Object.keys(store.getState().models).forEach(model => console.log(model))
+    //     console.log(store.getState().models['Product']);
 
-    ViewEngine.options.globals = { ...ViewEngine.options.globals,
-      ...{SITE_NAME: process.env.SITE_TITLE, isInProduction: process.env.NODE_ENV === 'production'}};
+    ViewEngine.options.globals = {
+      ...ViewEngine.options.globals,
+      ...{
+        SITE_NAME: process.env.SITE_TITLE,
+        isInProduction: process.env.NODE_ENV === 'production',
+      },
+    };
 
     Translate = new Lang({
-      directory : resolve(__dirname, '../../', 'lang'),
-      locales : store.getState().languages.map(lang => lang.code),
+      directory: resolve(__dirname, '../../', 'lang'),
+      locales: store.getState().languages.map((lang) => lang.code),
     }).add();
 
     // Lets load all configs
     await loadConfigs();
 
-    this.eventEmitter.emit('app.loaded', {success: true});
+    this.eventEmitter.emit('app.loaded', { success: true });
   }
 
-
-
   async onModuleInit() {
-    this.logger.log("AppModule initialized");
-
+    this.logger.log('AppModule initialized');
   }
 }

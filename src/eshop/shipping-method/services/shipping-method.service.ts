@@ -26,7 +26,7 @@ export class ShippingMethodService extends BaseNeoService {
 
   constructor() {
     super();
-    this.model = store.getState().models.Shipping;
+    this.model = store.getState().models.ShippingMethod;
 
     this.changeLog = new ChangeLogService();
   }

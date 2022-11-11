@@ -11,8 +11,13 @@ import {
 } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderService } from '~eshop/order/services/order.service';
+import { ProductService } from '~root/catalogue/product/services/product.service';
 import { CartService } from '~eshop/cart/cart.service';
 import { SessionData } from 'express-session';
+import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
+import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
+import { UserService } from '~root/user/services/user.service';
+import { store } from '~root/state';
 
 @Controller('api/order')
 export class OrderController {
@@ -36,20 +41,54 @@ export class OrderController {
     @Session() session: SessionData,
     @Body() item: IGenericObject,
   ) {
-    const userId = session.user && session.user['uuid'];
+    const service = new OrderService();
     let cartItem;
+
+    const userItem = {
+      firstName: 'UserF1',
+      lastName: 'UserF2',
+    };
+
+    const productItem = {
+      title: 'Product1',
+      slug: 'product1',
+    };
+
+    const paymentMethodItem = {
+      title: 'Payment method title',
+      description: 'Payment method descripton',
+      status: true,
+    };
+
+    const shippingMethodItem = {
+      title: 'Shipping method title',
+      description: 'Shipping method descripton',
+      status: true,
+    };
+
+    const user = await new UserService().store(userItem);
+    const product = await new ProductService().store(productItem);
+    const paymentMethod = await new PaymentMethodService().store(
+      paymentMethodItem,
+    );
+    const shippingMethod = await new ShippingMethodService().store(
+      shippingMethodItem,
+    );
+    console.log(product, user);
 
     try {
       cartItem = await new CartService().createCartItemFromProductId(
-        item.id,
-        item.quantity,
-        item.variantId,
-        userId,
+        product.uuid,
+        product.quantity,
+        product.variantId,
+        user.uuid,
       );
     } catch (e) {
+      console.log(e);
       return { success: false, reason: 'ProductNotFound' };
     }
 
+    console.log('HELLO');
     try {
       session.cart.add(cartItem);
     } catch (e) {
@@ -58,12 +97,61 @@ export class OrderController {
 
     await session.cart.save();
 
-    await new OrderService().store({
-      paymentMethod: item.paymentMethod,
-      shippingMethod: item.shippingMethod,
+    const order = await service.store({
+      status: 1,
+      paymentMethod: paymentMethod.title,
+      shippingMethod: shippingMethod.title,
     });
 
-    return true;
+    await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['PaymentMethod'],
+      {
+        uuid: paymentMethod.uuid,
+      },
+      'paymentMethod',
+    );
+
+    await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['ShippingMethod'],
+      {
+        uuid: shippingMethod.uuid,
+      },
+      'shippingMethod',
+    );
+
+    await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['User'],
+      {
+        uuid: user.uuid,
+      },
+      'user',
+    );
+
+    await service.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['Product'],
+      {
+        uuid: product.uuid,
+      },
+      'product',
+    );
+
+    return { success: true };
   }
 
   @Delete()

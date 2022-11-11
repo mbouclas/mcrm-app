@@ -22,16 +22,22 @@ export class PaymentMethodService extends BaseNeoService {
 
   constructor() {
     super();
-    this.model = store.getState().models.Payment;
+    this.model = store.getState().models.PaymentMethod;
 
     this.changeLog = new ChangeLogService();
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() { }
+  async onAppLoaded() {}
 
-  async findOne(filter: IGenericObject, rels = []): Promise<PaymentMethodModel> {
-    const item = (await super.findOne(filter, rels)) as unknown as PaymentMethodModel;
+  async findOne(
+    filter: IGenericObject,
+    rels = [],
+  ): Promise<PaymentMethodModel> {
+    const item = (await super.findOne(
+      filter,
+      rels,
+    )) as unknown as PaymentMethodModel;
     return item;
   }
 
