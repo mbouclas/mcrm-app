@@ -74,7 +74,6 @@ export class OrderController {
     const shippingMethod = await new ShippingMethodService().store(
       shippingMethodItem,
     );
-    console.log(product, user);
 
     try {
       cartItem = await new CartService().createCartItemFromProductId(
@@ -88,7 +87,6 @@ export class OrderController {
       return { success: false, reason: 'ProductNotFound' };
     }
 
-    console.log('HELLO');
     try {
       session.cart.add(cartItem);
     } catch (e) {
