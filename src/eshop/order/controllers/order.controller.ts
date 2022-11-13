@@ -21,7 +21,7 @@ import { store } from '~root/state';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
@@ -31,10 +31,10 @@ export class OrderController {
   }
 
   @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) {}
+  async update(@Param('id') uuid: string, body: IGenericObject) { }
 
   @Post()
-  async store(@Body() data: IGenericObject) {}
+  async store(@Body() data: IGenericObject) { }
 
   @Post(`order-simulation`)
   async orderSimulation(
@@ -54,6 +54,11 @@ export class OrderController {
       slug: 'product1',
     };
 
+    const productItem2 = {
+      title: 'Product2',
+      slug: 'product2',
+    };
+
     const paymentMethodItem = {
       title: 'Payment method title',
       description: 'Payment method descripton',
@@ -68,6 +73,7 @@ export class OrderController {
 
     const user = await new UserService().store(userItem);
     const product = await new ProductService().store(productItem);
+    const product2 = await new ProductService().store(productItem2);
     const paymentMethod = await new PaymentMethodService().store(
       paymentMethodItem,
     );
@@ -75,23 +81,29 @@ export class OrderController {
       shippingMethodItem,
     );
 
-    try {
-      cartItem = await new CartService().createCartItemFromProductId(
-        product.uuid,
-        product.quantity,
-        product.variantId,
-        user.uuid,
-      );
-    } catch (e) {
-      console.log(e);
-      return { success: false, reason: 'ProductNotFound' };
-    }
+    const products = [product, product2];
 
-    try {
-      session.cart.add(cartItem);
-    } catch (e) {
-      console.log(e);
-    }
+    await Promise.all(
+      products.map(async (productItem) => {
+        try {
+          cartItem = await new CartService().createCartItemFromProductId(
+            product.uuid,
+            product.quantity,
+            product.variantId,
+            user.uuid,
+          );
+        } catch (e) {
+          console.log(e);
+          return { success: false, reason: 'ProductNotFound' };
+        }
+
+        try {
+          session.cart.add(cartItem);
+        } catch (e) {
+          console.log(e);
+        }
+      }),
+    );
 
     await session.cart.save();
 
@@ -137,21 +149,25 @@ export class OrderController {
       'user',
     );
 
-    await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['Product'],
-      {
-        uuid: product.uuid,
-      },
-      'product',
+    await Promise.all(
+      products.map(async (productItem) => {
+        await service.attachModelToAnotherModel(
+          store.getState().models['Order'],
+          {
+            uuid: order.uuid,
+          },
+          store.getState().models['Product'],
+          {
+            uuid: productItem.uuid,
+          },
+          'product',
+        );
+      }),
     );
 
     return { success: true };
   }
 
   @Delete()
-  async delete(@Param('id') uuid: string) {}
+  async delete(@Param('id') uuid: string) { }
 }
