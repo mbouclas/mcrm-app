@@ -164,6 +164,8 @@ export class OrderController {
         );
       }),
     );
+  
+    await session.cart.clearWithDb();
 
     return { success: true };
   }

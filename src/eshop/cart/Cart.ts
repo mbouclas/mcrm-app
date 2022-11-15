@@ -133,6 +133,13 @@ export class Cart implements OnModuleInit, ICart {
     return this;
   }
 
+  public async clearWithDb() {
+    const itemIds = this.items.map(item => item.uuid);
+    await this.cartService.deleteMany(itemIds);
+
+    this.clear();
+    return this;
+  }
 
   public updateQuantity(filter: IBaseFilter, quantity = 1, appendToExisting = true) {
     const {key, value} = extractSingleFilterFromObject(filter);
