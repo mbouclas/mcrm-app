@@ -18,6 +18,8 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
+  public uuid: string;
+  public title: string;
 
   async onModuleInit() {}
 

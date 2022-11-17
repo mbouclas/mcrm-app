@@ -19,6 +19,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public orderId: string;
+  public userId: string;
 
   async onModuleInit() {}
 
@@ -75,6 +76,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
+      varName: 'userId',
+      label: 'UserId',
+      placeholder: 'UserId',
+      type: 'number',
+      isSortable: true,
+      group: 'main',
+    },
+    {
       varName: 'total',
       label: 'Total',
       placeholder: 'Total',
@@ -113,7 +122,16 @@ export class OrderModel extends BaseModel implements OnModuleInit {
     },
   ];
 
-  public static filterFields: IQueryBuilderFieldBlueprint[] = [];
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'userId',
+      label: 'UserId',
+      type: 'text',
+      model: 'Order',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+  ];
 
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',

@@ -10,6 +10,7 @@ import { v4 } from 'uuid';
 
 export class OrderModelDto {
   orderId?: string;
+  userId?: string;
   tempUuid?: string;
   uuid?: string;
   total?: number;

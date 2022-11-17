@@ -24,10 +24,11 @@ export class OrderController {
   constructor() {}
 
   @Get()
-  async find(@Query() queryParams = {}) {
+  async find(@Session() session: SessionData, @Query() queryParams = {}) {
+    const userId = session.user && session.user.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new OrderService().find({}, rels);
+    return await new OrderService().find({ userId }, rels);
   }
 
   @Get(':uuid')
@@ -43,8 +44,63 @@ export class OrderController {
   }
 
   @Post()
-  async store(@Body() body: IGenericObject) {
-    return await new OrderService().store(body);
+  async store(@Session() session: SessionData, @Body() body: IGenericObject) {
+    const userId = session.user && session.user.user['uuid'];
+
+    const orderService = new OrderService();
+
+    const paymentMethod = await new PaymentMethodService().findOne({
+      title: body.paymentMethod,
+    });
+
+    const shippingMethod = await new ShippingMethodService().findOne({
+      title: body.shippingMethod,
+    });
+
+    const order = await orderService.store({
+      status: 1,
+      paymentMethod: paymentMethod.title,
+      shippingMethod: shippingMethod.title,
+      userId,
+    });
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['PaymentMethod'],
+      {
+        uuid: paymentMethod.uuid,
+      },
+      'paymentMethod',
+    );
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['ShippingMethod'],
+      {
+        uuid: shippingMethod.uuid,
+      },
+      'shippingMethod',
+    );
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['User'],
+      {
+        uuid: userId,
+      },
+      'user',
+    );
+
+    return order;
   }
 
   @Post(`order-simulation`)
@@ -122,6 +178,7 @@ export class OrderController {
       status: 1,
       paymentMethod: paymentMethod.title,
       shippingMethod: shippingMethod.title,
+      userId: user.uuid,
     });
 
     await service.attachModelToAnotherModel(
