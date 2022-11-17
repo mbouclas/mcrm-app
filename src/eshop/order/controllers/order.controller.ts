@@ -21,7 +21,14 @@ import { store } from '~root/state';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
+
+  @Get()
+  async find(@Query() queryParams = {}) {
+    const rels = queryParams['with'] ? queryParams['with'] : [];
+
+    return await new OrderService().find({}, rels);
+  }
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
@@ -30,11 +37,15 @@ export class OrderController {
     return await new OrderService().findOne({ uuid }, rels);
   }
 
-  @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) { }
+  @Patch(`:uuid`)
+  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    return await new OrderService().update(uuid, body);
+  }
 
   @Post()
-  async store(@Body() data: IGenericObject) { }
+  async store(@Body() body: IGenericObject) {
+    return await new OrderService().store(body);
+  }
 
   @Post(`order-simulation`)
   async orderSimulation(
@@ -164,12 +175,14 @@ export class OrderController {
         );
       }),
     );
-  
+
     await session.cart.clearWithDb();
 
     return { success: true };
   }
 
-  @Delete()
-  async delete(@Param('id') uuid: string) { }
+  @Delete(`:uuid`)
+  async delete(@Param('uuid') uuid: string) {
+    return await new OrderService().delete(uuid);
+  }
 }
