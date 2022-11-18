@@ -1,30 +1,32 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
-import { PropertyService } from "~catalogue/property/property.service";
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import {
+  BaseModel,
+  IBaseModelFilterConfig,
+  INeo4jModel,
+} from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { PropertyService } from '~catalogue/property/property.service';
 
 const modelName = 'Product';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
-export class ProductModel extends BaseModel implements OnModuleInit
-{
+export class ProductModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public title: string;
   public price = 0;
   public slug;
+  public uuid: string;
 
-  async onModuleInit() {
+  async onModuleInit() {}
 
-  }
-
-  public static displayedColumns =  ['title','category'];
+  public static displayedColumns = ['title', 'category'];
 
   public static modelConfig: INeo4jModel = {
     select: 'product:Product',
@@ -36,7 +38,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
         alias: 'productVariantRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_VARIANTS'
+        rel: 'HAS_VARIANTS',
       },
       category: {
         model: 'ProductCategory',
@@ -44,7 +46,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
         alias: 'productCategoryRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_CATEGORY'
+        rel: 'HAS_CATEGORY',
       },
       categoryFilter: {
         rel: 'HAS_CATEGORY',
@@ -112,13 +114,21 @@ export class ProductModel extends BaseModel implements OnModuleInit
         isSortableCount: true,
         sortableCountDefaultAlias: 'property',
         defaultProperty: 'title',
-        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+        postProcessing: async (
+          record: Record<any, any>,
+          model: ProductModel,
+        ) => {
           if (record.property) {
-            record.property = await (new PropertyService).propertiesWithValuesByModel(modelName, record.uuid, record.property.map(p => p.uuid));
+            record.property =
+              await new PropertyService().propertiesWithValuesByModel(
+                modelName,
+                record.uuid,
+                record.property.map((p) => p.uuid),
+              );
           }
 
           return record;
-        }
+        },
       },
       propertyValues: {
         rel: 'HAS_PROPERTY_VALUE',
@@ -167,7 +177,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
         isCollection: true,
         defaultProperty: 'id',
       },
-    }
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -208,7 +218,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
       type: 'text',
       group: 'hidden',
       isSlug: true,
-      slugFrom: 'title'
+      slugFrom: 'title',
     },
     {
       varName: 'description',
@@ -232,7 +242,7 @@ export class ProductModel extends BaseModel implements OnModuleInit
         isAutoCompleteField: false,
         aggregationFieldSettings: {
           name: 'price',
-          type: "range",
+          type: 'range',
           isKeyword: false,
           size: ProductModel.defaultAggregationSize,
           field: 'price',
@@ -241,10 +251,10 @@ export class ProductModel extends BaseModel implements OnModuleInit
             { from: 60000.0, to: 100000.0 },
             { from: 100000.0, to: 500000.0 },
             { from: 500000.0, to: 1000000.0 },
-            { from: 1000000.0 }
+            { from: 1000000.0 },
           ],
           boost: 2,
-        }
+        },
       },
     },
     {
@@ -307,6 +317,6 @@ export class ProductModel extends BaseModel implements OnModuleInit
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
     defaultOrderBy: 'createdAt',
-    defaultWay: 'DESC'
+    defaultWay: 'DESC',
   };
 }

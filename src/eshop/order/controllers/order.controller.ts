@@ -18,6 +18,7 @@ import { PaymentMethodService } from '~root/eshop/payment-method/services/paymen
 import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
 import { UserService } from '~root/user/services/user.service';
 import { store } from '~root/state';
+import { ProductModel } from '~root/catalogue/product/models/product.model';
 
 @Controller('api/order')
 export class OrderController {
@@ -50,11 +51,15 @@ export class OrderController {
     const orderService = new OrderService();
 
     const paymentMethod = await new PaymentMethodService().findOne({
-      title: body.paymentMethod,
+      uuid: body.paymentMethodId,
     });
 
     const shippingMethod = await new ShippingMethodService().findOne({
-      title: body.shippingMethod,
+      uuid: body.shippingMethodId,
+    });
+
+    const products = await new ProductService().find({
+      uuids: body.productIds,
     });
 
     const order = await orderService.store({
@@ -98,6 +103,22 @@ export class OrderController {
         uuid: userId,
       },
       'user',
+    );
+
+    await Promise.all(
+      products.data.map(async (productItem: ProductModel) => {
+        await orderService.attachModelToAnotherModel(
+          store.getState().models['Order'],
+          {
+            uuid: order.uuid,
+          },
+          store.getState().models['Product'],
+          {
+            uuid: productItem?.uuid,
+          },
+          'product',
+        );
+      }),
     );
 
     return order;
