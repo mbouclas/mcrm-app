@@ -66,6 +66,9 @@ export class OrderController {
       status: 1,
       paymentMethod: paymentMethod.title,
       shippingMethod: shippingMethod.title,
+      salesChannel: body.salesChannel,
+      billingAddress: body.billingAddress,
+      shippingAddress: body.shippingAddress,
       userId,
     });
 

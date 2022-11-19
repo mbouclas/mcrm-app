@@ -18,6 +18,9 @@ export class OrderModelDto {
   paymentMethod?: string;
   notes?: string;
   status?: number;
+  salesChannel?: string;
+  billingAddress?: string;
+  shippingAddress?: string;
 }
 
 @Injectable()
