@@ -150,9 +150,11 @@ export class Neo4jService implements OnApplicationShutdown {
 
         if (!r) {return ;}
 
+        let result;
+
         const keys = Object.keys(r);
         if (isNode(r) || isRelationship(r)) {
-            return (r.properties) ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
+            result = (r.properties) ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
         }
         else if (isInt(r)) {
             return r.toNumber();
@@ -161,10 +163,15 @@ export class Neo4jService implements OnApplicationShutdown {
         else if (keys.length === 1) {
             const masterKey = keys[0];
             if (!r[masterKey]) {return null;}
-            return (r[masterKey].properties) ? Neo4jService.parseNeoProperties(r[masterKey].properties) : Neo4jService.parseNeoProperties(r);
+            result = (r[masterKey].properties) ? Neo4jService.parseNeoProperties(r[masterKey].properties) : Neo4jService.parseNeoProperties(r);
         }
         else {
-            return (r.properties) ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
+            result = (r.properties) ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
+        }
+
+        return {
+          id: r.identity.low,
+          ...result
         }
     }
 
