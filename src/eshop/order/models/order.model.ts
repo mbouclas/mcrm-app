@@ -116,6 +116,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
+      varName: 'VAT',
+      label: 'VAT',
+      placeholder: 'VAT',
+      type: 'number',
+      isSortable: true,
+      group: 'main',
+    },
+    {
       varName: 'shippingMethod',
       label: 'ShippingMethod',
       placeholder: 'ShippingMethod',

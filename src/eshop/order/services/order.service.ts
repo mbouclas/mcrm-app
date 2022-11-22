@@ -23,6 +23,7 @@ export class OrderModelDto {
   shippingAddress?: string;
   paymentStatus?: number;
   shippingStatus?: number;
+  VAT?: number;
 }
 
 @Injectable()
@@ -98,6 +99,8 @@ export class OrderService extends BaseNeoService {
     },
   ];
 
+  static VAT = 20;
+
   constructor() {
     super();
     this.model = store.getState().models.Order;
@@ -140,6 +143,7 @@ export class OrderService extends BaseNeoService {
 
     const orderId = v4();
     record.orderId = orderId;
+    record.VAT = OrderService.VAT;
 
     const r = await super.store(record, userId);
     return r;
