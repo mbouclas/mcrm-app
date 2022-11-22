@@ -142,6 +142,18 @@ describe('CartService', () => {
     expect(cart.subTotal).toEqual(cartItem.price * 2);
   });
 
+  it("should remove an item if the quantity is 0", () => {
+    const cart = new Cart();
+    cart.add(cloneCartItem(cartItem));
+    expect(cart.items.length).toEqual(1);
+
+    const item = cloneCartItem(cartItem);
+    item.quantity = 0;
+
+    cart.add(item);
+    expect(cart.items.length).toEqual(0);
+  });
+
   it("should increase the quantity by filter", () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));

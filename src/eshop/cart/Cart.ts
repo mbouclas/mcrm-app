@@ -103,6 +103,14 @@ export class Cart implements OnModuleInit, ICart {
       return this;
     }
 
+    if (item.quantity === 0) {
+      this.remove({id: item.id});
+      this.updateTotals();
+
+      this.eventEmitter.emit(Cart.itemAddedEventName, {item, cart: this.toObject()});
+      return this;
+    }
+
     found.quantity++;
     this.updateTotals();
 
