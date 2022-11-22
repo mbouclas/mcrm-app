@@ -69,6 +69,8 @@ export class OrderController {
       salesChannel: body.salesChannel,
       billingAddress: body.billingAddress,
       shippingAddress: body.shippingAddress,
+      paymentStatus: 1,
+      shippingStatus: 1,
       userId,
     });
 
