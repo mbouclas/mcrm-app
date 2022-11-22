@@ -21,41 +21,91 @@ export class OrderModelDto {
   salesChannel?: string;
   billingAddress?: string;
   shippingAddress?: string;
+  paymentStatus?: number;
+  shippingStatus?: number;
+  VAT?: number;
 }
 
 @Injectable()
 export class OrderService extends BaseNeoService {
   protected changeLog: ChangeLogService;
-  statuses: { id: number; label: string }[];
+
+  static statuses = [
+    {
+      id: 1,
+      label: 'started',
+    },
+    {
+      id: 2,
+      label: 'processing',
+    },
+    {
+      id: 3,
+      label: 'shipped',
+    },
+    {
+      id: 4,
+      label: 'completed',
+    },
+    {
+      id: 5,
+      label: 'cancelled',
+    },
+  ];
+
+  static paymentStatuses = [
+    {
+      id: 1,
+      label: 'in-progress',
+    },
+    {
+      id: 2,
+      label: 'failed',
+    },
+    {
+      id: 3,
+      label: 'unconfirmed',
+    },
+    {
+      id: 4,
+      label: 'paid',
+    },
+    {
+      id: 5,
+      label: 'authorized',
+    },
+    {
+      id: 6,
+      label: 'refunded',
+    },
+  ];
+
+  static shippingStatuses = [
+    {
+      id: 1,
+      label: 'in-progress',
+    },
+    {
+      id: 2,
+      label: 'open',
+    },
+    {
+      id: 3,
+      label: 'done',
+    },
+    {
+      id: 4,
+      label: 'cancelled',
+    },
+  ];
+
+  static VAT = 20;
 
   constructor() {
     super();
     this.model = store.getState().models.Order;
 
     this.changeLog = new ChangeLogService();
-
-    this.statuses = [
-      {
-        id: 1,
-        label: 'started',
-      },
-      {
-        id: 2,
-        label: 'processing',
-      },
-      {
-        id: 3,
-        label: 'shipped',
-      },
-      {
-        id: 4,
-        label: 'completed',
-      },
-      {
-        id: 5,
-        label: 'cancelled',
-      },
-    ];
   }
 
   @OnEvent('app.loaded')
@@ -67,7 +117,7 @@ export class OrderService extends BaseNeoService {
   }
 
   async store(record: OrderModelDto, userId?: string) {
-    const existsStatus = this.statuses.some(
+    const existsStatus = OrderService.statuses.some(
       (statusItem) => statusItem.id === record.status,
     );
 
@@ -75,8 +125,25 @@ export class OrderService extends BaseNeoService {
       throw new RecordStoreFailedException('Invalid status');
     }
 
+    const existsPaymentStatus = OrderService.paymentStatuses.some(
+      (statusItem) => statusItem.id === record.paymentStatus,
+    );
+
+    if (!existsPaymentStatus) {
+      throw new RecordStoreFailedException('Invalid status');
+    }
+
+    const existsShippingStatus = OrderService.shippingStatuses.some(
+      (statusItem) => statusItem.id === record.shippingStatus,
+    );
+
+    if (!existsShippingStatus) {
+      throw new RecordStoreFailedException('Invalid status');
+    }
+
     const orderId = v4();
     record.orderId = orderId;
+    record.VAT = OrderService.VAT;
 
     const r = await super.store(record, userId);
     return r;
