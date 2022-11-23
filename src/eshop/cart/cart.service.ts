@@ -183,4 +183,17 @@ export class CartService extends BaseNeoService {
     return cartResult[0].cart;
   }
 
+  async clearItems(cartId: string) {
+    const query = `MATCH (n:Cart {uuid: $cartId})
+    WHERE EXISTS(n.items)
+    SET n.items = [];
+    `;
+
+    const res = await this.neo.write(query, { cartId });
+
+    return this;
+  }
+
+
+
 }

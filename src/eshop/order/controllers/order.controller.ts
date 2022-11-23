@@ -19,6 +19,7 @@ import { ShippingMethodService } from '~root/eshop/shipping-method/services/ship
 import { UserService } from '~root/user/services/user.service';
 import { store } from '~root/state';
 import { ProductModel } from '~root/catalogue/product/models/product.model';
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
 
 @Controller('api/order')
 export class OrderController {
@@ -47,6 +48,11 @@ export class OrderController {
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const cart = session.cart.toObject();
+
+    if (!cart.items || !cart.items.length) {
+      throw new RecordNotFoundException('No items in cart');
+    }
+
     const userId = session.user && session.user.user['uuid'];
 
     const orderService = new OrderService();
@@ -129,6 +135,8 @@ export class OrderController {
         );
       }),
     );
+
+    await session.cart.clearWithDb();
 
     return order;
   }

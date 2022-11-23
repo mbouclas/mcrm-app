@@ -142,8 +142,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public async clearWithDb() {
-    const itemIds = this.items.map(item => item.uuid);
-    await this.cartService.deleteMany(itemIds);
+    await this.cartService.clearItems(this.id);
 
     this.clear();
     return this;

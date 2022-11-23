@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeLogService } from '~change-log/change-log.service';
 import { store } from '~root/state';
-import { OnEvent } from '@nestjs/event-emitter';
+import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderModel } from '~eshop/order/models/order.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
+import { SharedModule } from "~shared/shared.module";
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { v4 } from 'uuid';
 
@@ -29,6 +30,7 @@ export class OrderModelDto {
 @Injectable()
 export class OrderService extends BaseNeoService {
   protected changeLog: ChangeLogService;
+  protected eventEmitter: EventEmitter2;
 
   static statuses = [
     {
@@ -146,6 +148,8 @@ export class OrderService extends BaseNeoService {
     record.VAT = OrderService.VAT;
 
     const r = await super.store(record, userId);
+    this.eventEmitter.emit('order.completed', r);
+
     return r;
   }
 

@@ -377,7 +377,6 @@ export class BaseNeoService {
     RETURN *;
     `;
 
-    console.log(query);
     try {
       const res = await this.neo.write(query, {});
       if (!res?.records[0]) {
