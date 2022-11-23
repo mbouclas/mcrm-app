@@ -90,7 +90,7 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
       .apply(CartMiddleware)
       .forRoutes(
         { path: 'cart*', method: RequestMethod.ALL },
-        { path: 'api/order/order-simulation', method: RequestMethod.ALL },
+        { path: 'api/order*', method: RequestMethod.ALL },
       );
   }
 

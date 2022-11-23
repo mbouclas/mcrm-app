@@ -46,6 +46,7 @@ export class OrderController {
 
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
+    const cart = session.cart.toObject();
     const userId = session.user && session.user.user['uuid'];
 
     const orderService = new OrderService();
@@ -59,7 +60,7 @@ export class OrderController {
     });
 
     const products = await new ProductService().find({
-      uuids: body.productIds,
+      uuids: cart.items.map((item) => item.id),
     });
 
     const order = await orderService.store({
