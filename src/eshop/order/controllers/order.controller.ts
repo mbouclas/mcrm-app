@@ -123,6 +123,9 @@ export class OrderController {
             uuid: productItem?.uuid,
           },
           'product',
+          {
+            quantity: cart.items.find(item => item.id === productItem.uuid).quantity
+          }
         );
       }),
     );

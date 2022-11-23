@@ -352,20 +352,32 @@ export class BaseNeoService {
     return { success: true };
   }
 
-  async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string) {
+  async attachModelToAnotherModel(sourceModel: typeof BaseModel, sourceFilter: IGenericObject, destinationModel: typeof BaseModel, destinationFilter: IGenericObject, relationshipName: string, relationshipProps?: IGenericObject) {
     const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
     const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
     const relationship = sourceModel.modelConfig.relationships[relationshipName];
+
+
+
+    const createSetRelationship = relationshipProps ? 
+      ', '.concat(
+      Object.keys(relationshipProps)
+        .map(relProp => ` r.${relProp} = ${relationshipProps[relProp]},`)
+        .join()
+        .slice(0, -1))
+        : '';
+
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
     MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'}(n2)
-    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime()
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
     `;
 
+    console.log(query);
     try {
       const res = await this.neo.write(query, {});
       if (!res?.records[0]) {
