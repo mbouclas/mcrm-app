@@ -1,34 +1,39 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
-import { IGenericObject } from "~models/general";
-import { PaymentMethodService } from "~eshop/payment-method/services/payment-method.service";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { IGenericObject } from '~models/general';
+import { PaymentMethodService } from '~eshop/payment-method/services/payment-method.service';
 
 @Controller('api/payment-method')
 export class PaymentMethodController {
-
-  constructor(
-
-  ) {
-  }
+  constructor() {}
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
-    const rels = (queryParams['with']) ? queryParams['with'] : [];
+    const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await (new PaymentMethodService()).findOne({ uuid }, rels);
+    return await new PaymentMethodService().findOne({ uuid }, rels);
   }
 
-  @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) {
-
+  @Patch(`:uuid`)
+  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    return await new PaymentMethodService().update(uuid, body);
   }
 
   @Post()
-  async store(@Body() data: IGenericObject) {
-
+  async store(@Body() body: IGenericObject) {
+    return await new PaymentMethodService().store(body);
   }
 
   @Delete()
   async delete(@Param('id') uuid: string) {
-
+    return await new PaymentMethodService().delete(uuid);
   }
 }

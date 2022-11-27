@@ -22,12 +22,18 @@ export class ShippingMethodController {
     return await new ShippingMethodService().findOne({ uuid }, rels);
   }
 
-  @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) {}
+  @Patch(`:uuid`)
+  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    return await new ShippingMethodService().update(uuid, body);
+  }
 
   @Post()
-  async store(@Body() data: IGenericObject) {}
+  async store(@Body() body: IGenericObject) {
+    return await new ShippingMethodService().store(body);
+  }
 
   @Delete()
-  async delete(@Param('id') uuid: string) {}
+  async delete(@Param('id') uuid: string) {
+    return await new ShippingMethodService().delete(uuid);
+  }
 }
