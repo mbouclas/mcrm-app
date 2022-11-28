@@ -177,6 +177,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         defaultProperty: 'id',
       },
+      manufacturer: {
+        rel: 'HAS_MANUFACTURER',
+        alias: 'manufacturerRelationship',
+        model: 'Manufacturer',
+        modelAlias: 'manufacturer',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'id',
+      },
     },
   };
 
