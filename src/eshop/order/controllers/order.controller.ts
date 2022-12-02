@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderService } from '~eshop/order/services/order.service';
+import { AddressService } from '~eshop/address/services/address.service';
 import { ProductService } from '~root/catalogue/product/services/product.service';
 import { CartService } from '~eshop/cart/cart.service';
 import { SessionData } from 'express-session';
@@ -19,7 +20,7 @@ import { ShippingMethodService } from '~root/eshop/shipping-method/services/ship
 import { UserService } from '~root/user/services/user.service';
 import { store } from '~root/state';
 import { ProductModel } from '~root/catalogue/product/models/product.model';
-import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 
 @Controller('api/order')
 export class OrderController {
@@ -57,6 +58,14 @@ export class OrderController {
 
     const orderService = new OrderService();
 
+    const address = await new AddressService().store({
+      city: body.address.city,
+      country: body.address.country,
+      zipcode: body.address.zipcode,
+      note: body.address.note,
+      userId: body.address.userId,
+    });
+
     const paymentMethod = await new PaymentMethodService().findOne({
       uuid: body.paymentMethodId,
     });
@@ -80,6 +89,30 @@ export class OrderController {
       shippingStatus: 1,
       userId,
     });
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['User'],
+      {
+        uuid: userId,
+      },
+      store.getState().models['Address'],
+      {
+        uuid: address.uuid,
+      },
+      'address',
+    );
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['Address'],
+      {
+        uuid: address.uuid,
+      },
+      'address',
+    );
 
     await orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
@@ -130,8 +163,9 @@ export class OrderController {
           },
           'product',
           {
-            quantity: cart.items.find(item => item.id === productItem.uuid).quantity
-          }
+            quantity: cart.items.find((item) => item.id === productItem.uuid)
+              .quantity,
+          },
         );
       }),
     );

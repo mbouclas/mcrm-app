@@ -63,6 +63,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         rel: 'HAS_SHIPPING_METHOD',
       },
+      address: {
+        model: 'Address',
+        modelAlias: 'address',
+        alias: 'addressRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_ADDRESS',
+      },
     },
   };
 

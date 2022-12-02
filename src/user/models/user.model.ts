@@ -1,13 +1,17 @@
-import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
-import { McmsDi } from "../../helpers/mcms-component.decorator";
-import { Injectable } from "@nestjs/common";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
+import {
+  BaseModel,
+  IBaseModelFilterConfig,
+  INeo4jModel,
+} from '~models/base.model';
+import { McmsDi } from '../../helpers/mcms-component.decorator';
+import { Injectable } from '@nestjs/common';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
 const modelName = 'User';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
 export class UserModel extends BaseModel {
@@ -29,9 +33,17 @@ export class UserModel extends BaseModel {
         alias: 'roleRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_ROLE'
+        rel: 'HAS_ROLE',
       },
-    }
+      address: {
+        model: 'Address',
+        modelAlias: 'address',
+        alias: 'addressRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_ADDRESS',
+      },
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -96,55 +108,55 @@ export class UserModel extends BaseModel {
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
     {
-      "varName": "email",
-      "placeholder": "Email",
-      "label": "First Email",
-      "type": "text",
-      "relName": "",
-      "isInSimpleQuery": true,
+      varName: 'email',
+      placeholder: 'Email',
+      label: 'First Email',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
       filterType: 'partial',
-      "model": "User",
-      "filterField": "",
-      "order": 0
+      model: 'User',
+      filterField: '',
+      order: 0,
     },
     {
-      "varName": "firstName",
-      "placeholder": "Name",
-      "label": "First Name",
-      "type": "text",
-      "relName": "",
-      "isInSimpleQuery": true,
-      "model": "User",
-      "filterField": "",
-      "order": 1
+      varName: 'firstName',
+      placeholder: 'Name',
+      label: 'First Name',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
+      model: 'User',
+      filterField: '',
+      order: 1,
     },
     {
-      "varName": "lastName",
-      "placeholder": "Surname",
-      "label": "Surname",
-      "type": "text",
-      "relName": "",
-      "isInSimpleQuery": true,
-      "model": "User",
-      "filterField": "",
-      "order": 2
+      varName: 'lastName',
+      placeholder: 'Surname',
+      label: 'Surname',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
+      model: 'User',
+      filterField: '',
+      order: 2,
     },
     {
-      "varName": "active",
-      "placeholder": "Is Active",
-      "label": "Is Active",
-      "type": "boolean",
-      "relName": "",
-      "isInSimpleQuery": false,
-      "model": "User",
-      "filterField": "",
-      "order": 3
-    }
+      varName: 'active',
+      placeholder: 'Is Active',
+      label: 'Is Active',
+      type: 'boolean',
+      relName: '',
+      isInSimpleQuery: false,
+      model: 'User',
+      filterField: '',
+      order: 3,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
     defaultOrderBy: 'createdAt',
-    defaultWay: 'DESC'
+    defaultWay: 'DESC',
   };
 }
