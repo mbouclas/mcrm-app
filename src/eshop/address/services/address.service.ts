@@ -7,7 +7,6 @@ import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
-import { v4 } from 'uuid';
 
 export class AddressModelDto {
   userId?: string;
@@ -18,12 +17,14 @@ export class AddressModelDto {
   country?: string;
   street?: string;
   zipcode?: string;
+  note?: string;
 }
 
 @Injectable()
 export class AddressService extends BaseNeoService {
   protected changeLog: ChangeLogService;
   protected eventEmitter: EventEmitter2;
+  static availableTypes = ['SHIPPING', 'BILLING'];
 
   constructor() {
     super();
@@ -41,12 +42,19 @@ export class AddressService extends BaseNeoService {
   }
 
   async store(record: AddressModelDto, userId?: string) {
+    if (!AddressService.availableTypes.includes(record.type)) {
+      throw new RecordStoreFailedException('Invalid type');
+    }
     const r = await super.store(record, userId);
 
     return r;
   }
 
   async update(uuid: string, record: AddressModelDto, userId?: string) {
+    if (!AddressService.availableTypes.includes(record.type)) {
+      throw new RecordStoreFailedException('Invalid type');
+    }
+
     const r = await super.update(uuid, record, userId);
 
     return r;

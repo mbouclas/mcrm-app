@@ -33,8 +33,14 @@ export class AddressController {
   }
 
   @Patch(`:uuid`)
-  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    return await new AddressService().update(uuid, body);
+  async update(
+    @Session() session: SessionData,
+    @Param('uuid') uuid: string,
+    @Body() body: IGenericObject,
+  ) {
+    const userId = session.user && session.user.user['uuid'];
+
+    return await new AddressService().update(uuid, { ...body, userId });
   }
 
   @Post()
