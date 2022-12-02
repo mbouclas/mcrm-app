@@ -58,13 +58,22 @@ export class OrderController {
 
     const orderService = new OrderService();
 
-    const address = await new AddressService().store({
-      city: body.address.city,
-      country: body.address.country,
-      zipcode: body.address.zipcode,
-      note: body.address.note,
-      userId: body.address.userId,
-    });
+    let address;
+    if (!body.addressId) {
+      address = await new AddressService().store({
+        city: body.newAddress.city,
+        country: body.newAddress.country,
+        zipcode: body.newAddress.zipcode,
+        street: body.newAddress.street,
+        note: body.newAddress.note,
+        type: body.newAddress.type,
+        userId: body.newAddress.userId,
+      });
+    } else {
+      address = await new AddressService().findOne({
+        userId,
+      });
+    }
 
     const paymentMethod = await new PaymentMethodService().findOne({
       uuid: body.paymentMethodId,
@@ -89,18 +98,6 @@ export class OrderController {
       shippingStatus: 1,
       userId,
     });
-
-    await orderService.attachModelToAnotherModel(
-      store.getState().models['User'],
-      {
-        uuid: userId,
-      },
-      store.getState().models['Address'],
-      {
-        uuid: address.uuid,
-      },
-      'address',
-    );
 
     await orderService.attachModelToAnotherModel(
       store.getState().models['Order'],

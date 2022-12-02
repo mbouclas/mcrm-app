@@ -6,6 +6,7 @@ import { AddressModel } from '~eshop/address/models/address.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
+import { UserService } from '~root/user/services/user.service';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 
 export class AddressModelDto {
@@ -46,6 +47,18 @@ export class AddressService extends BaseNeoService {
       throw new RecordStoreFailedException('Invalid type');
     }
     const r = await super.store(record, userId);
+
+    await new UserService().attachModelToAnotherModel(
+      store.getState().models['User'],
+      {
+        uuid: userId,
+      },
+      store.getState().models['Address'],
+      {
+        uuid: r.uuid,
+      },
+      'address',
+    );
 
     return r;
   }
