@@ -23,7 +23,7 @@ export class ProductController {
     return await new ProductService().findOne({ uuid }, rels);
   }
 
-  @Post('/attach')
+  @Post(':uuid/attach')
   async addToProduct(
     @Param('uuid') uuid: string,
     @Body() body: IGenericObject,
@@ -39,7 +39,7 @@ export class ProductController {
     const response = await new ProductService().attachModelToAnotherModel(
       store.getState().models['Product'],
       {
-        uuid: body.productId,
+        uuid,
       },
       store.getState().models[targetRelationship.model],
       {

@@ -16,7 +16,17 @@ export class ManufacturerModel extends BaseModel {
   public static modelConfig: INeo4jModel = {
     select: 'manufacturer:Manufacturer',
     as: 'manufacturer',
-    relationships: {},
+    relationships: {
+      product: {
+        rel: 'HAS_MANUFACTURER',
+        alias: 'manufacturerRelationship',
+        model: 'Product',
+        modelAlias: 'product',
+        type: 'inverse',
+        isCollection: true,
+        defaultProperty: 'id',
+      },
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
