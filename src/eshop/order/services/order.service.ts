@@ -5,7 +5,7 @@ import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderModel } from '~eshop/order/models/order.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
-import { SharedModule } from "~shared/shared.module";
+import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { v4 } from 'uuid';
 
@@ -20,8 +20,8 @@ export class OrderModelDto {
   notes?: string;
   status?: number;
   salesChannel?: string;
-  billingAddress?: string;
-  shippingAddress?: string;
+  billingAddressId?: string;
+  shippingAddressId?: string;
   paymentStatus?: number;
   shippingStatus?: number;
   VAT?: number;

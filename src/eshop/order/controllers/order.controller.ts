@@ -58,21 +58,44 @@ export class OrderController {
 
     const orderService = new OrderService();
 
-    let address;
-    if (!body.addressId) {
-      address = await new AddressService().store({
-        city: body.newAddress.city,
-        country: body.newAddress.country,
-        zipcode: body.newAddress.zipcode,
-        street: body.newAddress.street,
-        note: body.newAddress.note,
-        type: body.newAddress.type,
-        userId: body.newAddress.userId,
-      });
-    } else {
-      address = await new AddressService().findOne({
+    let shippingAddress;
+    let billingAddress;
+
+    if (!body.shippingAddressId) {
+      shippingAddress = await new AddressService().store({
+        city: body.newShippingAddress.city,
+        country: body.newShippingAddress.country,
+        zipcode: body.newShippingAddress.zipcode,
+        street: body.newShippingAddress.street,
+        note: body.newShippingAddress.note,
+        type: 'SHIPPING',
         userId,
       });
+    } else {
+      shippingAddress = await new AddressService().findOne({
+        uuid: body.shippingAddressId,
+        type: 'SHIPPING',
+      });
+    }
+
+    if (!body.billingAddressId) {
+      billingAddress = await new AddressService().store({
+        city: body.newBillingAddress.city,
+        country: body.newBillingAddress.country,
+        zipcode: body.newBillingAddress.zipcode,
+        street: body.newBillingAddress.street,
+        note: body.newBillingAddress.note,
+        type: 'BILLING',
+        userId,
+      });
+    } else {
+      billingAddress = await new AddressService().findOne({
+        uuid: body.billingAddressId,
+        type: 'BILLING',
+      });
+    }
+    if (!billingAddress || !shippingAddress) {
+      throw new Error('Billing and shipping address required');
     }
 
     const paymentMethod = await new PaymentMethodService().findOne({
@@ -92,8 +115,8 @@ export class OrderController {
       paymentMethod: paymentMethod.title,
       shippingMethod: shippingMethod.title,
       salesChannel: body.salesChannel,
-      billingAddress: body.billingAddress,
-      shippingAddress: body.shippingAddress,
+      billingAddressId: billingAddress.uuid,
+      shippingAddressId: shippingAddress.uuid,
       paymentStatus: 1,
       shippingStatus: 1,
       userId,
@@ -106,7 +129,19 @@ export class OrderController {
       },
       store.getState().models['Address'],
       {
-        uuid: address.uuid,
+        uuid: shippingAddress.uuid,
+      },
+      'address',
+    );
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['Address'],
+      {
+        uuid: billingAddress.uuid,
       },
       'address',
     );
