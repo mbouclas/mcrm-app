@@ -83,7 +83,7 @@ export class PaymentMethodService extends BaseNeoService {
       },
       userId,
     );
-    return r;
+    return { ...r, providerSettings: JSON.parse(providerSettings) };
   }
 
   async update(uuid: string, record: PaymentModelDto, userId?: string) {
