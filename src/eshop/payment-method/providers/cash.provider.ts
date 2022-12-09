@@ -2,12 +2,8 @@ import {
   IPaymentMethodProvider,
   IPaymentMethodProviderConfig,
 } from '~eshop/payment-method/models/providers.types';
-import { IGenericObject } from '~models/general';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
-import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
-import { OnEvent } from '@nestjs/event-emitter';
-import { store } from '~root/state';
 
 export interface ICashProviderConfig extends IPaymentMethodProviderConfig {}
 
@@ -27,7 +23,13 @@ export class CashProvider implements IPaymentMethodProvider {
     {
       varName: 'deliveryInformation',
       label: 'DeliveryInformation',
-      type: 'stirng',
+      type: 'string',
+    },
+
+    {
+      varName: 'description',
+      label: 'Description',
+      type: 'string',
     },
   ];
 
@@ -43,5 +45,6 @@ export class CashProvider implements IPaymentMethodProvider {
   }
 
   public getSettings() {}
+
   public sendTransaction() {}
 }

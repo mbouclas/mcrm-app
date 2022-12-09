@@ -5,6 +5,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { PaymentMethodModel } from '~eshop/payment-method/models/payment-method.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
+import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
+import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 export class PaymentModelDto {
   title?: string;
@@ -14,6 +16,8 @@ export class PaymentModelDto {
   surcharge?: number;
   surcharge_type?: string;
   settings?: unknown;
+  providerName?: string;
+  settingsFields?: unknown;
 }
 
 @Injectable()
@@ -42,7 +46,43 @@ export class PaymentMethodService extends BaseNeoService {
   }
 
   async store(record: PaymentModelDto, userId?: string) {
-    const r = await super.store(record, userId);
+    const { providerName, settingsFields, ...rest } = record;
+    const settingsFieldKeys = Object.keys(settingsFields);
+
+    const providerContainer = McmsDiContainer.get({
+      id: `${
+        providerName.charAt(0).toUpperCase() + providerName.slice(1)
+      }Provider`,
+    });
+
+    const provider: IPaymentMethodProvider = new providerContainer.reference();
+
+    const allowedSettingsFields = provider.getFields();
+
+    const allowedSettingsKeys = allowedSettingsFields.map(
+      (field) => field.varName,
+    );
+
+    const notAllowedFound = settingsFieldKeys.find(
+      (settingsField) => !allowedSettingsKeys.includes(settingsField),
+    );
+
+    if (notAllowedFound) {
+      throw new Error(`Unsupported key: ${notAllowedFound}`);
+    }
+
+    const providerSettings = JSON.stringify({
+      providerName,
+      settingsFields,
+    });
+
+    const r = await super.store(
+      {
+        ...rest,
+        providerSettings,
+      },
+      userId,
+    );
     return r;
   }
 
