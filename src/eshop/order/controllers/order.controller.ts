@@ -21,6 +21,8 @@ import { UserService } from '~root/user/services/user.service';
 import { store } from '~root/state';
 import { ProductModel } from '~root/catalogue/product/models/product.model';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
+import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
+import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 @Controller('api/order')
 export class OrderController {
@@ -101,6 +103,18 @@ export class OrderController {
     const paymentMethod = await new PaymentMethodService().findOne({
       uuid: body.paymentMethodId,
     });
+
+    const parsedProviderSettings = JSON.parse(paymentMethod.providerSettings);
+
+    const providerContainer = McmsDiContainer.get({
+      id: `${
+        parsedProviderSettings.providerName.charAt(0).toUpperCase() +
+        parsedProviderSettings.providerName.slice(1)
+      }Provider`,
+    });
+
+    const provider: IPaymentMethodProvider = new providerContainer.reference();
+    provider.sendTransaction();
 
     const shippingMethod = await new ShippingMethodService().findOne({
       uuid: body.shippingMethodId,

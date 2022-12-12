@@ -46,5 +46,7 @@ export class CashProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public sendTransaction() {}
+  public sendTransaction() {
+    return true;
+  }
 }
