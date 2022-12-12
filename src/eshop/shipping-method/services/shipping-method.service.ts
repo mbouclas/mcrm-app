@@ -5,6 +5,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ShippingMethodModel } from '~eshop/shipping-method/models/shipping-method.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
+import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers.types';
+import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 export class ShippingModelDto {
   title?: string;
@@ -18,6 +20,8 @@ export class ShippingModelDto {
   weightLimit?: number;
   baseCost?: number;
   settings?: string;
+  providerName?: string;
+  settingsFields?: unknown;
 }
 
 @Injectable()
@@ -46,8 +50,44 @@ export class ShippingMethodService extends BaseNeoService {
   }
 
   async store(record: ShippingModelDto, userId?: string) {
-    const r = await super.store(record, userId);
-    return r;
+    const { providerName, settingsFields, ...rest } = record;
+    const settingsFieldKeys = Object.keys(settingsFields);
+
+    const providerContainer = McmsDiContainer.get({
+      id: `${
+        providerName.charAt(0).toUpperCase() + providerName.slice(1)
+      }Provider`,
+    });
+
+    const provider: IShippingMethodProvider = new providerContainer.reference();
+
+    const allowedSettingsFields = provider.getFields();
+
+    const allowedSettingsKeys = allowedSettingsFields.map(
+      (field) => field.varName,
+    );
+
+    const notAllowedFound = settingsFieldKeys.find(
+      (settingsField) => !allowedSettingsKeys.includes(settingsField),
+    );
+
+    if (notAllowedFound) {
+      throw new Error(`Unsupported key: ${notAllowedFound}`);
+    }
+
+    const providerSettings = JSON.stringify({
+      providerName,
+      settingsFields,
+    });
+
+    const r = await super.store(
+      {
+        ...rest,
+        providerSettings,
+      },
+      userId,
+    );
+    return { ...r, providerSettings: JSON.parse(providerSettings) };
   }
 
   async update(uuid: string, record: ShippingModelDto, userId?: string) {

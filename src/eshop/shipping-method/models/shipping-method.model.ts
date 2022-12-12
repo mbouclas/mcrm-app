@@ -120,6 +120,14 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       isSortable: true,
       group: 'main',
     },
+    {
+      varName: 'providerSettings',
+      label: 'ProviderSettings',
+      placeholder: 'ProviderSettings',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [];
