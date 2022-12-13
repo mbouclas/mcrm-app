@@ -104,21 +104,37 @@ export class OrderController {
       uuid: body.paymentMethodId,
     });
 
-    const parsedProviderSettings = JSON.parse(paymentMethod.providerSettings);
+    const pamentProviderSettings = JSON.parse(paymentMethod.providerSettings);
 
-    const providerContainer = McmsDiContainer.get({
+    const paymentProviderContainer = McmsDiContainer.get({
       id: `${
-        parsedProviderSettings.providerName.charAt(0).toUpperCase() +
-        parsedProviderSettings.providerName.slice(1)
+        pamentProviderSettings.providerName.charAt(0).toUpperCase() +
+        pamentProviderSettings.providerName.slice(1)
       }Provider`,
     });
 
-    const provider: IPaymentMethodProvider = new providerContainer.reference();
-    provider.sendTransaction();
+    const paymentMethodProvider: IPaymentMethodProvider =
+      new paymentProviderContainer.reference();
+    paymentMethodProvider.sendTransaction();
 
     const shippingMethod = await new ShippingMethodService().findOne({
       uuid: body.shippingMethodId,
     });
+
+    const shippingProviderSettings = JSON.parse(
+      shippingMethod.providerSettings,
+    );
+
+    const shippingProviderContainer = McmsDiContainer.get({
+      id: `${
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+        shippingProviderSettings.providerName.slice(1)
+      }Provider`,
+    });
+
+    const shippingMethodProvider: IPaymentMethodProvider =
+      new shippingProviderContainer.reference();
+    shippingMethodProvider.sendTransaction();
 
     const products = await new ProductService().find({
       uuids: cart.items.map((item) => item.id),

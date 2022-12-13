@@ -5,18 +5,18 @@ import {
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 
-export interface ICashProviderConfig extends IShippingMethodProviderConfig {}
+export interface IPickUpProviderConfig extends IShippingMethodProviderConfig {}
 
 @McmsDi({
-  id: 'CashProvider',
+  id: 'PickUpProvider',
   type: 'class',
 })
-export class CashProvider implements IShippingMethodProvider {
-  protected config: ICashProviderConfig;
+export class PickUpProvider implements IShippingMethodProvider {
+  protected config: IPickUpProviderConfig;
   protected settingsFields: IDynamicFieldConfigBlueprint[] = [
     {
-      varName: 'displayName',
-      label: 'DisplayName',
+      varName: 'description',
+      label: 'Description',
       type: 'string',
     },
 
@@ -35,7 +35,7 @@ export class CashProvider implements IShippingMethodProvider {
 
   constructor() {}
 
-  public setConfig(config: ICashProviderConfig) {
+  public setConfig(config: IPickUpProviderConfig) {
     this.config = config;
     return this;
   }
