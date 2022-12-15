@@ -19,16 +19,14 @@ export class PickUpProvider implements IShippingMethodProvider {
       label: 'Description',
       type: 'string',
     },
-
     {
-      varName: 'deliveryInformation',
-      label: 'DeliveryInformation',
+      varName: 'deliveryTime',
+      label: 'DeliveryTime',
       type: 'string',
     },
-
     {
-      varName: 'description',
-      label: 'Description',
+      varName: 'trackingUrl',
+      label: 'TrackingUrl',
       type: 'string',
     },
   ];
