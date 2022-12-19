@@ -22,6 +22,7 @@ import { store } from '~root/state';
 import { ProductModel } from '~root/catalogue/product/models/product.model';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
+import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers.types';
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 @Controller('api/order')
@@ -115,7 +116,6 @@ export class OrderController {
 
     const paymentMethodProvider: IPaymentMethodProvider =
       new paymentProviderContainer.reference();
-    paymentMethodProvider.sendTransaction();
 
     const shippingMethod = await new ShippingMethodService().findOne({
       uuid: body.shippingMethodId,
@@ -132,7 +132,7 @@ export class OrderController {
       }Provider`,
     });
 
-    const shippingMethodProvider: IPaymentMethodProvider =
+    const shippingMethodProvider: IShippingMethodProvider =
       new shippingProviderContainer.reference();
     shippingMethodProvider.sendTransaction();
 
@@ -212,8 +212,12 @@ export class OrderController {
       'user',
     );
 
+    let fullPrice = 0;
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
+        if (productItem && productItem.price) {
+          fullPrice += productItem.price;
+        }
         await orderService.attachModelToAnotherModel(
           store.getState().models['Order'],
           {
@@ -232,9 +236,14 @@ export class OrderController {
       }),
     );
 
+    const clientSecret = await paymentMethodProvider.sendTransaction(fullPrice);
+
     await session.cart.clearWithDb();
 
-    return order;
+    return {
+      ...order,
+      clientSecret,
+    };
   }
 
   @Post(`order-simulation`)

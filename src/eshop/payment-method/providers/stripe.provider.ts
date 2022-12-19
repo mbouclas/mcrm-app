@@ -4,15 +4,17 @@ import {
 } from '~eshop/payment-method/models/providers.types';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import Stripe from 'stripe';
 
-export interface ICashProviderConfig extends IPaymentMethodProviderConfig {}
+export interface IStripeProviderConfig extends IPaymentMethodProviderConfig {}
 
 @McmsDi({
-  id: 'CashProvider',
+  id: 'StripeProvider',
   type: 'class',
 })
-export class CashProvider implements IPaymentMethodProvider {
-  protected config: ICashProviderConfig;
+export class StripeProvider implements IPaymentMethodProvider {
+  protected stripe: Stripe;
+  protected config: IStripeProviderConfig;
   protected settingsFields: IDynamicFieldConfigBlueprint[] = [
     {
       varName: 'displayName',
@@ -33,9 +35,13 @@ export class CashProvider implements IPaymentMethodProvider {
     },
   ];
 
-  constructor() {}
+  constructor() {
+    this.stripe = new Stripe(process.env.STRIPE_API_SECRET, {
+      apiVersion: '2022-11-15',
+    });
+  }
 
-  public setConfig(config: ICashProviderConfig) {
+  public setConfig(config: IStripeProviderConfig) {
     this.config = config;
     return this;
   }
@@ -46,8 +52,13 @@ export class CashProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public sendTransaction(amount) {
-    console.log('CASH PAY OF ', amount);
-    return true;
+  public async sendTransaction(amount) {
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount: amount || 50,
+      currency: 'eur',
+      setup_future_usage: 'off_session',
+    });
+
+    return paymentIntent.client_secret;
   }
 }
