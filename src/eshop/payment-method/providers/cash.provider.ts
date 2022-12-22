@@ -46,7 +46,7 @@ export class CashProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public sendTransaction(amount) {
+  public sendTransaction(email, amount) {
     console.log('CASH PAY OF ', amount);
     return true;
   }

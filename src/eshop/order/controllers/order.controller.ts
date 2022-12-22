@@ -236,7 +236,10 @@ export class OrderController {
       }),
     );
 
-    const clientSecret = await paymentMethodProvider.sendTransaction(fullPrice);
+    const clientSecret = await paymentMethodProvider.sendTransaction(
+      session.user.user.email,
+      fullPrice,
+    );
 
     await session.cart.clearWithDb();
 

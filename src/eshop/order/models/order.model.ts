@@ -173,6 +173,20 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'text',
       group: 'main',
     },
+    {
+      varName: 'paymentInfo',
+      label: 'PaymentInfo',
+      placeholder: 'PaymentInfo',
+      type: 'text',
+      group: 'main',
+    },
+    {
+      varName: 'shippingInfo',
+      label: 'ShippingInfo',
+      placeholder: 'ShippingInfo',
+      type: 'text',
+      group: 'main',
+    },
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
