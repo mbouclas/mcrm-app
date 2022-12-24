@@ -52,27 +52,32 @@ export class StripeProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public async sendTransaction(email, amount) {
+  public async sendTransaction(email, price) {
     try {
-      //const customers = await this.stripe.customers.search({
-      //  query: `email:'${address}'`,
-      //});
-
-      //console.log(customers);
-
-      const customer = await this.stripe.customers.create({
-        email,
+      const customers = await this.stripe.customers.search({
+        query: `email:'${email}'`,
       });
 
-      console.log(customer);
+      const existsCustomer = !!customers?.data?.length;
+
+      const customer = existsCustomer
+        ? customers.data[0]
+        : await this.stripe.customers.create({
+            email,
+          });
+
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: amount || 50,
+        amount: price * 100 || 50,
         currency: 'eur',
         setup_future_usage: 'off_session',
         customer: customer.id,
       });
 
-      return paymentIntent.client_secret;
+      return JSON.stringify({
+        client_secret: paymentIntent.client_secret,
+        customer_id: customer.id,
+        price,
+      });
     } catch (err) {
       console.log(err);
     }

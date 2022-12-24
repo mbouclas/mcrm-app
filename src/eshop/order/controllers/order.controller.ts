@@ -140,6 +140,17 @@ export class OrderController {
       uuids: cart.items.map((item) => item.id),
     });
 
+    let fullPrice = products.data.reduce(
+      (accumulator, productItem: ProductModel) =>
+        productItem.price ? accumulator + productItem.price : accumulator,
+      0,
+    );
+
+    const paymentInfo = await paymentMethodProvider.sendTransaction(
+      session.user.user.email,
+      fullPrice,
+    );
+
     const order = await orderService.store({
       status: 1,
       paymentMethod: paymentMethod.title,
@@ -149,6 +160,7 @@ export class OrderController {
       shippingAddressId: shippingAddress.uuid,
       paymentStatus: 1,
       shippingStatus: 1,
+      paymentInfo,
       userId,
     });
 
@@ -212,12 +224,8 @@ export class OrderController {
       'user',
     );
 
-    let fullPrice = 0;
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
-        if (productItem && productItem.price) {
-          fullPrice += productItem.price;
-        }
         await orderService.attachModelToAnotherModel(
           store.getState().models['Order'],
           {
@@ -236,16 +244,11 @@ export class OrderController {
       }),
     );
 
-    const clientSecret = await paymentMethodProvider.sendTransaction(
-      session.user.user.email,
-      fullPrice,
-    );
-
     await session.cart.clearWithDb();
 
     return {
       ...order,
-      clientSecret,
+      paymentInfo: JSON.parse(order.paymentInfo),
     };
   }
 
