@@ -82,9 +82,9 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
   constructor(private eventEmitter: EventEmitter2) {}
 
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes({ path: 'api*', method: RequestMethod.ALL });
+    //consumer
+    //  .apply(AuthMiddleware)
+    //  .forRoutes({ path: 'api*', method: RequestMethod.ALL });
 
     consumer
       .apply(CartMiddleware)

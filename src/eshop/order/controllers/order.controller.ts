@@ -49,6 +49,15 @@ export class OrderController {
     return await new OrderService().update(uuid, body);
   }
 
+  @Post('/webhooks')
+  async webhook(@Body() body: IGenericObject) {
+    if (body.type === 'payment_intent.succeeded') {
+      console.log('DATA :', body.data);
+    }
+
+    return true;
+  }
+
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const cart = session.cart.toObject();
