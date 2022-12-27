@@ -134,7 +134,8 @@ export class OrderController {
 
     const shippingMethodProvider: IShippingMethodProvider =
       new shippingProviderContainer.reference();
-    shippingMethodProvider.sendTransaction();
+
+    const shippingInfo = await shippingMethodProvider.sendTransaction();
 
     const products = await new ProductService().find({
       uuids: cart.items.map((item) => item.id),
@@ -161,6 +162,7 @@ export class OrderController {
       paymentStatus: 1,
       shippingStatus: 1,
       paymentInfo,
+      shippingInfo,
       userId,
     });
 
@@ -249,6 +251,7 @@ export class OrderController {
     return {
       ...order,
       paymentInfo: JSON.parse(order.paymentInfo),
+      shippingInfo: JSON.parse(order.shippingInfo),
     };
   }
 

@@ -4,5 +4,5 @@ export interface IShippingMethodProvider {
   setConfig: (config: IShippingMethodProviderConfig) => any;
   getFields: () => any;
   getSettings: () => any;
-  sendTransaction: () => any;
+  sendTransaction: () => Promise<string>;
 }

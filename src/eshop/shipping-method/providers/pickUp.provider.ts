@@ -44,7 +44,9 @@ export class PickUpProvider implements IShippingMethodProvider {
 
   public getSettings() {}
 
-  public sendTransaction() {
-    return true;
+  public async sendTransaction() {
+    return JSON.stringify({
+      success: 'SUCCESS',
+    });
   }
 }

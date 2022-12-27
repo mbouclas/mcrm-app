@@ -25,6 +25,7 @@ export class OrderModelDto {
   paymentStatus?: number;
   shippingStatus?: number;
   paymentInfo?: string;
+  shippingInfo?: string;
   VAT?: number;
 }
 
