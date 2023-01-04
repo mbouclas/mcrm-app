@@ -20,6 +20,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public static defaultAggregationSize = 30;
   public orderId: string;
   public userId: string;
+  public uuid: string;
+  public paymentInfo: string;
 
   async onModuleInit() {}
 
