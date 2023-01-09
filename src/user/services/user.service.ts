@@ -1,21 +1,24 @@
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { Injectable } from "@nestjs/common";
-import { IGenericObject, IPagination } from "~models/general";
-import { store } from "~root/state";
-import { UserModel } from "~user/models/user.model";
-import { BaseNeoService } from "~shared/services/base-neo.service";
-import { extractFiltersFromObject } from "~helpers/extractFiltersFromObject";
-import { extractQueryParamsFilters, setupRelationShipsQuery } from "~helpers/extractQueryParamsFilters";
-import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
-import { RecordDeleteFailedException } from "~shared/exceptions/record-delete-failed.exception";
-import { OnEvent } from "@nestjs/event-emitter";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { Injectable } from '@nestjs/common';
+import { IGenericObject, IPagination } from '~models/general';
+import { store } from '~root/state';
+import { UserModel } from '~user/models/user.model';
+import { BaseNeoService } from '~shared/services/base-neo.service';
+import { extractFiltersFromObject } from '~helpers/extractFiltersFromObject';
+import {
+  extractQueryParamsFilters,
+  setupRelationShipsQuery,
+} from '~helpers/extractQueryParamsFilters';
+import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
+import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-failed.exception';
+import { OnEvent } from '@nestjs/event-emitter';
 import { v4 } from 'uuid';
-import { RecordStoreFailedException } from "~shared/exceptions/record-store-failed.exception";
-import { IsEmail, IsNotEmpty } from "class-validator";
-import { postedDataToUpdatesQuery } from "~helpers/postedDataToUpdatesQuery";
-import { ChangeLogService } from "~change-log/change-log.service";
-import { AuthService } from "~root/auth/auth.service";
-import { GateService } from "~root/auth/gate.service";
+import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
+import { IsEmail, IsNotEmpty } from 'class-validator';
+import { postedDataToUpdatesQuery } from '~helpers/postedDataToUpdatesQuery';
+import { ChangeLogService } from '~change-log/change-log.service';
+import { AuthService } from '~root/auth/auth.service';
+import { GateService } from '~root/auth/gate.service';
 
 export class UserModelDto {
   tempUuid?: string;
@@ -31,11 +34,13 @@ export class UserModelDto {
   @IsNotEmpty()
   @IsEmail()
   email?: string;
+
+  active?: boolean;
 }
 
 @McmsDi({
   id: 'UserService',
-  type: 'service'
+  type: 'service',
 })
 @Injectable()
 export class UserService extends BaseNeoService {
@@ -66,26 +71,25 @@ export class UserService extends BaseNeoService {
 
   @OnEvent(UserService.createdEventName)
   async onStore(payload: UserModel) {
-    console.log(`in ${UserService.createdEventName} event`,payload)
+    console.log(`in ${UserService.createdEventName} event`, payload);
   }
 
   @OnEvent(UserService.updatedEventName)
-  async onUpdate(payload: UserModel) {
-
-  }
+  async onUpdate(payload: UserModel) {}
 
   @OnEvent(UserService.deletedEventName)
-  async onDelete(payload: UserModel) {
+  async onDelete(payload: UserModel) {}
 
-  }
-
-  async findOne(filter: IGenericObject, rels: string[] = [], extras: string[] = []): Promise<UserModel> {
+  async findOne(
+    filter: IGenericObject,
+    rels: string[] = [],
+    extras: string[] = [],
+  ): Promise<UserModel> {
     const r = await super.findOne(filter, rels);
 
     if (extras.indexOf('gates') !== -1) {
-      r['gates'] = await (new GateService()).all(true, {uuid: r['uuid']});
+      r['gates'] = await new GateService().all(true, { uuid: r['uuid'] });
     }
-
 
     return r;
   }
@@ -99,47 +103,67 @@ export class UserService extends BaseNeoService {
   async store(record: UserModelDto, userId?: string) {
     const r = await super.store(record, userId);
 
+    this.eventEmitter.emit('user.created', r);
+
     return r;
   }
 
   async update(uuid: string, record: UserModelDto, userId?: string) {
-    const previousState = await this.getCurrentState({uuid}, this.model.modelConfig.relationships, this.findOne.bind(this));
+    const previousState = await this.getCurrentState(
+      { uuid },
+      this.model.modelConfig.relationships,
+      this.findOne.bind(this),
+    );
     const r = await super.update(uuid, record, userId);
 
     // Extra updates take place here
     //  await locationService.linkModelToAllLocationTypes(business, this.modelName);
 
-/*
-    if (business.extraFields) {
-      await this.updateModelExtraFields(uuid, business.extraFields as IExtraFieldResponse, IBusinessModel.modelConfig);
-    }
-
-    if (business.tags) {
-      await this.updateModelTags(uuid, business.tags as ITag[], IBusinessModel.modelConfig);
-    }
-
-    if (business.mainImage) {
-      await updateModelMainImage(uuid, business.mainImage, this.modelName);
-    }
-*/
+    /*
+        if (business.extraFields) {
+          await this.updateModelExtraFields(uuid, business.extraFields as IExtraFieldResponse, IBusinessModel.modelConfig);
+        }
+    
+        if (business.tags) {
+          await this.updateModelTags(uuid, business.tags as ITag[], IBusinessModel.modelConfig);
+        }
+    
+        if (business.mainImage) {
+          await updateModelMainImage(uuid, business.mainImage, this.modelName);
+        }
+    */
 
     if (!record.tempUuid) {
-      const currentState = await this.getCurrentState({uuid}, this.model.modelConfig.relationships, this.findOne.bind(this));
-      await this.changeLog.add(this.model.modelName, uuid, 'updated', {currentState, previousState}, userId);
+      const currentState = await this.getCurrentState(
+        { uuid },
+        this.model.modelConfig.relationships,
+        this.findOne.bind(this),
+      );
+      await this.changeLog.add(
+        this.model.modelName,
+        uuid,
+        'updated',
+        { currentState, previousState },
+        userId,
+      );
     }
-
 
     return r;
   }
 
   async delete(uuid: string, userId?: string) {
     const r = await super.delete(uuid, userId);
-    await this.changeLog.add(this.model.modelName, uuid, 'deleted',null, userId);
+    await this.changeLog.add(
+      this.model.modelName,
+      uuid,
+      'deleted',
+      null,
+      userId,
+    );
     return r;
   }
 
   async generatePasswordHash(password: string) {
     return await this.auth.hasher.hashPassword(password);
   }
-
 }
