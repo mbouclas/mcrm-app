@@ -15,6 +15,7 @@ import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
+const crypto = require('crypto');
 
 @Controller('oauth')
 export class Oauth2Controller {
@@ -62,10 +63,15 @@ export class Oauth2Controller {
 
     const hashedPassword = await authService.hasher.hashPassword(body.password);
 
+    const confirmToken = crypto
+      .createHash('sha256')
+      .update(body.email)
+      .digest('hex');
+
     const user = await new UserService().store({
       ...body,
       password: hashedPassword,
-      confirmToken: 'mysecrettoken',
+      confirmToken,
       active: false,
     });
 
@@ -74,23 +80,25 @@ export class Oauth2Controller {
 
   @Post('/confirm-email')
   async confirmEmail(@Body() body: IGenericObject) {
-    const [error, userExists] = await handleAsync(
-      new UserService().findOne({
-        confirmToken: body.confirmToken,
-      }),
-    );
+    try {
+      const [error, userExists] = await handleAsync(
+        new UserService().findOne({
+          confirmToken: body.confirmToken,
+        }),
+      );
 
-    if (error) {
-      throw new Error('Incorrect user token');
+      if (error) {
+        throw new Error('Incorrect user token');
+      }
+
+      await new UserService().update(userExists.uuid, {
+        active: true,
+        confirmToken: null,
+      });
+
+      return { success: true };
+    } catch (e) {
+      return { success: false };
     }
-
-    console.log(userExists);
-
-    await new UserService().update(userExists.uuid, {
-      active: true,
-      confirmToken: null,
-    });
-
-    return { success: true };
   }
 }
