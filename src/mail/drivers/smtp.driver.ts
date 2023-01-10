@@ -1,4 +1,7 @@
-import { IBaseMailMessage, IBaseMailServiceDriver } from '../Mail.service';
+import {
+  IBaseMailMessage,
+  IBaseMailServiceDriver,
+} from '../services/mail.service';
 const nodemailer = require('nodemailer');
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
@@ -21,10 +24,14 @@ export class SmtpDriver implements IBaseMailServiceDriver {
       maxMessages: 5,
     };
 
+    console.log(process.env.SMTP_USERNAME, process.env.SMTP_PASSWORD);
     const smtpOptions = {
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT as string),
       secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: process.env.SMTP_USERNAME,
         pass: process.env.SMTP_PASSWORD,

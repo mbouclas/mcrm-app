@@ -2,7 +2,10 @@ import { SendEmailFailedException } from '../exceptions/SendEmailFailed.exceptio
 
 const mailgun = require('mailgun-js');
 import { Mailgun } from 'mailgun-js';
-import { IBaseMailMessage, IBaseMailServiceDriver } from '../Mail.service';
+import {
+  IBaseMailMessage,
+  IBaseMailServiceDriver,
+} from '../services/mail.service';
 
 export class MailGunMail implements IBaseMailMessage {
   from: string;

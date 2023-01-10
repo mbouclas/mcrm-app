@@ -14,6 +14,7 @@ import { Body } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
+import { AuthService, hashPassword } from '~root/auth/auth.service';
 
 @Controller('oauth')
 export class Oauth2Controller {
@@ -57,9 +58,37 @@ export class Oauth2Controller {
       throw new Error('User exists');
     }
 
+    const authService = new AuthService();
+
+    const hashedPassword = await authService.hasher.hashPassword(body.password);
+
     const user = await new UserService().store({
       ...body,
+      password: hashedPassword,
+      confirmToken: 'mysecrettoken',
       active: false,
+    });
+
+    return { success: true };
+  }
+
+  @Post('/confirm-email')
+  async confirmEmail(@Body() body: IGenericObject) {
+    const [error, userExists] = await handleAsync(
+      new UserService().findOne({
+        confirmToken: body.confirmToken,
+      }),
+    );
+
+    if (error) {
+      throw new Error('Incorrect user token');
+    }
+
+    console.log(userExists);
+
+    await new UserService().update(userExists.uuid, {
+      active: true,
+      confirmToken: null,
     });
 
     return { success: true };

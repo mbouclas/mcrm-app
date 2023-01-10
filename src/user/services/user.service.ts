@@ -18,6 +18,7 @@ import { IsEmail, IsNotEmpty } from 'class-validator';
 import { postedDataToUpdatesQuery } from '~helpers/postedDataToUpdatesQuery';
 import { ChangeLogService } from '~change-log/change-log.service';
 import { AuthService } from '~root/auth/auth.service';
+import { MailService } from '~root/mail/services/mail.service';
 import { GateService } from '~root/auth/gate.service';
 
 export class UserModelDto {
@@ -36,6 +37,7 @@ export class UserModelDto {
   email?: string;
 
   active?: boolean;
+  confirmToken?: string;
 }
 
 @McmsDi({
@@ -48,6 +50,7 @@ export class UserService extends BaseNeoService {
   protected model: typeof UserModel;
   protected changeLog: ChangeLogService;
   protected auth: AuthService;
+  protected mail: MailService;
   static updatedEventName = 'user.model.updated';
   static createdEventName = 'user.model.created';
   static deletedEventName = 'user.model.deleted';
@@ -57,6 +60,7 @@ export class UserService extends BaseNeoService {
     this.model = store.getState().models.User;
     this.changeLog = new ChangeLogService();
     this.auth = new AuthService();
+    this.mail = new MailService();
   }
 
   @OnEvent('app.loaded')
@@ -72,6 +76,16 @@ export class UserService extends BaseNeoService {
   @OnEvent(UserService.createdEventName)
   async onStore(payload: UserModel) {
     console.log(`in ${UserService.createdEventName} event`, payload);
+  }
+
+  @OnEvent('user.created')
+  async confirmEmail(payload: UserModel) {
+    await this.mail.send({
+      from: '0xdjole@gmail.com',
+      to: payload.email,
+      subject: 'Confirm email',
+      text: `Use me ${payload.confirmToken}`,
+    });
   }
 
   @OnEvent(UserService.updatedEventName)

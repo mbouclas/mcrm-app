@@ -1,6 +1,7 @@
-import { MailgunDriver } from './drivers/mailgun.driver';
-import { SendEmailFailedException } from './exceptions/SendEmailFailed.exception';
-import { SmtpDriver } from './drivers/smtp.driver';
+import { MailgunDriver } from '../drivers/mailgun.driver';
+import { SendEmailFailedException } from '../exceptions/SendEmailFailed.exception';
+import { SmtpDriver } from '../drivers/smtp.driver';
+
 export interface IBaseMailMessage {
   from: string;
   to: string;
