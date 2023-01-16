@@ -115,7 +115,9 @@ export class Oauth2Controller {
       throw new Error('User does not exist');
     }
 
-    const confirmToken = jwt.sign({}, 'secret', { expiresIn: '1h' });
+    const confirmToken = jwt.sign({}, process.env.JWT_SECRET_KEY, {
+      expiresIn: '1h',
+    });
 
     await new UserService().update(userExists.uuid, {
       forgotPasswordToken: confirmToken,
@@ -128,7 +130,7 @@ export class Oauth2Controller {
   async forgotPasswordConfirm(@Body() body: IGenericObject) {
     try {
       try {
-        jwt.verify(body.token, 'secret');
+        jwt.verify(body.token, process.env.JWT_SECRET_KEY);
       } catch (err) {
         if (err.name === 'TokenExpiredError') {
           throw new Error('Token expired');
