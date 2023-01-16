@@ -38,6 +38,7 @@ export class UserModelDto {
 
   active?: boolean;
   confirmToken?: string;
+  forgotPasswordToken?: string;
 }
 
 @McmsDi({

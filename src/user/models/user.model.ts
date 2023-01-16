@@ -114,6 +114,14 @@ export class UserModel extends BaseModel {
       type: 'text',
       group: 'main',
     },
+    {
+      varName: 'resetPasswordToken',
+      label: 'ResetPasswordToken',
+      placeholder: 'ResetPasswordToken',
+      required: false,
+      type: 'text',
+      group: 'main',
+    },
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [

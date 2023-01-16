@@ -64,6 +64,7 @@
     "human-object-diff": "^2.0.2",
     "inquirer": "^8.2.0",
     "json2csv": "^5.0.6",
+    "jsonwebtoken": "^9.0.0",
     "liquidjs": "^9.28.6",
     "locutus": "^2.0.15",
     "lodash": "^4.17.21",
