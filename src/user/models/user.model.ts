@@ -115,9 +115,9 @@ export class UserModel extends BaseModel {
       group: 'main',
     },
     {
-      varName: 'resetPasswordToken',
-      label: 'ResetPasswordToken',
-      placeholder: 'ResetPasswordToken',
+      varName: 'forgotPasswordToken',
+      label: 'ForgotPasswordToken',
+      placeholder: 'ForgotPasswordToken',
       required: false,
       type: 'text',
       group: 'main',

@@ -15,7 +15,7 @@ import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
 const crypto = require('crypto');
 
@@ -115,10 +115,7 @@ export class Oauth2Controller {
       throw new Error('User does not exist');
     }
 
-    const confirmToken: string = crypto
-      .createHash('sha256')
-      .update(body.email)
-      .digest('hex');
+    const confirmToken = jwt.sign({}, 'secret', { expiresIn: '1h' });
 
     await new UserService().update(userExists.uuid, {
       forgotPasswordToken: confirmToken,
@@ -130,9 +127,19 @@ export class Oauth2Controller {
   @Post('/forgot-password-confirm')
   async forgotPasswordConfirm(@Body() body: IGenericObject) {
     try {
+      try {
+        jwt.verify(body.token, 'secret');
+      } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+          throw new Error('Token expired');
+        } else {
+          throw new Error('Invalid token');
+        }
+      }
+
       const [error, userExists] = await handleAsync(
         new UserService().findOne({
-          resetPasswordToken: body.resetPasswordToken,
+          forgotPasswordToken: body.token,
         }),
       );
 
