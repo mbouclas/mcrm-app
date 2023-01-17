@@ -89,6 +89,16 @@ export class UserService extends BaseNeoService {
     });
   }
 
+  @OnEvent('user.forgotPassword')
+  async forgotPasswordEmail(payload: UserModel) {
+    await this.mail.send({
+      from: '0xdjole@gmail.com',
+      to: payload.email,
+      subject: 'Forgot password email',
+      text: `Use me ${payload.forgotPasswordToken}`,
+    });
+  }
+
   @OnEvent(UserService.updatedEventName)
   async onUpdate(payload: UserModel) {}
 
@@ -164,6 +174,14 @@ export class UserService extends BaseNeoService {
     }
 
     return r;
+  }
+
+  async forgotPassword(uuid: string, record: UserModelDto, userId?: string) {
+    const update = await this.update(uuid, record, userId);
+
+    this.eventEmitter.emit('user.forgotPassword', update[0]);
+
+    return update;
   }
 
   async delete(uuid: string, userId?: string) {

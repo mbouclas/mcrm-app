@@ -23,6 +23,7 @@ export class UserModel extends BaseModel {
   public preferences?: string;
   public password?: string;
   public confirmToken?: string;
+  public forgotPasswordToken?: string;
   public tempPassword?: string;
   public uuid?: string;
   public static modelConfig: INeo4jModel = {

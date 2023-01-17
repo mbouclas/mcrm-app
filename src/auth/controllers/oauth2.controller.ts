@@ -15,8 +15,8 @@ import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
-const jwt = require('jsonwebtoken');
 
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 @Controller('oauth')
@@ -119,7 +119,7 @@ export class Oauth2Controller {
       expiresIn: '1h',
     });
 
-    await new UserService().update(userExists.uuid, {
+    await new UserService().forgotPassword(userExists.uuid, {
       forgotPasswordToken: confirmToken,
     });
 
