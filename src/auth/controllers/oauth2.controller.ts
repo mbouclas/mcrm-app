@@ -15,6 +15,7 @@ import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
+import { SessionData } from 'express-session';
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -163,5 +164,27 @@ export class Oauth2Controller {
     } catch (e) {
       return { success: false };
     }
+  }
+
+  @Post('/update-user')
+  async updateUser(
+    @Session() session: SessionData,
+    @Body() body: IGenericObject,
+  ) {
+    const userId = session.user && session.user.user['uuid'];
+
+    const [error, userExists] = await handleAsync(
+      new UserService().update(userId, {
+        firstName: body.firstName,
+        lastName: body.lastName,
+      }),
+    );
+    console.log(error, userExists);
+
+    if (!userExists) {
+      throw new Error('User does not exist');
+    }
+
+    return { success: true };
   }
 }
