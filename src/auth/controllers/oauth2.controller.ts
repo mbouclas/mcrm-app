@@ -173,16 +173,15 @@ export class Oauth2Controller {
   ) {
     const userId = session.user && session.user.user['uuid'];
 
-    const [error, userExists] = await handleAsync(
+    const [, userExists] = await handleAsync(
       new UserService().update(userId, {
         firstName: body.firstName,
         lastName: body.lastName,
       }),
     );
-    console.log(error, userExists);
 
-    if (!userExists) {
-      throw new Error('User does not exist');
+    if (!userExists || !userExists.length) {
+      throw new Error('User not updated');
     }
 
     return { success: true };
