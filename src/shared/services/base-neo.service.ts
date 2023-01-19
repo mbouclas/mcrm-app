@@ -27,6 +27,36 @@ import { RecordUpdateFailedException } from '~shared/exceptions/record-update-fa
 import { store } from '~root/state';
 const debug = require('debug')('mcms:neo:query');
 
+const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const flattenObj = (ob) => {
+  // The object which contains the
+  // final result
+  let result = {};
+
+  // loop through the object "ob"
+  for (const i in ob) {
+    // We check the type of the i using
+    // typeof() function and recursively
+    // call the function again
+    if (typeof ob[i] === 'object' && !Array.isArray(ob[i])) {
+      const temp = flattenObj(ob[i]);
+      for (const j in temp) {
+        // Store temp in result
+        result[i + capitalizeFirstLetter(j)] = temp[j];
+      }
+    }
+
+    // Else store ob[i] in result directly
+    else {
+      result[i] = ob[i];
+    }
+  }
+  return result;
+};
+
 @McmsDi({
   id: 'BaseNeoService',
   type: 'service',
@@ -349,7 +379,7 @@ export class BaseNeoService {
         `;
 
     const res = await this.neo.writeWithCleanUp(query, {
-      ...record,
+      ...flattenObj(record),
       ...{ uuid },
     });
 

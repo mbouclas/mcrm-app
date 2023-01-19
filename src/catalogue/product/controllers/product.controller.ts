@@ -23,6 +23,13 @@ export class ProductController {
     return await new ProductService().findOne({ uuid }, rels);
   }
 
+  @Post('')
+  async create(@Body() body: IGenericObject) {
+    const product = await new ProductService().store(body);
+
+    return { success: true };
+  }
+
   @Post(':uuid/attach')
   async addToProduct(
     @Param('uuid') uuid: string,

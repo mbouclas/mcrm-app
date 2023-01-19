@@ -310,6 +310,32 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       group: 'hidden',
       default: false,
     },
+    {
+      varName: 'deliverability',
+      label: 'Deliverability',
+      placeholder: 'Deliverability',
+      type: 'nested',
+      group: 'hidden',
+      default: false,
+      fields: [
+        {
+          varName: 'stock',
+          label: 'Stock',
+          placeholder: 'Stock',
+          type: 'number',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'clearanceSale',
+          label: 'ClearanceSale',
+          placeholder: 'ClearanceSale',
+          type: 'boolean',
+          group: 'hidden',
+          default: false,
+        },
+      ],
+    },
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
