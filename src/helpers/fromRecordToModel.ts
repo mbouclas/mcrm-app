@@ -22,15 +22,20 @@ export const fromRecordToModel = (
           nestedFieldName,
         )}`;
 
-        newResItem[modelFieldName][nestedFieldName] = resItem[resNestedKeyName];
+        if (resItem[resNestedKeyName]) {
+          newResItem[modelFieldName][nestedFieldName] =
+            resItem[resNestedKeyName];
+        }
+      }
+
+      if (!Object.keys(newResItem[modelFieldName]).length) {
+        delete newResItem[modelFieldName];
       }
     }
 
     if (!isFieldNested) {
       newResItem[modelFieldName] = resItem[modelFieldName];
     }
-
-    resItem[modelFieldName];
   }
 
   return newResItem;
