@@ -25,11 +25,10 @@ import { postedDataToUpdatesQuery } from '~helpers/postedDataToUpdatesQuery';
 import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-failed.exception';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { store } from '~root/state';
-const debug = require('debug')('mcms:neo:query');
+import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
+import { fromRecordToModel } from '~helpers/fromRecordToModel';
 
-const capitalizeFirstLetter = (string) => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};
+const debug = require('debug')('mcms:neo:query');
 
 const flattenObj = (ob) => {
   // The object which contains the
@@ -175,7 +174,8 @@ export class BaseNeoService {
     let record = Array.isArray(result) ? result[0] : result;
     record = modelPostProcessing(record, this.model);
 
-    return record;
+    const model = this.model;
+    return fromRecordToModel(record, model);
   }
 
   async find(
@@ -218,39 +218,9 @@ export class BaseNeoService {
     // console.log('----------------\n',query,'\n----------');
     this.logger(query);
 
-    const res = await this.neo.readWithCleanUp(query, {});
+    const records = await this.neo.readWithCleanUp(query, {});
 
-    const newRes = res.map((resItem) => {
-      const newResItem = {};
-      for (const modelFieldKey in model.fields) {
-        const modelField = model.fields[modelFieldKey];
-
-        const isFieldNested = modelField.type === 'nested';
-        const modelFieldName = modelField.varName;
-
-        if (isFieldNested) {
-          newResItem[modelFieldName] = {};
-
-          for (const nestedFieldKey in modelField.fields) {
-            const nestedFieldName = modelField.fields[nestedFieldKey].varName;
-            const resNestedKeyName = `${modelFieldName}${capitalizeFirstLetter(
-              nestedFieldName,
-            )}`;
-
-            newResItem[modelFieldName][nestedFieldName] =
-              resItem[resNestedKeyName];
-          }
-        }
-
-        if (!isFieldNested) {
-          newResItem[modelFieldName] = resItem[modelFieldName];
-        }
-
-        resItem[modelFieldName];
-      }
-
-      return newResItem;
-    });
+    const res = records.map((record) => fromRecordToModel(record, model));
 
     /*    const data = res.records.map(item => {
           const record = item.get(modelAlias).properties;
