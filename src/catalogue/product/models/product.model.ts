@@ -369,7 +369,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           default: false,
         },
         {
-          varName: 'og:title',
+          varName: 'og_title',
           label: 'Og:Title',
           placeholder: 'Oh:Title',
           type: 'string',
@@ -377,7 +377,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           default: false,
         },
         {
-          varName: 'og:image',
+          varName: 'og_image',
           label: 'Og:Image',
           placeholder: 'Og:Image',
           type: 'string',
@@ -385,7 +385,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           default: false,
         },
         {
-          varName: 'og:description',
+          varName: 'og_description',
           label: 'Og:Description',
           placeholder: 'Og:Description',
           type: 'string',

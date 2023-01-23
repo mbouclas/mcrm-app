@@ -44,9 +44,9 @@ export class ProductModelDto {
     title?: string;
     descrtiption?: string;
     keywords?: string;
-    ['og:title']: string;
-    ['og:image']: string;
-    ['og:description']: string;
+    og_title?: string;
+    og_image?: string;
+    og_description?: string;
   };
 }
 
