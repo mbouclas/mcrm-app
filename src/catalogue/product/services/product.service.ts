@@ -39,6 +39,15 @@ export class ProductModelDto {
     stock?: number;
     clearanceSale?: boolean;
   };
+
+  seo?: {
+    title?: string;
+    descrtiption?: string;
+    keywords?: string;
+    ['og:title']: string;
+    ['og:image']: string;
+    ['og:description']: string;
+  };
 }
 
 @Injectable()
