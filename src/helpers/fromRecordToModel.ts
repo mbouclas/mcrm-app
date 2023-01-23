@@ -6,7 +6,9 @@ export const fromRecordToModel = (
   resItem: IGenericObject,
   model: typeof BaseModel,
 ): any => {
-  const newResItem = {};
+  console.log(resItem);
+  const newResItem = resItem;
+
   for (const modelFieldKey in model.fields) {
     const modelField = model.fields[modelFieldKey];
 
@@ -25,6 +27,8 @@ export const fromRecordToModel = (
         if (resItem[resNestedKeyName]) {
           newResItem[modelFieldName][nestedFieldName] =
             resItem[resNestedKeyName];
+
+          delete resItem[resNestedKeyName];
         }
       }
 
@@ -38,5 +42,6 @@ export const fromRecordToModel = (
     }
   }
 
+  console.log('dead here', newResItem);
   return newResItem;
 };
