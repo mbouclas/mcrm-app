@@ -48,6 +48,16 @@ export class ProductModelDto {
     og_image?: string;
     og_description?: string;
   };
+  measuresAndPackaging?: {
+    width?: string;
+    height?: string;
+    length?: string;
+    weight?: string;
+    sellingUnit?: string;
+    scaleUnit?: string;
+    packagingUnit?: string;
+    basicUnit?: string;
+  };
 }
 
 @Injectable()
