@@ -7,6 +7,7 @@ import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
+import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { v4 } from 'uuid';
 
 export class OrderModelDto {
@@ -118,6 +119,21 @@ export class OrderService extends BaseNeoService {
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;
     return item;
+  }
+
+  async findByRegex(key: string, value: string): Promise<OrderModel> {
+    const query = `MATCH (n:Order)
+    WHERE n.${key}  =~ '(?i).*${value}.*'
+    RETURN n;
+    `;
+
+    const res = await this.neo.readWithCleanUp(query);
+
+    if (!res || !res.length) {
+      throw new RecordNotFoundException('Order with client secret not found');
+    }
+
+    return res[0];
   }
 
   async store(record: OrderModelDto, userId?: string) {

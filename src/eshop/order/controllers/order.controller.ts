@@ -49,6 +49,35 @@ export class OrderController {
     return await new OrderService().update(uuid, body);
   }
 
+  @Post('/webhooks')
+  async webhook(@Body() body: IGenericObject) {
+    if (body.type === 'payment_intent.succeeded') {
+      let clientSecret = body.data.client_secret;
+
+      // clientSecret = 'pi_3MMaBpFVnCuD42ua2CDyjXPL_secret_BwHVPZzQYElqvG9LZgwjdHSCj';
+
+      const order = await new OrderService().findByRegex(
+        'paymentInfo',
+        clientSecret,
+      );
+
+      if (order) {
+        const paymentInfo = JSON.parse(order.paymentInfo);
+
+        const withSuccessStatus = JSON.stringify({
+          ...paymentInfo,
+          status: 'SUCCESS',
+        });
+
+        await new OrderService().update(order.uuid, {
+          paymentInfo: withSuccessStatus,
+        });
+      }
+    }
+
+    return true;
+  }
+
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const cart = session.cart.toObject();

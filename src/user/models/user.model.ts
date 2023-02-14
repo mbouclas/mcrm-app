@@ -22,7 +22,10 @@ export class UserModel extends BaseModel {
   public email?: string;
   public preferences?: string;
   public password?: string;
+  public confirmToken?: string;
+  public forgotPasswordToken?: string;
   public tempPassword?: string;
+  public uuid?: string;
   public static modelConfig: INeo4jModel = {
     select: 'user:User',
     as: 'user',
@@ -103,6 +106,22 @@ export class UserModel extends BaseModel {
       placeholder: 'Verified At',
       type: 'date',
       group: 'hidden',
+    },
+    {
+      varName: 'confirmToken',
+      label: 'ConfirmToken',
+      placeholder: 'ConfirmToken',
+      required: false,
+      type: 'text',
+      group: 'main',
+    },
+    {
+      varName: 'forgotPasswordToken',
+      label: 'ForgotPasswordToken',
+      placeholder: 'ForgotPasswordToken',
+      required: false,
+      type: 'text',
+      group: 'main',
     },
   ];
 

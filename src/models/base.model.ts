@@ -1,10 +1,10 @@
-import { IDynamicFieldConfigBlueprint } from "../admin/models/dynamicFields";
-import { IGenericObject, IPagination } from "./general";
-import { IQueryBuilderFieldBlueprint } from "../shared/models/queryBuilder";
-import { IRelationshipToInject } from "../admin/services/model-generator.service";
-import { findIndex } from "lodash";
-import { IItemSelectorConfig } from "~models/item-selector";
-import { Logger } from "@nestjs/common";
+import { IDynamicFieldConfigBlueprint } from '../admin/models/dynamicFields';
+import { IGenericObject, IPagination } from './general';
+import { IQueryBuilderFieldBlueprint } from '../shared/models/queryBuilder';
+import { IRelationshipToInject } from '../admin/services/model-generator.service';
+import { findIndex } from 'lodash';
+import { IItemSelectorConfig } from '~models/item-selector';
+import { Logger } from '@nestjs/common';
 export interface IBaseModelFilterConfig {
   results_per_page?: number;
   allowMultiple?: boolean;
@@ -33,10 +33,10 @@ export interface INeo4jModelRelationshipConfig {
   model: string;
   modelAlias: string;
   exactAliasQuery?: boolean;
-  type: 'inverse'|'normal',
+  type: 'inverse' | 'normal';
   isCount?: boolean;
-  isCollection: boolean,
-  isSortable?: boolean,
+  isCollection: boolean;
+  isSortable?: boolean;
   isSortableCount?: boolean;
   sortableCountDefaultAlias?: string;
   orderByKey?: string;
@@ -60,10 +60,12 @@ export class BaseModel {
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
     defaultOrderBy: 'createdAt',
-    defaultWay: 'DESC'
+    defaultWay: 'DESC',
   };
 
-  public static injectRelationships: IGenericObject<IRelationshipToInject>|string;
+  public static injectRelationships:
+    | IGenericObject<IRelationshipToInject>
+    | string;
 
   getFields() {
     return (this.constructor as typeof BaseModel).fields;
@@ -73,25 +75,44 @@ export class BaseModel {
     return this.hasOwnProperty(field);
   }
 
-  public static isFieldSortable(field: string, fields: IDynamicFieldConfigBlueprint[]) {
-    return findIndex(fields, {varName: field, isSortable: true}) !== -1;
+  public static isFieldSortable(
+    field: string,
+    fields: IDynamicFieldConfigBlueprint[],
+  ) {
+    return findIndex(fields, { varName: field, isSortable: true }) !== -1;
   }
 
-  public static isFieldSortableCount(field: string, relationships: INeo4jModelRelationshipConfig) {
+  public static isFieldSortableCount(
+    field: string,
+    relationships: INeo4jModelRelationshipConfig,
+  ) {
     // @ts-ignore
-    const found = Object.keys(relationships).filter(key => key === field && relationships[key].isSortableCount).length > 0;
-    if (found) {return true;}
+    const found =
+      Object.keys(relationships).filter(
+        (key) => key === field && relationships[key].isSortableCount,
+      ).length > 0;
+    if (found) {
+      return true;
+    }
     // Try out for aliases
     return BaseModel.getSortableCountField(field, relationships);
   }
 
-  public static getSortableCountField(field: string, relationships: INeo4jModelRelationshipConfig) {
+  public static getSortableCountField(
+    field: string,
+    relationships: INeo4jModelRelationshipConfig,
+  ) {
     // @ts-ignore
-    const fields = Object.keys(relationships).filter(key => field && relationships[key].isSortableCount && field === relationships[key].sortableCountDefaultAlias);
-    if (fields.length === 0) {return false;}
+    const fields = Object.keys(relationships).filter(
+      (key) =>
+        field &&
+        relationships[key].isSortableCount &&
+        field === relationships[key].sortableCountDefaultAlias,
+    );
+    if (fields.length === 0) {
+      return false;
+    }
 
     return fields[0];
   }
-
-
 }

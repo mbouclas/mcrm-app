@@ -77,7 +77,7 @@ export class StripeProvider implements IPaymentMethodProvider {
         client_secret: paymentIntent.client_secret,
         customer_id: customer.id,
         price,
-        success: 'PENDING',
+        status: 'PENDING',
       });
     } catch (err) {
       console.log(err);
