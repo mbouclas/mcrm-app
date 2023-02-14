@@ -14,7 +14,7 @@ import { tokenGenerator } from "~helpers/tokenGenerator";
 import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { ProductModel } from "~catalogue/product/models/product.model";
-import { IBaseFilter, IGenericObject } from "~models/general";
+import { IBaseFilter, IGenericObject, IPagination } from "~models/general";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import { ImageService } from "~image/image.service";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
@@ -79,10 +79,23 @@ export class ProductService extends BaseNeoService {
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
     const item = await super.findOne(filter, rels) as unknown as ProductModel;
-    item['images'] = await this.imageService.getItemImages('Product', item['uuid']);
+    item['images'] = await this.imageService.getItemImages(this.model.modelName, item['uuid']);
     item['thumb'] = item['images'].find(img => img.type === 'main') || null;
 
     return item;
+  }
+
+  async find(params: IGenericObject = {}, rels: string[] = []): Promise<IPagination<ProductModel>> {
+    const items = await super.find(params, rels);
+
+    for (let idx=0; items.data.length > idx;idx++) {
+      const item = items.data[idx];
+      const images = await this.imageService.getItemImages(this.model.modelName, item['uuid']);
+      item['images'] = images;
+      item['thumb'] = images.find(img => img.type === 'main') || null;
+    }
+
+    return items as IPagination<ProductModel>;
   }
 
   async store(record: ProductModelDto, userId?: string) {

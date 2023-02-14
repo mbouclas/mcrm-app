@@ -46,6 +46,20 @@ export class CartController {
     return session.cart.toObject();
   }
 
+  @Post('clear')
+  async clear(@Session() session: SessionData) {
+    try {
+      session.cart.clear();
+
+      await session.cart.save();
+
+      return session.cart.toObject();
+    }
+    catch (e) {
+      return {success: false, reason: 'CouldNotClear'};
+    }
+  }
+
   @Delete(':id')
   async delete(@Session() session: SessionData, @Param('id') uuid: string) {
     try {
