@@ -27,6 +27,13 @@ export default {
     statusCode: 404,
   },
 
+  USER_FAILED_UPDATE: {
+    error: 'USER_FAILED_UPDATE',
+    reason: 'User has failed to update',
+    code: '400.1',
+    statusCode: 400,
+  },
+
   INVALID_FORGOT_PASSWORD_TOKEN: {
     error: 'INVALID_FORGOT_PASSWORD_TOKEN',
     reason: 'Invalid forgot password token',

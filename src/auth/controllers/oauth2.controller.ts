@@ -22,6 +22,7 @@ import {
   UserDoesNotExist,
   InvalidConfirmToken,
   InvalidForgotPasswordToken,
+  UserFailedUpdate,
 } from '../exceptions';
 
 const jwt = require('jsonwebtoken');
@@ -175,7 +176,7 @@ export class Oauth2Controller {
     );
 
     if (!userExists || !userExists.length) {
-      throw new Error('User not updated');
+      throw new UserFailedUpdate();
     }
 
     return { success: true };

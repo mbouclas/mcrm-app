@@ -30,3 +30,9 @@ export class InvalidForgotPasswordToken extends BaseHttpException {
     super(errors.INVALID_FORGOT_PASSWORD_TOKEN);
   }
 }
+
+export class UserFailedUpdate extends BaseHttpException {
+  constructor() {
+    super(errors.USER_FAILED_UPDATE);
+  }
+}
