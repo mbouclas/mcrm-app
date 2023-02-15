@@ -16,6 +16,7 @@ import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
 import { SessionData } from 'express-session';
+import { InvalidCredentials, UserExists } from '../exceptions';
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -46,7 +47,7 @@ export class Oauth2Controller {
       // Need to send the response like so cause we're injecting @Req and @Res
       res.json(result);
     } catch (e) {
-      res.status(500).json({ success: false, reason: e.message });
+      throw new InvalidCredentials();
     }
   }
 
@@ -59,7 +60,7 @@ export class Oauth2Controller {
     );
 
     if (userExists) {
-      throw new Error('User exists');
+      throw new UserExists();
     }
 
     const authService = new AuthService();
