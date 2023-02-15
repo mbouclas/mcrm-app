@@ -111,7 +111,6 @@ export class UserService extends BaseNeoService {
     extras: string[] = [],
   ): Promise<UserModel> {
     const r = await super.findOne(filter, rels);
-    console.log('r', r);
 
     if (extras.indexOf('gates') !== -1) {
       r['gates'] = await new GateService().all(true, { uuid: r['uuid'] });
