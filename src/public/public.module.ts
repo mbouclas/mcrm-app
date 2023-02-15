@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { CheckoutSettingsController } from './checkout-settings.controller';
 
-@Module({})
+@Module({
+  controllers: [CheckoutSettingsController]
+})
 export class PublicModule {}

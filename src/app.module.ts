@@ -37,6 +37,7 @@ import { CartMiddleware } from '~eshop/middleware/cart.middleware';
 import { UploadModule } from './upload/upload.module';
 import { ImageModule } from './image/image.module';
 import { loadConfigs } from '~helpers/load-config';
+import { SyncModule } from './sync/sync.module';
 const Lang = require('mcms-node-localization');
 export let Translate;
 export let Test = { token: null };
@@ -71,6 +72,7 @@ export let Test = { token: null };
     TagModule,
     UploadModule,
     ImageModule,
+    SyncModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],
