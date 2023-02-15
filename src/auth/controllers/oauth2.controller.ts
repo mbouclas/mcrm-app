@@ -16,7 +16,13 @@ import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
 import { SessionData } from 'express-session';
-import { InvalidCredentials, UserExists } from '../exceptions';
+import {
+  InvalidCredentials,
+  UserExists,
+  UserDoesNotExist,
+  InvalidConfirmToken,
+  InvalidForgotPasswordToken,
+} from '../exceptions';
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -83,26 +89,23 @@ export class Oauth2Controller {
 
   @Post('/confirm-email')
   async confirmEmail(@Body() body: IGenericObject) {
-    try {
-      const [error, userExists] = await handleAsync(
-        new UserService().findOne({
-          confirmToken: body.confirmToken,
-        }),
-      );
+    console.log(body);
+    const [error, userExists] = await handleAsync(
+      new UserService().findOne({
+        confirmToken: body.confirmToken,
+      }),
+    );
 
-      if (error) {
-        throw new Error('Incorrect user token');
-      }
-
-      await new UserService().update(userExists.uuid, {
-        active: true,
-        confirmToken: null,
-      });
-
-      return { success: true };
-    } catch (e) {
-      return { success: false };
+    if (error) {
+      throw new InvalidConfirmToken();
     }
+
+    await new UserService().update(userExists.uuid, {
+      active: true,
+      confirmToken: null,
+    });
+
+    return { success: true };
   }
 
   @Post('/forgot-password')
@@ -114,7 +117,7 @@ export class Oauth2Controller {
     );
 
     if (!userExists) {
-      throw new Error('User does not exist');
+      throw new UserDoesNotExist();
     }
 
     const confirmToken = jwt.sign({}, process.env.JWT_SECRET_KEY, {
@@ -131,40 +134,30 @@ export class Oauth2Controller {
   @Post('/forgot-password-confirm')
   async forgotPasswordConfirm(@Body() body: IGenericObject) {
     try {
-      try {
-        jwt.verify(body.token, process.env.JWT_SECRET_KEY);
-      } catch (err) {
-        if (err.name === 'TokenExpiredError') {
-          throw new Error('Token expired');
-        } else {
-          throw new Error('Invalid token');
-        }
-      }
-
-      const [error, userExists] = await handleAsync(
-        new UserService().findOne({
-          forgotPasswordToken: body.token,
-        }),
-      );
-
-      if (error) {
-        throw new Error('Incorrect reset password token');
-      }
-
-      const authService = new AuthService();
-      const hashedPassword = await authService.hasher.hashPassword(
-        body.password,
-      );
-
-      await new UserService().update(userExists.uuid, {
-        password: hashedPassword,
-        forgotPasswordToken: null,
-      });
-
-      return { success: true };
-    } catch (e) {
-      return { success: false };
+      jwt.verify(body.token, process.env.JWT_SECRET_KEY);
+    } catch (err) {
+      throw new InvalidForgotPasswordToken();
     }
+
+    const [error, userExists] = await handleAsync(
+      new UserService().findOne({
+        forgotPasswordToken: body.token,
+      }),
+    );
+
+    if (error) {
+      throw new InvalidForgotPasswordToken();
+    }
+
+    const authService = new AuthService();
+    const hashedPassword = await authService.hasher.hashPassword(body.password);
+
+    await new UserService().update(userExists.uuid, {
+      password: hashedPassword,
+      forgotPasswordToken: null,
+    });
+
+    return { success: true };
   }
 
   @Post('/update-user')

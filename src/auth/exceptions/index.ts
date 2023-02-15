@@ -12,3 +12,21 @@ export class UserExists extends BaseHttpException {
     super(errors.USER_EXISTS);
   }
 }
+
+export class InvalidConfirmToken extends BaseHttpException {
+  constructor() {
+    super(errors.INVALID_CONFIRM_TOKEN);
+  }
+}
+
+export class UserDoesNotExist extends BaseHttpException {
+  constructor() {
+    super(errors.USER_DOES_NOT_EXIST);
+  }
+}
+
+export class InvalidForgotPasswordToken extends BaseHttpException {
+  constructor() {
+    super(errors.INVALID_FORGOT_PASSWORD_TOKEN);
+  }
+}
