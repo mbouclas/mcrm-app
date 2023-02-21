@@ -34,7 +34,7 @@ export class OrderController {
     const userId = session.user && session.user.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new OrderService().find({ userId }, rels);
+    return await new OrderService().findAll({ userId }, rels);
   }
 
   @Get(':uuid')

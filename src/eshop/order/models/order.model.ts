@@ -22,6 +22,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public userId: string;
   public uuid: string;
   public paymentInfo: string;
+  public shippingInfo: string;
 
   async onModuleInit() {}
 

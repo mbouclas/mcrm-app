@@ -4,7 +4,7 @@ import { store } from '~root/state';
 import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderModel } from '~eshop/order/models/order.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { IGenericObject } from '~models/general';
+import { IGenericObject, IPagination } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
@@ -119,6 +119,25 @@ export class OrderService extends BaseNeoService {
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;
     return item;
+  }
+
+  async findAll(
+    filter: IGenericObject,
+    rels = [],
+  ): Promise<IPagination<IGenericObject>> {
+    const response = (await super.find(
+      filter,
+      rels,
+    )) as IPagination<IGenericObject>;
+
+    return {
+      ...response,
+      data: response.data.map((item) => ({
+        ...item,
+        paymentInfo: JSON.parse(item?.paymentInfo),
+        shippingInfo: JSON.parse(item?.shippingInfo),
+      })),
+    };
   }
 
   async findByRegex(key: string, value: string): Promise<OrderModel> {
