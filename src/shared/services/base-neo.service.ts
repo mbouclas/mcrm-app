@@ -219,6 +219,7 @@ export class BaseNeoService {
     this.logger(query);
 
     const records = await this.neo.readWithCleanUp(query, {});
+    console.log(records);
 
     const res = records.map((record) => fromRecordToModel(record, model));
 
