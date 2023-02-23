@@ -6,7 +6,7 @@ export const fromRecordToModel = (
   resItem: IGenericObject,
   model: typeof BaseModel,
 ): any => {
-  const newResItem = resItem;
+  const newResItem = resItem[model.modelConfig.as];
 
   for (const modelFieldKey in model.fields) {
     const modelField = model.fields[modelFieldKey];
@@ -37,9 +37,13 @@ export const fromRecordToModel = (
     }
 
     if (!isFieldNested) {
-      newResItem[modelFieldName] = resItem[modelFieldName];
+      newResItem[modelFieldName] =
+        resItem[model.modelConfig.as][modelFieldName];
     }
   }
 
-  return newResItem;
+  return {
+    ...resItem,
+    [model.modelConfig.as]: newResItem,
+  };
 };

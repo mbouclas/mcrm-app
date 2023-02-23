@@ -33,6 +33,7 @@ export class OrderController {
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
     const userId = session.user && session.user.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
+    console.log(rels);
 
     return await new OrderService().findAll({ userId }, rels);
   }

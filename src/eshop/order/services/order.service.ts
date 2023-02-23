@@ -130,12 +130,20 @@ export class OrderService extends BaseNeoService {
       rels,
     )) as IPagination<IGenericObject>;
 
+    console.log(response);
+
     return {
       ...response,
       data: response.data.map((item) => ({
         ...item,
-        paymentInfo: JSON.parse(item?.paymentInfo),
-        shippingInfo: JSON.parse(item?.shippingInfo),
+        paymentInfo:
+          item?.paymentInfo && typeof item?.paymentInfo === 'string'
+            ? JSON.parse(item?.paymentInfo)
+            : item.paymentInfo,
+        shippingInfo:
+          item?.shippingInfo && typeof item?.shippingInfo === 'string'
+            ? JSON.parse(item?.shippingInfo)
+            : item.paymentInfo,
       })),
     };
   }
