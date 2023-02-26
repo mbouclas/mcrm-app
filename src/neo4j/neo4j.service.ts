@@ -17,6 +17,7 @@ import {
 import { parseDate } from '../helpers/neoDateToMoment';
 import { defaultNeo4JConfig, Neo4jModule } from '~root/neo4j/neo4j.module';
 import { IGenericObject } from '~models/general';
+import { fromRecordToModel } from '~helpers/fromRecordToModel';
 
 @Injectable()
 export class Neo4jService implements OnApplicationShutdown {
@@ -199,8 +200,10 @@ export class Neo4jService implements OnApplicationShutdown {
    * @param record
    * @param parentKey
    */
-  mergeRelationshipsToParent(record: any, parentKey: string) {
-    const obj: IGenericObject = record[parentKey];
+  mergeRelationshipsToParent(record: any, model: any) {
+    let parentKey = model.modelConfig.as;
+
+    const obj: IGenericObject = fromRecordToModel(record[parentKey], model);
 
     if (!obj) {
       return record;
@@ -215,9 +218,9 @@ export class Neo4jService implements OnApplicationShutdown {
     return obj;
   }
 
-  extractResultsFromArray(res: any[], parentKey: string) {
+  extractResultsFromArray(res: any[], model: any) {
     return res.map((r) => {
-      return this.mergeRelationshipsToParent(r, parentKey);
+      return this.mergeRelationshipsToParent(r, model);
     });
   }
 }

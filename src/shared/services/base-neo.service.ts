@@ -160,12 +160,7 @@ export class BaseNeoService {
     this.logger(query);
     let records = await this.neo.readWithCleanUp(query, {});
 
-    const res = fromRecordToModel(records[0], this.model);
-
-    let result = this.neo.mergeRelationshipsToParent(
-      res,
-      this.model.modelConfig.as,
-    );
+    let result = this.neo.mergeRelationshipsToParent(records[0], this.model);
 
     if (!result || result.length === 0) {
       throw new RecordNotFoundException(`Record Not Found`);
@@ -219,8 +214,6 @@ export class BaseNeoService {
     const records = await this.neo.readWithCleanUp(query, {});
     console.log('RESULT MANY', records);
 
-    const res = records.map((record) => fromRecordToModel(record, model));
-
     /*    const data = res.records.map(item => {
           const record = item.get(modelAlias).properties;
     
@@ -272,10 +265,7 @@ export class BaseNeoService {
           total
         };*/
 
-    let results = this.neo.extractResultsFromArray(
-      res,
-      this.model.modelConfig.as,
-    );
+    let results = this.neo.extractResultsFromArray(records, this.model);
 
     // results = modelsPostProcessing(results, this.model);
     return this.createPaginationObject(
