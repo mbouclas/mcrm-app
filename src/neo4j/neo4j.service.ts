@@ -18,6 +18,7 @@ import { parseDate } from '../helpers/neoDateToMoment';
 import { defaultNeo4JConfig, Neo4jModule } from '~root/neo4j/neo4j.module';
 import { IGenericObject } from '~models/general';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
+import { store } from '~root/state';
 
 @Injectable()
 export class Neo4jService implements OnApplicationShutdown {
@@ -212,7 +213,12 @@ export class Neo4jService implements OnApplicationShutdown {
       if (key === parentKey) {
         continue;
       }
-      obj[key] = record[key];
+
+      const relModel =
+        store.getState().models[model.modelConfig.relationships[key].model];
+      console.log(relModel, record[key]);
+
+      obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
     }
 
     return obj;
