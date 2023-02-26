@@ -198,7 +198,7 @@ export class BaseNeoService {
     this.logger(countQuery);
 
     const countRes = await this.neo.readWithCleanUp(countQuery, {});
-    const total = countRes[0];
+    const total = countRes[0].total;
     const pages = Math.ceil(total / limit);
     const skip = limit * (page - 1);
 
@@ -206,8 +206,8 @@ export class BaseNeoService {
         WITH ${modelAlias}
         ${matches.join('\n')}
         RETURN ${returnVars.join(
-      ',',
-    )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
+          ',',
+        )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
     // console.log('----------------\n',query,'\n----------');
     this.logger(query);
 
@@ -451,18 +451,19 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-        Object.keys(relationshipProps)
-          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-          .join()
-          .slice(0, -1),
-      )
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
       : '';
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel
-      }]${relationship.type === 'normal' ? '->' : '-'}(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${
+      relationship.rel
+    }]${relationship.type === 'normal' ? '->' : '-'}(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
