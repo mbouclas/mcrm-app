@@ -159,13 +159,12 @@ export class BaseNeoService {
 
     this.logger(query);
     let result = await this.neo.readWithCleanUp(query, {});
+    console.log('RESULT ', result);
 
-    if (relationships && relationships.length > 0) {
-      result = this.neo.mergeRelationshipsToParent(
-        result[0],
-        this.model.modelConfig.as,
-      );
-    }
+    result = this.neo.mergeRelationshipsToParent(
+      result[0],
+      this.model.modelConfig.as,
+    );
 
     if (!result || result.length === 0) {
       throw new RecordNotFoundException(`Record Not Found`);
@@ -219,7 +218,7 @@ export class BaseNeoService {
     this.logger(query);
 
     const records = await this.neo.readWithCleanUp(query, {});
-    console.log(records);
+    console.log('RESULT MANY', records);
 
     const res = records.map((record) => fromRecordToModel(record, model));
 

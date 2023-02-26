@@ -7,6 +7,7 @@ export const fromRecordToModel = (
   model: typeof BaseModel,
 ): any => {
   const hasParent = resItem[model.modelConfig.as];
+  console.log('hasParent', hasParent, resItem);
   const newResItem = resItem[model.modelConfig.as] || resItem;
 
   for (const modelFieldKey in model.fields) {
@@ -38,7 +39,9 @@ export const fromRecordToModel = (
     }
 
     if (modelFieldType === 'json') {
-      newResItem[modelFieldName] = JSON.parse(resItem[modelFieldName]);
+      newResItem[modelFieldName] = hasParent
+        ? JSON.parse(resItem[model.modelConfig.as][modelFieldName])
+        : JSON.parse(resItem[modelFieldName]);
     }
 
     if (modelFieldType !== 'json' && modelFieldType !== 'nested') {

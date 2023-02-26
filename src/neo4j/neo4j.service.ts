@@ -147,11 +147,6 @@ export class Neo4jService implements OnApplicationShutdown {
   static processRecord(rec: Record<any, any>) {
     const obj = {};
 
-    if (rec.keys.length === 1) {
-      const key = rec.keys[0];
-      return this.parseNodeResult(rec.get(key), key);
-    }
-
     for (let idx = 0; rec.keys.length > idx; idx++) {
       const key = rec.keys[idx];
       const r = rec.get(key);

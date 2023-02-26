@@ -125,27 +125,12 @@ export class OrderService extends BaseNeoService {
     filter: IGenericObject,
     rels = [],
   ): Promise<IPagination<IGenericObject>> {
-    const response = (await super.find(
+    const items = (await super.find(
       filter,
       rels,
     )) as IPagination<IGenericObject>;
 
-    console.log(response);
-
-    return {
-      ...response,
-      data: response.data.map((item) => ({
-        ...item,
-        paymentInfo:
-          item?.paymentInfo && typeof item?.paymentInfo === 'string'
-            ? JSON.parse(item?.paymentInfo)
-            : item.paymentInfo,
-        shippingInfo:
-          item?.shippingInfo && typeof item?.shippingInfo === 'string'
-            ? JSON.parse(item?.shippingInfo)
-            : item.paymentInfo,
-      })),
-    };
+    return items;
   }
 
   async findByRegex(key: string, value: string): Promise<OrderModel> {
