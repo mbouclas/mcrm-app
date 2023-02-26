@@ -160,22 +160,20 @@ export class BaseNeoService {
     this.logger(query);
     let records = await this.neo.readWithCleanUp(query, {});
 
-    const res = records.map((record) => fromRecordToModel(record, this.model));
+    const res = fromRecordToModel(records[0], this.model);
 
-    let results = this.neo.extractResultsFromArray(
+    let result = this.neo.mergeRelationshipsToParent(
       res,
       this.model.modelConfig.as,
     );
-    let result = results[0];
 
     if (!result || result.length === 0) {
       throw new RecordNotFoundException(`Record Not Found`);
     }
 
-    let record = Array.isArray(result) ? result[0] : result;
-    record = modelPostProcessing(record, this.model);
+    result = modelPostProcessing(result, this.model);
 
-    return record;
+    return result;
   }
 
   async find(
