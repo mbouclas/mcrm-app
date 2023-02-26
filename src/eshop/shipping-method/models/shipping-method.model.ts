@@ -125,7 +125,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       varName: 'providerSettings',
       label: 'ProviderSettings',
       placeholder: 'ProviderSettings',
-      type: 'text',
+      type: 'json',
       isSortable: true,
       group: 'main',
     },

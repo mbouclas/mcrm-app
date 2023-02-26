@@ -84,7 +84,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'OrderId',
       type: 'text',
       isSortable: true,
-      group: 'main',
+      group: 'hidden',
     },
     {
       varName: 'userId',
@@ -92,7 +92,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'UserId',
       type: 'number',
       isSortable: true,
-      group: 'main',
+      group: 'hidden',
     },
     {
       varName: 'total',
@@ -116,7 +116,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'PaymentStatus',
       type: 'number',
       isSortable: true,
-      group: 'main',
+      group: 'hidden',
     },
     {
       varName: 'shippingStatus',
@@ -124,7 +124,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingStatus',
       type: 'number',
       isSortable: true,
-      group: 'main',
+      group: 'hidden',
     },
     {
       varName: 'VAT',
@@ -139,14 +139,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       label: 'ShippingMethod',
       placeholder: 'ShippingMethod',
       type: 'text',
-      group: 'main',
+      group: 'right',
     },
     {
       varName: 'paymentMethod',
       label: 'PaymentMethod',
       placeholder: 'PaymentMethod',
       type: 'text',
-      group: 'main',
+      group: 'right',
     },
     {
       varName: 'notes',
@@ -180,14 +180,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       varName: 'paymentInfo',
       label: 'PaymentInfo',
       placeholder: 'PaymentInfo',
-      type: 'text',
+      type: 'json',
       group: 'main',
     },
     {
       varName: 'shippingInfo',
       label: 'ShippingInfo',
       placeholder: 'ShippingInfo',
-      type: 'text',
+      type: 'json',
       group: 'main',
     },
   ];

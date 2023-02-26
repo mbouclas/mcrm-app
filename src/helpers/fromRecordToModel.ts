@@ -12,10 +12,10 @@ export const fromRecordToModel = (
   for (const modelFieldKey in model.fields) {
     const modelField = model.fields[modelFieldKey];
 
-    const isFieldNested = modelField.type === 'nested';
+    const modelFieldType = modelField.type;
     const modelFieldName = modelField.varName;
 
-    if (isFieldNested) {
+    if (modelFieldType === 'nested') {
       newResItem[modelFieldName] = {};
 
       for (const nestedFieldKey in modelField.fields) {
@@ -37,7 +37,11 @@ export const fromRecordToModel = (
       }
     }
 
-    if (!isFieldNested) {
+    if (modelFieldType === 'json') {
+      newResItem[modelFieldName] = JSON.parse(resItem[modelFieldName]);
+    }
+
+    if (modelFieldType !== 'json' && modelFieldType !== 'nested') {
       newResItem[modelFieldName] = hasParent
         ? resItem[model.modelConfig.as][modelFieldName]
         : resItem[modelFieldName];
