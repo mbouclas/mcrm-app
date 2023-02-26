@@ -6,17 +6,15 @@ export const fromRecordToModel = (
   resItem: IGenericObject,
   model: typeof BaseModel,
 ): any => {
-  const hasParent = resItem[model.modelConfig.as];
-  console.log('hasParent', hasParent, resItem);
-  const newResItem = resItem[model.modelConfig.as] || resItem;
+  const newResItem = resItem[model.modelConfig.as];
 
   for (const modelFieldKey in model.fields) {
     const modelField = model.fields[modelFieldKey];
 
-    const modelFieldType = modelField.type;
+    const fieldType = modelField.type;
     const modelFieldName = modelField.varName;
 
-    if (modelFieldType === 'nested') {
+    if (fieldType === 'nested') {
       newResItem[modelFieldName] = {};
 
       for (const nestedFieldKey in modelField.fields) {
@@ -38,24 +36,21 @@ export const fromRecordToModel = (
       }
     }
 
-    if (modelFieldType === 'json') {
-      newResItem[modelFieldName] = hasParent
-        ? JSON.parse(resItem[model.modelConfig.as][modelFieldName])
-        : JSON.parse(resItem[modelFieldName]);
+    if (fieldType === 'json') {
+      newResItem[modelFieldName] = JSON.parse(
+        resItem[model.modelConfig.as][modelFieldName],
+      );
     }
 
-    if (modelFieldType !== 'json' && modelFieldType !== 'nested') {
-      newResItem[modelFieldName] = hasParent
-        ? resItem[model.modelConfig.as][modelFieldName]
-        : resItem[modelFieldName];
+    if (fieldType !== 'nested' && fieldType !== 'json') {
+      newResItem[modelFieldName] =
+        resItem[model.modelConfig.as][modelFieldName];
     }
   }
 
   let result = resItem;
 
-  if (hasParent) {
-    result[model.modelConfig.as] = newResItem;
-  }
+  result[model.modelConfig.as] = newResItem;
 
   return result;
 };
