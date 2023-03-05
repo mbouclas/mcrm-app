@@ -182,6 +182,24 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'PaymentInfo',
       type: 'json',
       group: 'main',
+      fields: [
+        {
+          varName: 'provider',
+          label: 'Provider',
+          placeholder: 'Provider',
+          type: 'text',
+          group: 'main',
+          default: false,
+        },
+        {
+          varName: 'price',
+          label: 'Price',
+          placeholder: 'Price',
+          type: 'number',
+          group: 'main',
+          default: false,
+        },
+      ],
     },
     {
       varName: 'shippingInfo',
@@ -189,6 +207,16 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingInfo',
       type: 'json',
       group: 'main',
+      fields: [
+        {
+          varName: 'status',
+          label: 'Status',
+          placeholder: 'Status',
+          type: 'text',
+          group: 'main',
+          default: false,
+        },
+      ],
     },
   ];
 
