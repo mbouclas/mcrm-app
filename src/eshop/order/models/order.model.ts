@@ -56,6 +56,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         rel: 'HAS_PAYMENT_METHOD',
+        tabs: ['General'],
+        group: 'right',
       },
 
       shippingMethod: {
@@ -65,6 +67,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         rel: 'HAS_SHIPPING_METHOD',
+        tabs: ['General'],
+        group: 'right',
       },
       address: {
         model: 'Address',
@@ -139,14 +143,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       label: 'ShippingMethod',
       placeholder: 'ShippingMethod',
       type: 'text',
-      group: 'right',
+      group: 'hidden',
     },
     {
       varName: 'paymentMethod',
       label: 'PaymentMethod',
       placeholder: 'PaymentMethod',
       type: 'text',
-      group: 'right',
+      group: 'hidden',
     },
     {
       varName: 'notes',

@@ -45,6 +45,8 @@ export interface INeo4jModelRelationshipConfig {
   isTree?: boolean;
   isMultilingual?: boolean;
   addRelationshipData?: boolean;
+  tabs?: string[];
+  group?: string;
 }
 
 export class BaseModel {
