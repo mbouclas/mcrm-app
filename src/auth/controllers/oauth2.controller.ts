@@ -96,7 +96,6 @@ export class Oauth2Controller {
         confirmToken: body.confirmToken,
       }),
     );
-    console.log(userExists);
 
     if (error) {
       throw new InvalidConfirmToken();
@@ -156,7 +155,7 @@ export class Oauth2Controller {
 
     await new UserService().update(userExists.uuid, {
       password: hashedPassword,
-      forgotPasswordToken: null,
+      forgotPasswordToken: '',
     });
 
     return { success: true };
