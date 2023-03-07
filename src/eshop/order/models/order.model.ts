@@ -24,7 +24,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = [];
 
@@ -89,6 +89,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'text',
       isSortable: true,
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'userId',
@@ -97,6 +109,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'total',
@@ -105,6 +129,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'status',
@@ -113,6 +149,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+        ],
+      },
     },
     {
       varName: 'paymentStatus',
@@ -121,6 +165,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'shippingStatus',
@@ -129,6 +185,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'VAT',
@@ -137,6 +205,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'shippingMethod',
@@ -144,6 +224,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingMethod',
       type: 'text',
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'paymentMethod',
@@ -151,6 +243,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'PaymentMethod',
       type: 'text',
       group: 'hidden',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'notes',
@@ -158,6 +262,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'Notes',
       type: 'text',
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'salesChannel',
@@ -165,6 +281,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'SalesChannel',
       type: 'text',
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'billingAddressId',
@@ -172,6 +300,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'BillingAddressId',
       type: 'text',
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'shippingAddressId',
@@ -179,6 +319,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingAddressId',
       type: 'text',
       group: 'main',
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'paymentInfo',
@@ -204,6 +356,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
     {
       varName: 'shippingInfo',
@@ -221,6 +385,18 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
+      editableRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+          {
+            type: 'field',
+            value: 'status=0',
+          },
+        ],
+      },
     },
   ];
 
