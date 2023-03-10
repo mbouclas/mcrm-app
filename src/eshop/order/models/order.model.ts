@@ -24,7 +24,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = [];
 
@@ -147,6 +147,10 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       label: 'Status',
       placeholder: 'Status',
       type: 'number',
+      ui: {
+        component: 'DropDown',
+        defaultValues: [0, 1, 2, 3, 4, 5],
+      },
       isSortable: true,
       group: 'main',
       editableRules: {
