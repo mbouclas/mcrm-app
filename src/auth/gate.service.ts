@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { BaseNeoService } from "~shared/services/base-neo.service";
-import { UserService } from "~user/services/user.service";
-import { IGate } from "~admin/models/gates";
-import { OnEvent } from "@nestjs/event-emitter";
-import { IBaseFilter } from "~models/general";
-import { ChangeLogService } from "~change-log/change-log.service";
-import { store } from "~root/state";
+import { BaseNeoService } from '~shared/services/base-neo.service';
+import { UserService } from '~user/services/user.service';
+import { IGate } from '~admin/models/gates';
+import { OnEvent } from '@nestjs/event-emitter';
+import { IBaseFilter } from '~models/general';
+import { ChangeLogService } from '~change-log/change-log.service';
+import { store } from '~root/state';
 
 @Injectable()
 export class GateService extends BaseNeoService {
-
   constructor() {
     super();
     this.model = store.getState().models.Gate;
   }
-
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
@@ -24,9 +22,14 @@ export class GateService extends BaseNeoService {
   }
 
   async all(sanitize = false, userToFilter?: IBaseFilter) {
-    const result = await this.neo.readWithCleanUp(`MATCH (g:Gate) return g as gate ORDER BY g.name ASC`, {});
+    const result = await this.neo.readWithCleanUp(
+      `MATCH (g:Gate) return g as gate ORDER BY g.name ASC`,
+      {},
+    );
+    console.log(result);
 
-    const allGates = result.map((record: any) => {
+    const allGates = result.map((item: any) => {
+      const record = item.gate;
       if (!sanitize) {
         return record;
       }
@@ -36,16 +39,17 @@ export class GateService extends BaseNeoService {
         gate: record.gate,
         level: record.level,
         name: record.name,
-        provider: record.provider
+        provider: record.provider,
       };
     });
 
-    if (!userToFilter) { return allGates; }
-
+    if (!userToFilter) {
+      return allGates;
+    }
 
     // get the user first
-    const user = await (new UserService()).findOne(userToFilter, ['role']);
-    const userLevel = Math.max(...user['role'].map(role => role.level));
+    const user = await new UserService().findOne(userToFilter, ['role']);
+    const userLevel = Math.max(...user['role'].map((role) => role.level));
 
     return allGates.filter((gate: IGate) => {
       return gate.level <= userLevel;
