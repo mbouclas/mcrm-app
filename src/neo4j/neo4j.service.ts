@@ -216,9 +216,10 @@ export class Neo4jService implements OnApplicationShutdown {
 
       const relModel =
         store.getState().models[model.modelConfig.relationships[key].model];
-      console.log(relModel, record[key]);
 
-      obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+      if (relModel) {
+        obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+      }
     }
 
     return obj;
