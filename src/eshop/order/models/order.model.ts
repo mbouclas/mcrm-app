@@ -7,6 +7,8 @@ import {
 } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { PaymentMethodModel } from '../../payment-method/models/payment-method.model';
+import { ShippingMethodModel } from '../../shipping-method/models/shipping-method.model';
 
 const modelName = 'Order';
 @McmsDi({
@@ -31,6 +33,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public static modelConfig: INeo4jModel = {
     select: 'order:Order',
     as: 'order',
+    deleteRules: {
+      must: [
+        {
+          type: 'role',
+          value: 'ADMIN',
+        },
+      ],
+    },
     relationships: {
       product: {
         model: 'Product',
@@ -58,6 +68,21 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         rel: 'HAS_PAYMENT_METHOD',
         tabs: ['General'],
         group: 'right',
+        fields: PaymentMethodModel.fields.map((field) => ({
+          ...field,
+          updateRules: {
+            must: [
+              {
+                type: 'role',
+                value: 'ADMIN',
+              },
+              {
+                type: 'field',
+                value: 'status=0',
+              },
+            ],
+          },
+        })),
       },
 
       shippingMethod: {
@@ -69,6 +94,21 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         rel: 'HAS_SHIPPING_METHOD',
         tabs: ['General'],
         group: 'right',
+        fields: ShippingMethodModel.fields.map((field) => ({
+          ...field,
+          updateRules: {
+            must: [
+              {
+                type: 'role',
+                value: 'ADMIN',
+              },
+              {
+                type: 'field',
+                value: 'status=0',
+              },
+            ],
+          },
+        })),
       },
       address: {
         model: 'Address',
@@ -89,7 +129,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'text',
       isSortable: true,
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -109,7 +149,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -129,7 +169,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -153,7 +193,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       },
       isSortable: true,
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -169,7 +209,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -189,7 +229,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -209,7 +249,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -228,7 +268,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingMethod',
       type: 'text',
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -247,7 +287,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'PaymentMethod',
       type: 'text',
       group: 'hidden',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -266,7 +306,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'Notes',
       type: 'text',
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -285,7 +325,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'SalesChannel',
       type: 'text',
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -304,7 +344,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'BillingAddressId',
       type: 'text',
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -323,7 +363,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       placeholder: 'ShippingAddressId',
       type: 'text',
       group: 'main',
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -360,7 +400,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',
@@ -389,7 +429,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
-      editableRules: {
+      updateRules: {
         must: [
           {
             type: 'role',

@@ -23,6 +23,7 @@ export interface IBaseModelFilterConfig {
 export interface INeo4jModel {
   select: string;
   as: string;
+  deleteRules?: any;
   relationships: IGenericObject<INeo4jModelRelationshipConfig>;
 }
 
@@ -47,6 +48,7 @@ export interface INeo4jModelRelationshipConfig {
   addRelationshipData?: boolean;
   tabs?: string[];
   group?: string;
+  fields?: IDynamicFieldConfigBlueprint[];
 }
 
 export class BaseModel {
