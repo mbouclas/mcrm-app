@@ -20,8 +20,7 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
   public static defaultAggregationSize = 30;
   public uuid: string;
   public title: string;
-  public providerSettings: string;
-
+  public providerSettings: Record<string, any>;
   async onModuleInit() {}
 
   public static displayedColumns = [];

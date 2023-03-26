@@ -134,7 +134,7 @@ export class OrderController {
       uuid: body.paymentMethodId,
     });
 
-    const pamentProviderSettings = JSON.parse(paymentMethod.providerSettings);
+    const pamentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
       id: `${
@@ -150,9 +150,7 @@ export class OrderController {
       uuid: body.shippingMethodId,
     });
 
-    const shippingProviderSettings = JSON.parse(
-      shippingMethod.providerSettings,
-    );
+    const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
       id: `${
@@ -255,6 +253,7 @@ export class OrderController {
       'user',
     );
 
+    console.log('shit here', cart.items, products.data);
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
         await orderService.attachModelToAnotherModel(
@@ -277,11 +276,7 @@ export class OrderController {
 
     await session.cart.clearWithDb();
 
-    return {
-      ...order,
-      paymentInfo: JSON.parse(order.paymentInfo),
-      shippingInfo: JSON.parse(order.shippingInfo),
-    };
+    return order;
   }
 
   @Post(`order-simulation`)
