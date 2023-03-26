@@ -166,7 +166,7 @@ export class BaseNeoService {
       throw new RecordNotFoundException(`Record Not Found`);
     }
 
-    result = modelPostProcessing(result, this.model);
+    result = await modelPostProcessing(result, this.model);
 
     return result;
   }
@@ -206,8 +206,8 @@ export class BaseNeoService {
         WITH ${modelAlias}
         ${matches.join('\n')}
         RETURN ${returnVars.join(
-          ',',
-        )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
+      ',',
+    )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
     // console.log('----------------\n',query,'\n----------');
     this.logger(query);
 
@@ -266,7 +266,7 @@ export class BaseNeoService {
 
     let results = this.neo.extractResultsFromArray(records, this.model);
 
-    results = modelsPostProcessing(results, this.model);
+    results = await modelsPostProcessing(results, this.model);
     return this.createPaginationObject(
       results,
       limit,
@@ -451,19 +451,18 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-          Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-            .join()
-            .slice(0, -1),
-        )
+        Object.keys(relationshipProps)
+          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+          .join()
+          .slice(0, -1),
+      )
       : '';
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${
-      relationship.rel
-    }]${relationship.type === 'normal' ? '->' : '-'}(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel
+      }]${relationship.type === 'normal' ? '->' : '-'}(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
