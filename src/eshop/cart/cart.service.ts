@@ -18,7 +18,8 @@ export interface ICartItem {
   uuid?: string;
   quantity: number;
   price: number;
-  id: string;
+  productId: string;
+  variantId: string;
   title: string;
   conditions?: ICondition[];
   metaData?: IGenericObject;
@@ -55,34 +56,34 @@ export class CartService extends BaseNeoService {
   @OnEvent("app.loaded")
   async onAppLoaded() {
     this.model = store.getState().models.Cart;
-/*        const s = new CartService();
-        const cart = new Cart();
-        const product = await (new ProductService()).findOne({ slug: "betty" });
-        // Get the cart id from the Session. On the first run, add the id to the session
-        await cart.initialize("1JfqkZXK9-H1iaVD_HIfs5VbwD4xSwtE");
-        const cartItem = {
-          id: product["uuid"],
-          title: product.title,
-          price: product.price,
-          quantity: 1,
-          metaData: {
-            slug: product.slug
-          }
-        };
-
-        // cart.add(cartItem);
-        // cart.add(cartItem);
-        // cart.add(cartItem);
-
-        try {
-          // await s.save(cart);
-        }
-        catch (e) {
-          console.log(e)
-        }
-
-
-        setTimeout(() => console.log(cart.toObject()), 600)*/
+    /*        const s = new CartService();
+            const cart = new Cart();
+            const product = await (new ProductService()).findOne({ slug: "betty" });
+            // Get the cart id from the Session. On the first run, add the id to the session
+            await cart.initialize("1JfqkZXK9-H1iaVD_HIfs5VbwD4xSwtE");
+            const cartItem = {
+              id: product["uuid"],
+              title: product.title,
+              price: product.price,
+              quantity: 1,
+              metaData: {
+                slug: product.slug
+              }
+            };
+    
+            // cart.add(cartItem);
+            // cart.add(cartItem);
+            // cart.add(cartItem);
+    
+            try {
+              // await s.save(cart);
+            }
+            catch (e) {
+              console.log(e)
+            }
+    
+    
+            setTimeout(() => console.log(cart.toObject()), 600)*/
 
   }
 
@@ -114,11 +115,11 @@ export class CartService extends BaseNeoService {
    * @param variantId
    * @param userId
    */
-  async createCartItemFromProductId(id: string, quantity = 1, variantId?:string, userId?: string): Promise<ICartItem> {
+  async createCartItemFromProductId(id: string, quantity = 1, variantId?: string, metaData?: IGenericObject, userId?: string): Promise<ICartItem> {
     let product;
 
     try {
-      product = await (new ProductService()).findOne({uuid: id}, ['variants']);
+      product = await (new ProductService()).findOne({ uuid: id }, ['variants']);
 
     }
     catch (e) {
@@ -127,14 +128,16 @@ export class CartService extends BaseNeoService {
 
     let price = product.price;
     if (variantId) {
-      const variant = ProductService.findVariant(product, {uuid: variantId});
+      const variant = ProductService.findVariant(product, { uuid: variantId });
       price = variant.price;
     }
 
     return {
-      id,
+      productId: id,
+      variantId,
       quantity,
       price,
+      metaData,
       title: product.title
     }
   }
@@ -166,11 +169,11 @@ export class CartService extends BaseNeoService {
 
     const query = `MERGE (n:Cart {uuid:$uuid}) SET ${fieldsQuery} RETURN *`;
 
-    return this.neo.write(query, {...objToStore, ...{uuid: objToStore.id}});
+    return this.neo.write(query, { ...objToStore, ...{ uuid: objToStore.id } });
   }
 
   async findUserCart(filter: IBaseFilter) {
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
     const query = `MATCH (user:User {${key}: '${value}'})-[r:HAS_CART]->(cart:Cart)
     return *;
     `;

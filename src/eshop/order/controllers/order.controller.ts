@@ -27,7 +27,7 @@ import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
@@ -137,10 +137,9 @@ export class OrderController {
     const pamentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${
-        pamentProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${pamentProviderSettings.providerName.charAt(0).toUpperCase() +
         pamentProviderSettings.providerName.slice(1)
-      }Provider`,
+        }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider =
@@ -153,10 +152,9 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
         shippingProviderSettings.providerName.slice(1)
-      }Provider`,
+        }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider =
@@ -165,7 +163,7 @@ export class OrderController {
     const shippingInfo = await shippingMethodProvider.sendTransaction();
 
     const products = await new ProductService().find({
-      uuids: cart.items.map((item) => item.id),
+      uuids: cart.items.map((item) => item.productId),
     });
 
     let fullPrice = products.data.reduce(
@@ -253,7 +251,6 @@ export class OrderController {
       'user',
     );
 
-    console.log('shit here', cart.items, products.data);
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
         await orderService.attachModelToAnotherModel(
@@ -267,7 +264,7 @@ export class OrderController {
           },
           'product',
           {
-            quantity: cart.items.find((item) => item.id === productItem.uuid)
+            quantity: cart.items.find((item) => item.productId === productItem.uuid)
               .quantity,
           },
         );

@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { CartService, ICart, ICartItem } from "~eshop/cart/cart.service";
-import {  ICondition } from "~eshop/cart/condition.service";
+import { ICondition } from "~eshop/cart/condition.service";
 import { ICoupon } from "~eshop/cart/coupon.service";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { v4 } from "uuid";
@@ -58,10 +58,10 @@ export class Cart implements OnModuleInit, ICart {
 
   constructor(id?: string, settings?: ICartSettings) {
     this.cartService = new CartService();
-    if (id) { this.id = id;}
-/*    this.initialize(id)
-      .then(cart => {})
-      .catch(err => console.log(err));*/
+    if (id) { this.id = id; }
+    /*    this.initialize(id)
+          .then(cart => {})
+          .catch(err => console.log(err));*/
     this.eventEmitter = SharedModule.eventEmitter;
     this.setCartSettings(settings ? settings : this.settingsDefaults);
   }
@@ -91,44 +91,44 @@ export class Cart implements OnModuleInit, ICart {
         return;
       }
 
-      if (it.id === item.id && isEqual(item.metaData, it.metaData)) {
+      if (it.productId === item.productId && isEqual(item.metaData, it.metaData)) {
         found = it;
       }
     });
 
     if (!found) {
-      this.items.push({...item, uuid: v4()});
+      this.items.push({ ...item, uuid: v4() });
       this.updateTotals();
 
       return this;
     }
 
     if (item.quantity === 0) {
-      this.remove({id: item.id});
+      this.remove({ id: item.productId });
       this.updateTotals();
 
-      this.eventEmitter.emit(Cart.itemAddedEventName, {item, cart: this.toObject()});
+      this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
       return this;
     }
 
     found.quantity++;
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemAddedEventName, {item, cart: this.toObject()});
+    this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
     return this;
   }
 
   public remove(filter: IBaseFilter) {
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
 
-    const idx = findIndex(this.items,[key, value]);
-    if (idx === -1) {throw new RecordNotFoundException('ProductNotFound')}
+    const idx = findIndex(this.items, [key, value]);
+    if (idx === -1) { throw new RecordNotFoundException('ProductNotFound') }
 
     const item = Object.assign({}, this.items[idx]);
     this.items.splice(idx, 1);
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemRemovedEventName, {item, cart: this.toObject()});
+    this.eventEmitter.emit(Cart.itemRemovedEventName, { item, cart: this.toObject() });
     return this;
   }
 
@@ -137,7 +137,7 @@ export class Cart implements OnModuleInit, ICart {
 
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.cartClearedEventName, {cart: this.toObject()});
+    this.eventEmitter.emit(Cart.cartClearedEventName, { cart: this.toObject() });
     return this;
   }
 
@@ -149,15 +149,15 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public updateQuantity(filter: IBaseFilter, quantity = 1, appendToExisting = true) {
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
 
-    const item = find(this.items,[key, value]);
+    const item = find(this.items, [key, value]);
 
     item.quantity = (appendToExisting) ? item.quantity + quantity : item.quantity = quantity;
 
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemUpdatedEventName, {item, cart: this.toObject()});
+    this.eventEmitter.emit(Cart.itemUpdatedEventName, { item, cart: this.toObject() });
     return this;
   }
 
@@ -172,23 +172,23 @@ export class Cart implements OnModuleInit, ICart {
 
 
   public getItem(filter: IBaseFilter) {
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
 
-    return find(this.items,[key, value]);
+    return find(this.items, [key, value]);
   }
 
   public count() {
-    return this.items.map(item => item.quantity).reduce((pre,curr)=>pre+curr,0);
+    return this.items.map(item => item.quantity).reduce((pre, curr) => pre + curr, 0);
   }
 
   public async initialize(id?: string, userId?: string) {
     let cart;
     // Load a cart using the userID
     try {
-      cart = await this.cartService.findUserCart({uuid: userId});
+      cart = await this.cartService.findUserCart({ uuid: userId });
 
       this.loadExistingCart(cart);
-      this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
+      this.eventEmitter.emit(Cart.cartReadyEventName, { cart: this.toObject() });
       return this;
     }
     catch (e) {
@@ -198,7 +198,7 @@ export class Cart implements OnModuleInit, ICart {
 
     // IF not, try to find it by the session
     try {
-      cart = await (new CartService).findOne({id});
+      cart = await (new CartService).findOne({ id });
       this.loadExistingCart(cart);
     }
     catch (e) {
@@ -209,36 +209,36 @@ export class Cart implements OnModuleInit, ICart {
       this.initializeDefaults(id);
     }
 
-    this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
+    this.eventEmitter.emit(Cart.cartReadyEventName, { cart: this.toObject() });
     return this;
 
-  /*  if (!userId) {
-      try {
-        cart = await (new CartService).findOne({id});
-        this.loadExistingCart(cart);
+    /*  if (!userId) {
+        try {
+          cart = await (new CartService).findOne({id});
+          this.loadExistingCart(cart);
+        }
+        catch (e) {
+          console.log(e)
+        }
+  
+        if (!cart) {
+          this.initializeDefaults(id);
+        }
+  
+        this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
+        return this;
       }
-      catch (e) {
-        console.log(e)
-      }
-
+      // Load a cart from the user relationship instead of using the id
+      cart = await this.cartService.findUserCart(userId);
+  
       if (!cart) {
         this.initializeDefaults(id);
       }
-
+  
+      this.loadExistingCart(cart);
+  
       this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
-      return this;
-    }
-    // Load a cart from the user relationship instead of using the id
-    cart = await this.cartService.findUserCart(userId);
-
-    if (!cart) {
-      this.initializeDefaults(id);
-    }
-
-    this.loadExistingCart(cart);
-
-    this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
-    return this;*/
+      return this;*/
   }
 
   protected initializeDefaults(id?: string) {
@@ -266,7 +266,7 @@ export class Cart implements OnModuleInit, ICart {
   public async save() {
     await this.cartService.save(this);
 
-    this.eventEmitter.emit(Cart.cartSavedEventName, {cart: this.toObject()});
+    this.eventEmitter.emit(Cart.cartSavedEventName, { cart: this.toObject() });
     return this;
   }
 
@@ -303,18 +303,18 @@ export class Cart implements OnModuleInit, ICart {
     // Figure out conditions here
 
     // if no conditions were added, just return the sub total
-/*    if (!$conditions->count()) {
-      return Helpers::formatValue($subTotal, $this->config['format_numbers'], $this->config);
-    }*/
+    /*    if (!$conditions->count()) {
+          return Helpers::formatValue($subTotal, $this->config['format_numbers'], $this->config);
+        }*/
 
-/*    $conditions
-      ->each(function (CartCondition $cond) use ($subTotal, &$newTotal, &$process) {
-      $toBeCalculated = ($process > 0) ? $newTotal : $subTotal;
-
-      $newTotal = $cond->applyCondition($toBeCalculated);
-
-      $process++;
-    });*/
+    /*    $conditions
+          ->each(function (CartCondition $cond) use ($subTotal, &$newTotal, &$process) {
+          $toBeCalculated = ($process > 0) ? $newTotal : $subTotal;
+    
+          $newTotal = $cond->applyCondition($toBeCalculated);
+    
+          $process++;
+        });*/
 
     newTotal = subtotal;
     this.total = newTotal;
@@ -323,40 +323,40 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public getMetaData(filter: IBaseFilter) {
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
 
-    return find(this.items,[key, value]).metaData;
+    return find(this.items, [key, value]).metaData;
   }
 
   public setMetaData(filter: IBaseFilter, metaData: IGenericObject) {
-    const {key, value} = extractSingleFilterFromObject(filter);
-    const item = find(this.items,[key, value]);
+    const { key, value } = extractSingleFilterFromObject(filter);
+    const item = find(this.items, [key, value]);
     Object.keys(metaData).forEach(key => {
       item.metaData[key] = metaData[key];
     });
 
-    this.eventEmitter.emit(Cart.itemMetaDataUpdatedEventName, {item, metaData, cart: this.toObject()});
+    this.eventEmitter.emit(Cart.itemMetaDataUpdatedEventName, { item, metaData, cart: this.toObject() });
 
     return this;
   }
 
   protected itemsTotal() {
-    return  this.items.map(item => {
+    return this.items.map(item => {
       let conditionsTotal = 0,
-      price = item.price;
+        price = item.price;
       if (Array.isArray(item.conditions)) {
         //line 308
       }
 
-/*      if (item.attributesPrice) {
-        price = price + item.attributesPrice;
-      }*/
+      /*      if (item.attributesPrice) {
+              price = price + item.attributesPrice;
+            }*/
 
       price = price + conditionsTotal;
 
       return price * item.quantity;
     })
-      .reduce((pre,curr)=>pre+curr,0);
+      .reduce((pre, curr) => pre + curr, 0);
   }
 
   private loadExistingCart(cart) {
@@ -368,6 +368,41 @@ export class Cart implements OnModuleInit, ICart {
   public setCartSettings(settings: ICartSettings) {
     this.settings = settings;
 
+    return this;
+  }
+
+  public existingItem(item: ICartItem) {
+    return this.items.findIndex(it => {
+      if (item.productId === it.productId && isEqual(item.metaData, it.metaData)) {
+        if ((!item.variantId && !it.variantId) || (item.variantId === it.variantId)) {
+          return true
+        }
+      }
+    });
+  }
+
+  public manageAdd(item: ICartItem) {
+    this.items.push({ ...item, uuid: v4() });
+    this.updateTotals();
+    this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
+    return this;
+  }
+
+  public manageRemove(idx: number) {
+    const foundItem = Object.assign({}, this.items[idx]);
+    this.items.splice(idx, 1);
+    this.updateTotals();
+    this.eventEmitter.emit(Cart.itemRemovedEventName, { item: foundItem, cart: this.toObject() });
+
+    return this;
+  }
+
+  public manageUpdateQuantity(idx: number, quantity = 1) {
+    this.items[idx].quantity = quantity;
+    this.updateTotals();
+
+    const item = this.items[idx];
+    this.eventEmitter.emit(Cart.itemUpdatedEventName, { item, cart: this.toObject() });
     return this;
   }
 }
