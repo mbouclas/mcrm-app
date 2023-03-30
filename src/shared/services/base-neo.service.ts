@@ -321,7 +321,7 @@ export class BaseNeoService {
       this.eventEmitter.emit(this.constructor['createdEventName'], ret);
     }
 
-    return ret[0];
+    return ret;
   }
 
   async update(
@@ -389,7 +389,7 @@ export class BaseNeoService {
       this.eventEmitter.emit(this.constructor['updatedEventName'], res);
     }
 
-    return res;
+    return res[0][this.model.modelConfig.as];
   }
 
   async delete(uuid: string, userId?: string) {
