@@ -26,7 +26,6 @@ export class GateService extends BaseNeoService {
       `MATCH (g:Gate) return g as gate ORDER BY g.name ASC`,
       {},
     );
-    console.log(result);
 
     const allGates = result.map((item: any) => {
       const record = item.gate;

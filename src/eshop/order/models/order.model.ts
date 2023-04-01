@@ -26,7 +26,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = [];
 
@@ -37,7 +37,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       must: [
         {
           type: 'role',
-          value: 'ADMIN',
+          value: 98,
         },
       ],
     },

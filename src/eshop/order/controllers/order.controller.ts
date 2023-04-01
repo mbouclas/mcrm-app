@@ -412,7 +412,12 @@ export class OrderController {
   }
 
   @Delete(`:uuid`)
-  async delete(@Param('uuid') uuid: string) {
-    return await new OrderService().delete(uuid);
+  async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
+    //const userId = session.user && session.user.user['uuid'];
+    const userId = '7aaa0da0-2504-4238-ada5-91a3f5975029';
+    console.log('user id ', userId);
+
+
+    return await new OrderService().delete(uuid, userId);
   }
 }

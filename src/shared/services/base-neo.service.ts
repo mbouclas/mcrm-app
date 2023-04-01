@@ -27,6 +27,7 @@ import { RecordUpdateFailedException } from '~shared/exceptions/record-update-fa
 import { store } from '~root/state';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
+import { range } from 'lodash';
 
 const debug = require('debug')('mcms:neo:query');
 
@@ -393,6 +394,33 @@ export class BaseNeoService {
   }
 
   async delete(uuid: string, userId?: string) {
+    let authorized = true;
+    const modelDeleteRule = this.model.modelConfig.deleteRules;
+
+    if (modelDeleteRule) {
+      const mustDeleteRules = modelDeleteRule.must;
+
+      if (mustDeleteRules && mustDeleteRules.length) {
+
+        const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
+
+        let roles = await this.neo.readWithCleanUp(authorizeQuery);
+        const maxLevel = Math.max(...roles.map((role) => role.r.level));
+
+        for (let i = 0; i < mustDeleteRules.length; i++) {
+          const rule = mustDeleteRules[i];
+
+          if (rule.type === 'role' && maxLevel < rule.value) {
+            authorized = false;
+          }
+        }
+      }
+    }
+
+    if (!authorized) {
+      throw new Error('No permission');
+    }
+
     const query = `MATCH (${this.model.modelConfig.select} {uuid: $uuid}) DETACH DELETE ${this.model.modelConfig.as} RETURN *`;
     try {
       await this.neo.write(query, { uuid });
