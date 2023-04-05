@@ -44,11 +44,6 @@ export class OrderController {
     return await new OrderService().findOne({ uuid }, rels);
   }
 
-  @Patch(`:uuid`)
-  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    return await new OrderService().update(uuid, body);
-  }
-
   @Post('/webhooks')
   async webhook(@Body() body: IGenericObject) {
     if (body.type === 'payment_intent.succeeded') {
@@ -416,5 +411,88 @@ export class OrderController {
     const userId = session.user && session.user.user['uuid'];
 
     return await new OrderService().delete(uuid, userId);
+  }
+
+
+  @Patch(`:uuid`)
+  async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
+
+    const userId = session.user && session.user.user['uuid'];
+
+    const orderService = new OrderService();
+
+    const orderItem = await orderService.findOne({ uuid });
+
+    if (!orderItem) {
+      throw new Error("Order doesn't exist");
+    }
+
+    const shippingAddress = await new AddressService().update(body.shippingAddressId, {
+      city: body.shippingAddress.city,
+      country: body.shippingAddress.country,
+      zipcode: body.shippingAddress.zipcode,
+      street: body.shippingAddress.street,
+      note: body.shippingAddress.note,
+      type: 'SHIPPING',
+      userId,
+    });
+
+    const billingAddress = await new AddressService().update(body.billingAddressId,
+      {
+        city: body.newBillingAddress.city,
+        country: body.newBillingAddress.country,
+        zipcode: body.newBillingAddress.zipcode,
+        street: body.newBillingAddress.street,
+        note: body.newBillingAddress.note,
+        type: 'BILLING',
+        userId,
+      });
+
+    const paymentMethod = await new PaymentMethodService().findOne({
+      uuid: body.paymentMethodId,
+    });
+
+    const pamentProviderSettings = paymentMethod.providerSettings;
+
+    const paymentProviderContainer = McmsDiContainer.get({
+      id: `${pamentProviderSettings.providerName.charAt(0).toUpperCase() +
+        pamentProviderSettings.providerName.slice(1)
+        }Provider`,
+    });
+
+    const paymentMethodProvider: IPaymentMethodProvider =
+      new paymentProviderContainer.reference();
+
+    const shippingMethod = await new ShippingMethodService().findOne({
+      uuid: body.shippingMethodId,
+    });
+
+    const shippingProviderSettings = shippingMethod.providerSettings;
+
+    const shippingProviderContainer = McmsDiContainer.get({
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+        shippingProviderSettings.providerName.slice(1)
+        }Provider`,
+    });
+
+    const shippingMethodProvider: IShippingMethodProvider =
+      new shippingProviderContainer.reference();
+
+    const shippingInfo = await shippingMethodProvider.sendTransaction();
+
+    const order = await orderService.update(uuid, {
+      status: 1,
+      paymentMethod: paymentMethod.title,
+      shippingMethod: shippingMethod.title,
+      salesChannel: body.salesChannel,
+      billingAddressId: billingAddress.uuid,
+      shippingAddressId: shippingAddress.uuid,
+      paymentStatus: 1,
+      shippingStatus: 1,
+      shippingInfo,
+      userId,
+    });
+
+    return order;
   }
 }
