@@ -369,8 +369,25 @@ export class BaseNeoService {
         RETURN *;
         `;
 
+
+    let processedRecord = {};
+
+    for (const key in record) {
+      const value = record[key];
+
+      const field = this.model.fields.find(field => field.varName === key);
+      if (field && field.type === 'nested') {
+        processedRecord[key] = flattenObj(value);
+
+      } else if (field && field.type === 'json') {
+        processedRecord[key] = JSON.stringify(value);
+      } else {
+        processedRecord[key] = value;
+      }
+    }
+
     const res = await this.neo.writeWithCleanUp(query, {
-      ...flattenObj(record),
+      ...processedRecord,
       ...{ uuid },
     });
 

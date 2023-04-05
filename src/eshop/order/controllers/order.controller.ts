@@ -271,141 +271,6 @@ export class OrderController {
     return order;
   }
 
-  @Post(`order-simulation`)
-  async orderSimulation(
-    @Session() session: SessionData,
-    @Body() item: IGenericObject,
-  ) {
-    const service = new OrderService();
-    let cartItem;
-
-    const userItem = {
-      firstName: 'UserF1',
-      lastName: 'UserF2',
-    };
-
-    const productItem = {
-      title: 'Product1',
-      slug: 'product1',
-    };
-
-    const productItem2 = {
-      title: 'Product2',
-      slug: 'product2',
-    };
-
-    const paymentMethodItem = {
-      title: 'Payment method title',
-      description: 'Payment method descripton',
-      status: true,
-    };
-
-    const shippingMethodItem = {
-      title: 'Shipping method title',
-      description: 'Shipping method descripton',
-      status: true,
-    };
-
-    const user = await new UserService().store(userItem);
-    const product = await new ProductService().store(productItem);
-    const product2 = await new ProductService().store(productItem2);
-    const paymentMethod = await new PaymentMethodService().store(
-      paymentMethodItem,
-    );
-    const shippingMethod = await new ShippingMethodService().store(
-      shippingMethodItem,
-    );
-
-    const products = [product, product2];
-
-    await Promise.all(
-      products.map(async (productItem) => {
-        try {
-          cartItem = await new CartService().createCartItemFromProductId(
-            product.uuid,
-            product.quantity,
-            product.variantId,
-            user.uuid,
-          );
-        } catch (e) {
-          console.log(e);
-          return { success: false, reason: 'ProductNotFound' };
-        }
-
-        try {
-          session.cart.add(cartItem);
-        } catch (e) {
-          console.log(e);
-        }
-      }),
-    );
-
-    await session.cart.save();
-
-    const order = await service.store({
-      status: 1,
-      paymentMethod: paymentMethod.title,
-      shippingMethod: shippingMethod.title,
-      userId: user.uuid,
-    });
-
-    await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['PaymentMethod'],
-      {
-        uuid: paymentMethod.uuid,
-      },
-      'paymentMethod',
-    );
-
-    await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['ShippingMethod'],
-      {
-        uuid: shippingMethod.uuid,
-      },
-      'shippingMethod',
-    );
-
-    await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['User'],
-      {
-        uuid: user.uuid,
-      },
-      'user',
-    );
-
-    await Promise.all(
-      products.map(async (productItem) => {
-        await service.attachModelToAnotherModel(
-          store.getState().models['Order'],
-          {
-            uuid: order.uuid,
-          },
-          store.getState().models['Product'],
-          {
-            uuid: productItem.uuid,
-          },
-          'product',
-        );
-      }),
-    );
-
-    await session.cart.clearWithDb();
-
-    return { success: true };
-  }
-
   @Delete(`:uuid`)
   async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
     const userId = session.user && session.user.user['uuid'];
@@ -414,7 +279,7 @@ export class OrderController {
   }
 
 
-  @Patch(`:uuid`)
+  @Post(`:uuid`)
   async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
 
     const userId = session.user && session.user.user['uuid'];
@@ -427,58 +292,22 @@ export class OrderController {
       throw new Error("Order doesn't exist");
     }
 
-    const shippingAddress = await new AddressService().update(body.shippingAddressId, {
-      city: body.shippingAddress.city,
-      country: body.shippingAddress.country,
-      zipcode: body.shippingAddress.zipcode,
-      street: body.shippingAddress.street,
-      note: body.shippingAddress.note,
-      type: 'SHIPPING',
-      userId,
-    });
+    const paymentMethodBody = body.paymentMethod[0];
+    const paymentMethod = await new PaymentMethodService().update(paymentMethodBody.uuid, paymentMethodBody);
 
-    const billingAddress = await new AddressService().update(body.billingAddressId,
-      {
-        city: body.newBillingAddress.city,
-        country: body.newBillingAddress.country,
-        zipcode: body.newBillingAddress.zipcode,
-        street: body.newBillingAddress.street,
-        note: body.newBillingAddress.note,
-        type: 'BILLING',
-        userId,
-      });
+    const shippingMethodBody = body.shippingMethod[0];
+    const shippingMethod = await new ShippingMethodService().update(shippingMethodBody.uuid, shippingMethodBody);
 
-    const paymentMethod = await new PaymentMethodService().findOne({
-      uuid: body.paymentMethodId,
-    });
 
-    const pamentProviderSettings = paymentMethod.providerSettings;
+    const shippingAdressBody = body.address.find(address => address.type === 'SHIPPING');
+    const shippingAddress = await new AddressService().update(shippingAdressBody.uuid, shippingAdressBody);
 
-    const paymentProviderContainer = McmsDiContainer.get({
-      id: `${pamentProviderSettings.providerName.charAt(0).toUpperCase() +
-        pamentProviderSettings.providerName.slice(1)
-        }Provider`,
-    });
 
-    const paymentMethodProvider: IPaymentMethodProvider =
-      new paymentProviderContainer.reference();
+    const billingAdressBody = body.address.find(address => address.type === 'BILLING');
+    const billingAddress = await new AddressService().update(billingAdressBody.uuid,
+      billingAdressBody);
 
-    const shippingMethod = await new ShippingMethodService().findOne({
-      uuid: body.shippingMethodId,
-    });
 
-    const shippingProviderSettings = shippingMethod.providerSettings;
-
-    const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
-        shippingProviderSettings.providerName.slice(1)
-        }Provider`,
-    });
-
-    const shippingMethodProvider: IShippingMethodProvider =
-      new shippingProviderContainer.reference();
-
-    const shippingInfo = await shippingMethodProvider.sendTransaction();
 
     const order = await orderService.update(uuid, {
       status: 1,
@@ -489,7 +318,7 @@ export class OrderController {
       shippingAddressId: shippingAddress.uuid,
       paymentStatus: 1,
       shippingStatus: 1,
-      shippingInfo,
+      shippingInfo: body.shippingInfo,
       userId,
     });
 
