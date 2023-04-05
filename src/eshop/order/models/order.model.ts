@@ -9,6 +9,7 @@ import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PaymentMethodModel } from '../../payment-method/models/payment-method.model';
 import { ShippingMethodModel } from '../../shipping-method/models/shipping-method.model';
+import { AddressModel } from '~root/eshop/address/models/address.model';
 
 const modelName = 'Order';
 @McmsDi({
@@ -117,6 +118,23 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         rel: 'HAS_ADDRESS',
+        tabs: ['General'],
+        fields: AddressModel.fields.map((field) => ({
+          ...field,
+          updateRules: {
+            must: [
+              {
+                type: 'role',
+                value: 'ADMIN',
+              },
+              {
+                type: 'field',
+                value: 'status=0',
+              },
+            ],
+          },
+        })),
+
       },
     },
   };
@@ -343,7 +361,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       label: 'BillingAddressId',
       placeholder: 'BillingAddressId',
       type: 'text',
-      group: 'main',
+      group: 'hidden',
       updateRules: {
         must: [
           {
@@ -362,7 +380,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       label: 'ShippingAddressId',
       placeholder: 'ShippingAddressId',
       type: 'text',
-      group: 'main',
+      group: 'hidden',
       updateRules: {
         must: [
           {
