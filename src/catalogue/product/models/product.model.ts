@@ -35,7 +35,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       must: [
         {
           type: 'role',
-          value: 98,
+          value: '98',
         },
       ],
     },
@@ -213,7 +213,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -229,7 +229,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -250,7 +250,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -268,7 +268,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -288,7 +288,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -340,7 +340,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -369,7 +369,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }
@@ -386,7 +386,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2,
+            value: '2',
           },
         ],
       }

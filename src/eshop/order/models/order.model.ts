@@ -38,7 +38,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       must: [
         {
           type: 'role',
-          value: 98,
+          value: '98',
         },
       ],
     },
@@ -75,7 +75,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             must: [
               {
                 type: 'role',
-                value: 98,
+                value: '98',
               },
               {
                 type: 'field',
@@ -101,7 +101,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             must: [
               {
                 type: 'role',
-                value: 98,
+                value: '98',
               },
               {
                 type: 'field',
@@ -125,7 +125,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             must: [
               {
                 type: 'role',
-                value: 98,
+                value: '98',
               },
               {
                 type: 'field',
@@ -151,7 +151,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -171,7 +171,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -191,7 +191,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -215,7 +215,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
         ],
       },
@@ -231,7 +231,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -251,7 +251,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -271,7 +271,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -290,7 +290,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -309,7 +309,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -328,7 +328,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -347,7 +347,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -366,7 +366,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -385,7 +385,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -422,7 +422,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
@@ -451,7 +451,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 98,
+            value: '98',
           },
           {
             type: 'field',
