@@ -24,13 +24,22 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public slug;
   public uuid: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = ['title', 'category'];
 
   public static modelConfig: INeo4jModel = {
     select: 'product:Product',
     as: 'product',
+    deleteRules: {
+      must: [
+        {
+          type: 'role',
+          value: 98,
+        },
+      ],
+    },
+
     relationships: {
       variants: {
         model: 'ProductVariant',
@@ -200,6 +209,14 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
     },
     {
       varName: 'active',
@@ -208,6 +225,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'boolean',
       isSortable: true,
       group: 'main',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'title',
@@ -219,6 +245,16 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
+
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'slug',
@@ -228,6 +264,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       group: 'hidden',
       isSlug: true,
       slugFrom: 'title',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'description',
@@ -239,6 +284,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'price',
@@ -265,6 +319,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           boost: 2,
         },
       },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+        ],
+      }
+
     },
     {
       varName: 'quantity',
@@ -273,6 +336,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'right',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'thumb',
@@ -293,6 +365,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         quality: 70,
       },
       group: 'right',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'updatedAt',
@@ -301,6 +382,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'date',
       isSortable: true,
       group: 'hidden',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2,
+          },
+        ],
+      }
+
     },
     {
       varName: 'fromImport',
@@ -309,6 +399,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'boolean',
       group: 'hidden',
       default: false,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 2
+          },
+        ],
+      }
+
     },
     {
       varName: 'deliverability',
