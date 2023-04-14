@@ -202,6 +202,21 @@ export class Neo4jService implements OnApplicationShutdown {
    * @param parentKey
    */
   mergeRelationshipsToParent(record: any, model: any) {
+    console.log('RECORD ', record);
+    const modelRelKeys = Object.keys(model.modelConfig.relationships);
+    console.log(modelRelKeys);
+
+    const aliasKeyMap = modelRelKeys.reduce((acc, key) => {
+
+      const alias = model.modelConfig.relationships[key].modelAlias;
+
+      return {
+        ...acc,
+        [alias]: key
+      }
+    }, {})
+
+
     let parentKey = model.modelConfig.as;
 
     const obj: IGenericObject = fromRecordToModel(record[parentKey], model);
@@ -214,11 +229,16 @@ export class Neo4jService implements OnApplicationShutdown {
         continue;
       }
 
+      const returnKey = aliasKeyMap[key];
+      console.log('return key ', aliasKeyMap, key);
+
       const relModel =
-        store.getState().models[model.modelConfig.relationships[key].model];
+        store.getState().models[model.modelConfig.relationships[returnKey].model];
 
       if (relModel) {
-        obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+        if (record[key]) {
+          obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+        }
       }
     }
 
