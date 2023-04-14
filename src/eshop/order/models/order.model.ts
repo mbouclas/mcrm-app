@@ -56,7 +56,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         modelAlias: 'user',
         alias: 'userRelationship',
         type: 'inverse',
-        isCollection: true,
+        isCollection: false,
         rel: 'HAS_USER',
       },
 

@@ -202,7 +202,7 @@ export class Neo4jService implements OnApplicationShutdown {
    * @param parentKey
    */
   mergeRelationshipsToParent(record: any, model: any) {
-    console.log('RECORD ', record);
+    console.log(record);
     const modelRelKeys = Object.keys(model.modelConfig.relationships);
     console.log(modelRelKeys);
 
@@ -230,14 +230,20 @@ export class Neo4jService implements OnApplicationShutdown {
       }
 
       const returnKey = aliasKeyMap[key];
-      console.log('return key ', aliasKeyMap, key);
 
       const relModel =
         store.getState().models[model.modelConfig.relationships[returnKey].model];
 
+      const isCollection = model.modelConfig.relationships[returnKey].isCollection;
+
       if (relModel) {
         if (record[key]) {
-          obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+
+          if (isCollection) {
+            obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
+          } else {
+            obj[key] = fromRecordToModel(record[key], relModel);
+          }
         }
       }
     }
