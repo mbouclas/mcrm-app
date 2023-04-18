@@ -206,6 +206,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'text',
       isSortable: true,
       group: 'right',
+      groupIndex: 0,
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
@@ -301,6 +302,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'right',
+      groupIndex: 1,
       searchIndexSettings: {
         isAutoCompleteField: false,
         aggregationFieldSettings: {
@@ -336,6 +338,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'number',
       isSortable: true,
       group: 'right',
+      groupIndex: 2,
       updateRules: {
         must: [
           {
@@ -365,6 +368,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         quality: 70,
       },
       group: 'right',
+      groupIndex: 3,
       updateRules: {
         must: [
           {
