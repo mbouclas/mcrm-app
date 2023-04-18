@@ -114,7 +114,7 @@ export class OrderService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {}
+  async onAppLoaded() { }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;

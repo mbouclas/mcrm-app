@@ -319,6 +319,8 @@ export class OrderController {
       paymentStatus: 1,
       shippingStatus: 1,
       shippingInfo: body.shippingInfo,
+      VAT: body.VAT,
+      total: body.total,
       userId,
     });
 
