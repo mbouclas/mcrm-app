@@ -16,6 +16,12 @@ export class ProductController {
     );
   }
 
+  @Post('/basic')
+  async storeBasic(@Body() body: IGenericObject) {
+    console.log('body ', body);
+    return await new ProductService().store(body);
+  }
+
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];

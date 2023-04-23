@@ -31,30 +31,13 @@ import { range } from 'lodash';
 
 const debug = require('debug')('mcms:neo:query');
 
-const flattenObj = (ob) => {
-  // The object which contains the
-  // final result
-  let result = {};
+const flattenObj = (record, baseKey, nested) => {
+  for (const key in nested) {
+    const capitalKey = capitalizeFirstLetter(key);
+    const nestedKey = `${baseKey}${capitalKey}`;
 
-  // loop through the object "ob"
-  for (const i in ob) {
-    // We check the type of the i using
-    // typeof() function and recursively
-    // call the function again
-    if (typeof ob[i] === 'object' && !Array.isArray(ob[i])) {
-      const temp = flattenObj(ob[i]);
-      for (const j in temp) {
-        // Store temp in result
-        result[i + capitalizeFirstLetter(j)] = temp[j];
-      }
-    }
-
-    // Else store ob[i] in result directly
-    else {
-      result[i] = ob[i];
-    }
+    record[nestedKey] = nested[key];
   }
-  return result;
 };
 
 @McmsDi({
@@ -207,8 +190,8 @@ export class BaseNeoService {
         WITH ${modelAlias}
         ${matches.join('\n')}
         RETURN ${returnVars.join(
-      ',',
-    )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
+          ',',
+        )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
     // console.log('----------------\n',query,'\n----------');
     this.logger(query);
 
@@ -369,16 +352,14 @@ export class BaseNeoService {
         RETURN *;
         `;
 
-
     let processedRecord = {};
 
     for (const key in record) {
       const value = record[key];
 
-      const field = this.model.fields.find(field => field.varName === key);
+      const field = this.model.fields.find((field) => field.varName === key);
       if (field && field.type === 'nested') {
-        processedRecord[key] = flattenObj(value);
-
+        flattenObj(processedRecord, key, value);
       } else if (field && field.type === 'json') {
         processedRecord[key] = JSON.stringify(value);
       } else {
@@ -418,7 +399,6 @@ export class BaseNeoService {
       const mustDeleteRules = modelDeleteRule.must;
 
       if (mustDeleteRules && mustDeleteRules.length) {
-
         const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
 
         let roles = await this.neo.readWithCleanUp(authorizeQuery);
@@ -496,18 +476,19 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-        Object.keys(relationshipProps)
-          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-          .join()
-          .slice(0, -1),
-      )
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
       : '';
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel
-      }]${relationship.type === 'normal' ? '->' : '-'}(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${
+      relationship.rel
+    }]${relationship.type === 'normal' ? '->' : '-'}(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;

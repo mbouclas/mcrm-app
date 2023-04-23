@@ -27,7 +27,7 @@ import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
@@ -71,6 +71,11 @@ export class OrderController {
     }
 
     return true;
+  }
+
+  @Post('/basic')
+  async storeBasic(@Body() body: IGenericObject) {
+    return await new OrderService().store(body);
   }
 
   @Post()
@@ -132,9 +137,10 @@ export class OrderController {
     const pamentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${pamentProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${
+        pamentProviderSettings.providerName.charAt(0).toUpperCase() +
         pamentProviderSettings.providerName.slice(1)
-        }Provider`,
+      }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider =
@@ -147,9 +153,10 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
         shippingProviderSettings.providerName.slice(1)
-        }Provider`,
+      }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider =
@@ -259,8 +266,9 @@ export class OrderController {
           },
           'product',
           {
-            quantity: cart.items.find((item) => item.productId === productItem.uuid)
-              .quantity,
+            quantity: cart.items.find(
+              (item) => item.productId === productItem.uuid,
+            ).quantity,
           },
         );
       }),
@@ -278,10 +286,12 @@ export class OrderController {
     return await new OrderService().delete(uuid, userId);
   }
 
-
   @Post(`:uuid`)
-  async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
-
+  async update(
+    @Session() session: SessionData,
+    @Body() body: IGenericObject,
+    @Param('uuid') uuid: string,
+  ) {
     const userId = session.user && session.user.user['uuid'];
 
     const orderService = new OrderService();
@@ -293,21 +303,32 @@ export class OrderController {
     }
 
     const paymentMethodBody = body.paymentMethod[0];
-    const paymentMethod = await new PaymentMethodService().update(paymentMethodBody.uuid, paymentMethodBody);
+    const paymentMethod = await new PaymentMethodService().update(
+      paymentMethodBody.uuid,
+      paymentMethodBody,
+    );
 
     const shippingMethodBody = body.shippingMethod[0];
-    const shippingMethod = await new ShippingMethodService().update(shippingMethodBody.uuid, shippingMethodBody);
+    const shippingMethod = await new ShippingMethodService().update(
+      shippingMethodBody.uuid,
+      shippingMethodBody,
+    );
 
+    const shippingAdressBody = body.address.find(
+      (address) => address.type === 'SHIPPING',
+    );
+    const shippingAddress = await new AddressService().update(
+      shippingAdressBody.uuid,
+      shippingAdressBody,
+    );
 
-    const shippingAdressBody = body.address.find(address => address.type === 'SHIPPING');
-    const shippingAddress = await new AddressService().update(shippingAdressBody.uuid, shippingAdressBody);
-
-
-    const billingAdressBody = body.address.find(address => address.type === 'BILLING');
-    const billingAddress = await new AddressService().update(billingAdressBody.uuid,
-      billingAdressBody);
-
-
+    const billingAdressBody = body.address.find(
+      (address) => address.type === 'BILLING',
+    );
+    const billingAddress = await new AddressService().update(
+      billingAdressBody.uuid,
+      billingAdressBody,
+    );
 
     const order = await orderService.update(uuid, {
       status: 1,
