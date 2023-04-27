@@ -74,8 +74,32 @@ export class OrderController {
   }
 
   @Post('/basic')
-  async storeBasic(@Body() body: IGenericObject) {
-    return await new OrderService().store(body);
+  async storeBasic(
+    @Session() session: SessionData,
+    @Body() body: IGenericObject,
+  ) {
+    const userId = session.user && session.user.user['uuid'];
+
+    const orderService = new OrderService();
+
+    const order = await orderService.store({
+      ...body,
+      userId,
+    });
+
+    await orderService.attachModelToAnotherModel(
+      store.getState().models['Order'],
+      {
+        uuid: order.uuid,
+      },
+      store.getState().models['User'],
+      {
+        uuid: userId,
+      },
+      'user',
+    );
+
+    return order;
   }
 
   @Post()
