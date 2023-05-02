@@ -33,8 +33,10 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
   }
 
   // Full path or url
-  async handle(file: string, type:'local'|'remote' = 'local'): Promise<IFileUploadHandlerResult> {
+  async handle(file: string, type:'local'|'remote' = 'local',  metaData: any = {}): Promise<IFileUploadHandlerResult> {
     let url, id,res;
+
+
     if (type === 'local') {
       // url = await ImageService.provider.handleLocal(file);
       url = (process.env.ENV === 'production') ? await ImageService.provider.handleLocal(file) : 'https://res.cloudinary.com/businesslink/image/upload/v1662548134/rps/b3eaf906-a112-46c5-aeef-d5c125864b23.png';
@@ -45,10 +47,10 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
 
     // save it to the db
     try {
-      res = await this.store({
-        active: true,
-        url,
-      });
+      res = await this.store({...{
+          active: true,
+          url,
+        }, ...metaData});
 
       id = res['uuid'];
     }
@@ -64,14 +66,18 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
   }
 
 
-  async linkToObject(image: IItemImage, model: string, itemId: string, type='main') {
+  async linkToObject(image: IItemImage, model: string, itemId: string, type='main', metaData: any = {}) {
     // There can be only one. Replace old main with new one. Old one remains linked but not as main
-    let typeQuery;
+    const metaDataQuery = function(varName: string) {
+      return Object.keys(metaData).map(key => `${varName}.${key} = '${metaData[key]}'`).join(',')
+    };
+
+    let typeQuery = '';
     if (type === 'main') {
       typeQuery = `
       WITH *
       OPTIONAL MATCH (model)-[r1:HAS_IMAGE]->(img:Image)
-      SET r1.type = null
+      SET r1.type = null ${metaDataQuery('r1').length ? `, ${metaDataQuery('r1')}` : ''}
       WITH image,model
       `;
     }
@@ -80,8 +86,8 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
         MATCH (image:Image {uuid: $uuid})
         ${typeQuery}
         MERGE (model)-[r:HAS_IMAGE]->(image)
-        ON MATCH SET r.type = $type, r.updatedAt = datetime()
-        ON CREATE SET r.type = $type, r.createdAt = datetime()
+        ON MATCH SET r.type = $type, r.updatedAt = datetime() ${metaDataQuery('r').length ? `, ${metaDataQuery('r')}` : ''}
+        ON CREATE SET r.type = $type, r.createdAt = datetime() ${metaDataQuery('r').length ? `, ${metaDataQuery('r')}` : ''}
         return *`;
 
     try {
@@ -109,7 +115,7 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
          WITH * 
          RETURN image, r
          ORDER BY image.orderBy ASC`;
-    console.log(query)
+    // console.log(query)
 
     const res = await this.neo.readWithCleanUp(query, {uuid});
 

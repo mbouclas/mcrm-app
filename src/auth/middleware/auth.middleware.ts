@@ -19,6 +19,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   async use(req: ExpressRequest, res: ExpressResponse, next: () => void) {
+
     if (
       process.env.NODE_ENV === 'development' &&
       process.env.APPLY_AUTH_MIDDLEWARE === 'false'
@@ -31,6 +32,11 @@ export class AuthMiddleware implements NestMiddleware {
       if (session && session.user) {
         req.session.user = session.user;
       }
+    }
+
+    if (req.headers['authorization']) {
+      const session = await this.cache.get(`token-${req.headers['authorization'].replace('Bearer ', '')}`);
+      req.session.user = session.user;
     }
 
     if (!req.session || !req.session.user) {

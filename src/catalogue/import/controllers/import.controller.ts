@@ -4,6 +4,8 @@ import { ImportService } from "~catalogue/import/services/import.service";
 import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
 import {resolve} from 'path';
 import { stat } from "fs/promises";
+import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
+import { HttpService } from "@nestjs/axios";
 
 export class AnalyzerQueryParamsDTO {
   template?: string;
@@ -32,15 +34,41 @@ export class ImportController {
 
   @Post('analyze')
   @UseInterceptors(FileInterceptor('file'))
-  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
+  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
     if (queryParams.template) {
       //Get the template and load it into the import service
     }
 
 
-    const res = await (new ImportService()).analyzeFile(file);
+    const res = await (new ImportService()).analyzeFile(file, limit);
 
     return {...res, file : { filename: file.filename, mimetype: file.mimetype }};
+  }
+
+  /**
+   * Get a CSV file with product photos and analyze it
+   * @param file
+   * @param limit
+   * @param queryParams
+   */
+  @Post('photos/analyze')
+  @UseInterceptors(FileInterceptor('file'))
+  async analyzePhotos(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
+    const res = await (new ImportProductPhotosService(new HttpService())).analyze(file, limit);
+    return res;
+  }
+
+  @Post('photos/start')
+  async startPhotosImport(@Body() file: Express.Multer.File) {
+    // On the upload we're missing the path for security reasons. Let's find the file based on the filename
+    const dest = resolve(require('path').resolve('./'), './upload');
+    file.path = resolve(dest,file.filename);
+
+    // Push it to the worker
+    const job = await ImportQueueService.photosImportQueue.add(ImportProductPhotosService.jobEventName, file);
+    return {success: true, jobId: job.id};
+
+    // return await (new ImportProductPhotosService()).processFile(file);
   }
 
   @Get('progress/:id')
@@ -55,6 +83,26 @@ export class ImportController {
   @Get('progress/image/:id')
   async getImageProcessingProgress(@Param('id') jobId: string) {
     const job = await ImportQueueService.imageProcessingQueue.getJob(jobId);
-    return await job.getState();
+    try {
+      return await job.getState();
+    }
+    catch (e) {
+      console.log(`Error getting state ${jobId}`)
+      return {success: false, error: e.message}
+    }
+
+  }
+
+  @Get('progress/photos-import/:id')
+  async getPhotosImportProgress(@Param('id') jobId: string) {
+    const job = await ImportQueueService.photosImportQueue.getJob(jobId);
+    try {
+      return await job.getState();
+    }
+    catch (e) {
+      console.log(`Error getting state ${jobId}`);
+      return {success: false, error: e.message}
+    }
+
   }
 }

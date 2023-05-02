@@ -26,9 +26,16 @@ export const AppStateActions = {
       AppStateActions.setModel(model.name, model)
     });
   },
-  setConfig: (name: string, config: any) => {
+  setConfig: (name: string, config: any, merge = false) => {
     const configs = store.getState().configs;
-    configs[name] = config;
-    store.setState({configs});
+
+    if (!merge) {
+      configs[name] = config;
+      store.setState({ configs });
+      return;
+    }
+
+    configs[name] = { ...configs[name], ...config };
+    store.setState({ configs });
   },
 };

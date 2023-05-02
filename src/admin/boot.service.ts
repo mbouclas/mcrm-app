@@ -15,7 +15,7 @@ export class BootService extends BaseNeoService {
           allModels[key].fields.length > 0,
       )
       .map((key) => {
-        console.log('ALLLLL MODELS', allModels[key].name);
+        // console.log('ALLLLL MODELS', allModels[key].name);
         return {
           name: allModels[key].name,
           fields: allModels[key].fields,

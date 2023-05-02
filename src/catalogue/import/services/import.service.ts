@@ -14,9 +14,10 @@ import { IImportProcessorFieldMap } from "~catalogue/import/services/base-proces
 import { PropertyValueModel } from "~catalogue/property/property-value.model";
 import { ImageService } from "~image/image.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
+const slugify = require('slug');
 
-export interface ITransformerResult {
-  data: IImportSchema;
+export interface ITransformerResult<T> {
+  data: T;
   isInvalid: boolean;
   invalidFields: IInvalidField[];
 }
@@ -46,6 +47,7 @@ export interface IProcessorResult {
   data: IImportSchema[];
   isInvalid: boolean;
   invalidRows: IInvalidField[];
+  validRows: number;
 }
 
 @Injectable()
@@ -66,6 +68,12 @@ export class ImportService implements OnApplicationBootstrap {
       importFieldName: "Reference",
       name: "sku",
       required: true
+    },
+    {
+      importFieldName: "variantID",
+      name: "variantId",
+      required: true,
+      type: 'variantId'
     },
     {
       importFieldName: "Name",
@@ -186,7 +194,7 @@ export class ImportService implements OnApplicationBootstrap {
    */
   async processImageFromImport(job: Job) {
     const product = job.data as IImportSchema;
-    if (process.env.ENV !== 'production') {
+    if (process.env.ENV !== 'production' && !job.data.processForReal) {
       console.log(`processing Image from Import job ${job.id}`);
       return {};
     }
@@ -215,10 +223,11 @@ export class ImportService implements OnApplicationBootstrap {
       for (let idx = 0; product.variants.length > idx; idx++) {
         if (!product.variants[idx].image) {continue;}
 
-        const img = await service.handle(product.variants[idx].image, 'remote');
         const variant = await (new ProductVariantService()).findOne({variantId: product.variants[idx].variantId});
 
         if (!variant) {continue;}
+        const img = await service.handle(product.variants[idx].image, 'remote');
+
 
         await service.linkToObject({uuid: img.id}, 'ProductVariant', variant['uuid']);
         console.log(`Variant ${variant['variantId']} linked to image ${img.id}`)
@@ -252,7 +261,7 @@ export class ImportService implements OnApplicationBootstrap {
 
   }
 
-  async analyzeFile(file: Express.Multer.File) {
+  async analyzeFile(file: Express.Multer.File, limit?: number) {
     let res: IProcessorResult;
     try {
       const processor = ImportService.determineProcessorBasedOnMimeType(file.mimetype);
@@ -262,16 +271,22 @@ export class ImportService implements OnApplicationBootstrap {
 
       res = await processorService.run(file);
     } catch (e) {
-      console.log(e);
+      console.log(`Error processing file ${file.originalname}`, e);
     }
-
+    const grouped = groupBy(res.data, "sku");
+    res.validRows = Object.keys(grouped).length;
+    if (limit) {
+      res.data = res.data.slice(0, limit);
+    }
 
     return res;
   }
 
   async processFile(file: Express.Multer.File) {
     const s = new ImportService();
+
     const res = await s.analyzeFile(file);
+
 
     // Now try to group products into variants, images etc
 
@@ -310,9 +325,9 @@ export class ImportService implements OnApplicationBootstrap {
         return product;
       }
 
-      // Assign properties to each entry
+      // Assign properties to each entry. Slugify to match the DB
       product.categories = product.categories.map(c => {
-        return c.toLowerCase();
+        return slugify(c, {lower: true});
       });
 
       product.assignedProperties = product.properties.map(prop => prop.key.trim().toLowerCase());
@@ -323,7 +338,7 @@ export class ImportService implements OnApplicationBootstrap {
       product.allProperties = [];
       row.forEach((r, index) => {
         const name = [];
-        const variantId = `${r.sku}.${index}`;
+        const variantId = product.variantId ? product.variantId : `${r.sku}.${index}`;
 
         // console.log(r)
         product.allProperties.push(Object.assign([], r.properties.map(prop => ({
@@ -497,7 +512,7 @@ export class ImportService implements OnApplicationBootstrap {
                     
           RETURN *;
       `;
-
+// console.log('---------', products.length)
     // console.log(query);
 // console.log(products[1].variants)
     // console.log(products[0]['propertyValues']);
@@ -537,7 +552,7 @@ export class ImportService implements OnApplicationBootstrap {
       pv.price = variant.price, pv.image = variant.image,  pv.updatedAt = datetime(), pv.createdAt = datetime()
 
       WITH *
-      CREATE (n)-[rpv:HAS_VARIANTS {createdAt: datetime()}]->(pv)
+      MERGE (n)-[rpv:HAS_VARIANTS {createdAt: datetime()}]->(pv)
     
           
       RETURN *;
@@ -569,9 +584,11 @@ export class ImportService implements OnApplicationBootstrap {
       console.log(e);
     }
 
+
+// console.log('*********', JSON.stringify(products.find(p => p.sku === 'R7200')), '*********')
     await this.importProperties(products);
     await this.importPropertyValues(products);
-    await this.importImages(products);
+    // await this.importImages(products);
   }
 
   async importProperties(products: IImportSchema[]) {
@@ -638,6 +655,7 @@ export class ImportService implements OnApplicationBootstrap {
    * This is a tricky one as images need to be processed async.
    * Each image must go into a queue where a worker will process it and
    * once done and we have a url, update the DB.
+   * Using processImageFromImport as the job handler
    * @param products
    */
   async importImages(products: IImportSchema[]) {

@@ -10,12 +10,13 @@ export function loadConfig(name: string, reload = false) {
   }
 }
 
-export async function loadConfigs() {
-  const dir = resolve(require('path').resolve('./config'));
+export async function loadConfigs(readFrom = './config', merge = false) {
+  const dir = resolve(require('path').resolve(readFrom));
   const files = await readDirFiles(dir, ['.js', '.json']);
+
   files.forEach(file => {
     const config = require(file.fullFileName);
     const name = file.fileName.replace('.js', '').replace('.json', '');
-    AppStateActions.setConfig(name, config);
+    AppStateActions.setConfig(name, config, merge);
   });
 }

@@ -158,6 +158,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
       },
+      images: {
+        rel: 'HAS_IMAGE',
+        alias: 'imagesRelationship',
+        model: 'Image',
+        modelAlias: 'images',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'name',
+      },
       creator: {
         rel: 'HAS_CREATED',
         alias: 'creatorRelationship',

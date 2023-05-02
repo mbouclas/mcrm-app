@@ -8,6 +8,7 @@ import { BaseProcessorService } from "~catalogue/import/services/base-processor"
 import { CsvProcessorService } from "~catalogue/import/services/csv-processor.service";
 import { PropertiesService } from "~catalogue/import/services/properties.service";
 import { ImportTemplateService } from './services/import-template.service';
+import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
 
 
 
@@ -19,6 +20,7 @@ import { ImportTemplateService } from './services/import-template.service';
     BaseProcessorService,
     CsvProcessorService,
     ImportTemplateService,
+    ImportProductPhotosService,
   ],
   imports: [
     MulterModule.registerAsync({

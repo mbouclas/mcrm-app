@@ -30,6 +30,7 @@ export class PropertiesService implements OnApplicationBootstrap {
 
     const rows = await s.readPropertyValuesCsv(`I:\\Work\\mcms-node\\mcrm\\upload\\color-codes.csv`, fieldMapper)
     await s.importPropertyValuesFromCsv({slug: 'color'}, rows, 'code');*/
+
   }
 
   async readPropertyValuesCsv(filename: string, fieldMapper: IPropertyValueFieldMapper): Promise<PropertyValueModel[]> {
@@ -40,6 +41,7 @@ export class PropertiesService implements OnApplicationBootstrap {
           mapHeaders: ({ header, index }) => header.trim()
         }))
         .on('data', (data) => {
+
           const temp = {};
 
           for (let key in fieldMapper) {
@@ -63,6 +65,7 @@ export class PropertiesService implements OnApplicationBootstrap {
             temp['iconPending'] = true;
           }
 
+
           rows.push(temp);
         })
         .on('error', (e) => reject(e))
@@ -83,6 +86,7 @@ export class PropertiesService implements OnApplicationBootstrap {
         fields.push(key);
       })
     });
+
     const rowFieldsQuery = fields.map(field => {
       return `pv.${field} = row.${field}`;
     });
@@ -98,6 +102,7 @@ export class PropertiesService implements OnApplicationBootstrap {
     MERGE (property)-[r1:HAS_VALUE]->(pv) ON CREATE SET r1.createdAt = datetime() ON MATCH SET r1.updatedAt = datetime()
     return *;
     `;
+
 
     try {
       const res = await service.neo.write(query, {rows})

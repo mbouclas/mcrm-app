@@ -1,40 +1,43 @@
-import { Injectable } from '@nestjs/common';
 import { BaseProcessorService } from "~catalogue/import/services/base-processor";
+import { IInvalidField, IProcessorResult, ITransformerResult } from "~catalogue/import/services/import.service";
 import { createReadStream, existsSync } from "fs";
-import { IImportSchema, IProcessorResult, ITransformerResult } from "~catalogue/import/services/import.service";
-const slug = require('slug');
+import slug from "slug";
 const csv = require('csv-parser');
-
-@Injectable()
-export class CsvProcessorService extends BaseProcessorService {
+export interface IPhotosImportSchema {
+  variantId?: string;
+  productId?: string;
+  image: string;
+  id: string;
+  sku: string;
+}
+export interface IPhotosTransformerResult extends ITransformerResult<IPhotosImportSchema> {
+}
+export class PhotosCsvProcessorService extends BaseProcessorService {
   results = [];
   invalidRows = [];
 
-
   async run(file: Express.Multer.File): Promise<IProcessorResult> {
+    await super.run(file);
     if (!existsSync(file.path)) {
       throw new Error(`File ${file.path} does not exist`);
     }
 
-    await super.run(file);
     return new Promise((resolve, reject) => {
       let idx = 0;
-
       createReadStream(file.path)
         .pipe(csv())
         .on('data', (data) => {
-          //look into field map to do any transformations
           const processedRow = this.transformRow(data, idx === 0);
 
-          if (processedRow.isInvalid && this.invalidRows.findIndex(r => r.id === processedRow.data.sku) === -1) {
-            this.invalidRows.push({row: idx, fields: processedRow.invalidFields, id: processedRow.data.sku});
+          if (processedRow.isInvalid && this.invalidRows.findIndex(r => r.id === processedRow.data.id) === -1) {
+            this.invalidRows.push({row: idx, fields: processedRow.invalidFields, id: processedRow.data.id});
             return;
           }
 
           this.results.push(processedRow.data);
           idx++;
         })
-        .on('error', (e) => { console.log(`CSV Processor Error processing file ${file.path}`); reject(e); })
+        .on('error', (e) => { console.log(`Photo CSV Processor Error processing file ${file.path}`); reject(e); })
         .on('end', () => {
           resolve({
             data: this.results,
@@ -43,15 +46,12 @@ export class CsvProcessorService extends BaseProcessorService {
             validRows: this.results.length,
           })
         });
-    });
 
+    });
   }
-  protected transformRow(rowData: any, debug = false): ITransformerResult<IImportSchema> {
-    //look into field map to do any transformations and dump the useless stuff
-    const data: IImportSchema = {
-      properties: [],
-      categories: []
-    } as IImportSchema;
+
+  protected transformRow(rowData: any, debug: boolean = false): ITransformerResult<IPhotosImportSchema> {
+    const data: IPhotosImportSchema = {} as IPhotosImportSchema;
 
     let isInvalid = false
     const invalidFields = [];
@@ -61,50 +61,35 @@ export class CsvProcessorService extends BaseProcessorService {
       })
       .forEach(key => {
         const field = this.fieldMap.find(f => f.importFieldName === key.trim());
-
         if (field.required && !rowData[key]) {
           isInvalid = true;
           invalidFields.push({key, value: rowData[key]});
           return;
         }
 
-        if (['property', 'category', 'number', 'float'].indexOf(field.type) === -1) {
-          data[field.name] = rowData[key];
-        }
-
         if (field.type === 'number') {
           data[field.name] = parseInt(rowData[key]);
+
+          return;
         }
 
         if (field.type === 'float') {
           data[field.name] = parseFloat(rowData[key]);
-        }
-
-        if (field.type === 'category') {
-          //split first, slugify later
-          const parts = rowData[key].split(',');
-          data['categories'] = parts.map(p => slug(p.trim(), {lower: true}));
-        }
-
-        if (field.type === 'property') {
-          if (['N/A'].indexOf(rowData[key]) !== -1) {return;}
-          data['properties'].push({key: key.replace('property.', ''), value: rowData[key]});
-        }
-
-        if (field.type === 'variantId') {
-          data['variantId'] = rowData[key];
+          return;
         }
 
         if (field.isSlugFor) {
           data[field.isSlugFor] = slug(rowData[key], {trim: true, lower: true});
+          return;
         }
 
+        if (field.name === 'variantId') {
+          const parts = rowData[key].split('.');
+          data['sku'] = parts[0];
+        }
 
+        data[field.name] = rowData[key];
       });
-
-    if (debug) {
-      // console.log(data)
-    }
 
 
     return {

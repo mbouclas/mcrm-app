@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { CommandMeta } from "~cli/meta-data/command-meta";
 export const COMMAND_NAME = "__clicommandname__";
 export const COMMAND_OPTIONS = "__clicommandoptions__";
 
@@ -30,5 +31,7 @@ export function CliCommand(command: string, options?: CommandOptions) {
         Reflect.defineMetadata(COMMAND_OPTIONS, options, args[0], args[1]);
         break;
     }
+
+    CommandMeta.setCommand(command, args[0], options)
   };
 }

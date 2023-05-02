@@ -25,6 +25,15 @@ export class ProductVariantModel extends BaseModel {
         type: 'inverse',
         isCollection: true,
       },
+      images: {
+        rel: 'HAS_IMAGE',
+        alias: 'imagesRelationship',
+        model: 'Image',
+        modelAlias: 'images',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'name',
+      },
     }
   };
 
@@ -63,7 +72,36 @@ export class ProductVariantModel extends BaseModel {
       translatable: true,
       group: 'main'
     },
+    {
+      varName: 'thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
+      type: 'image',
+      imageSettings: {
+        multiple: true,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        fileLimit: 5,
+        quality: 70,
+      },
+      group: 'right',
+      groupIndex: 3,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      }
 
+    },
 
   ];
 }
