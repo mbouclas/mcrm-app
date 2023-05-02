@@ -26,7 +26,7 @@ export class CommandRunner {
       return;
     }
 
-    await command.target(args);
+    await (new command.target).handle(args);
     return;
   }
 

@@ -64,6 +64,7 @@ export class CloudinaryProvider implements IImageProcessingProvider{
         async,
         eager_async: true,
         public_id: imageId,
+        use_filename: true,
         notification_url: process.env.CLOUDINARY_NOTIFICATION_URL,
         eager_notification_url: process.env.CLOUDINARY_NOTIFICATION_URL,
         eager,

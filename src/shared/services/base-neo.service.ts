@@ -199,19 +199,19 @@ export class BaseNeoService {
 
     /*    const data = res.records.map(item => {
           const record = item.get(modelAlias).properties;
-    
+
           returnAliases.forEach(variable => {
             if (variable === modelAlias) {
               return;
             }
-    
+
             const tmp = item.get(variable);
             if (!tmp) {
               return;
             }
-    
+
             // collection
-    
+
             if (Array.isArray(tmp)) {
               record[variable] = tmp
                 .filter(item => {
@@ -230,12 +230,12 @@ export class BaseNeoService {
                       ret[key] = item[key].properties;
                     }
                   });
-    
+
                   return ret;
                 });
               return;
             }
-    
+
             record[variable] = (tmp.low) ? tmp.low : tmp.properties;
           });
         });*/

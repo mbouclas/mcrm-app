@@ -202,9 +202,9 @@ export class Neo4jService implements OnApplicationShutdown {
    * @param parentKey
    */
   mergeRelationshipsToParent(record: any, model: any) {
-    console.log(record);
+    // console.log(record);
     const modelRelKeys = Object.keys(model.modelConfig.relationships);
-    console.log(modelRelKeys);
+    // console.log(modelRelKeys);
 
     const aliasKeyMap = modelRelKeys.reduce((acc, key) => {
 

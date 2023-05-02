@@ -122,6 +122,8 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
 
     // Lets load all configs
     await loadConfigs();
+    // Now all the client configs
+    await loadConfigs('./client-configs', true);
 
     this.eventEmitter.emit('app.loaded', { success: true });
   }

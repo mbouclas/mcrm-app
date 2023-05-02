@@ -6,4 +6,7 @@ module.exports = {
     files: {}
   },
   categories: {},
+  import: {
+    overwriteImages: false,
+  }
 }

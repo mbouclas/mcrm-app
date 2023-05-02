@@ -10,8 +10,10 @@ export class ImportQueueService implements OnModuleInit {
   private static readonly logger = new Logger(ImportQueueService.name);
   public static queueName = 'importQueue'
   public static imageProcessingQueueName = 'importImageProcessingQueue'
+  public static photosImportQueueName = 'importPhotosQueue'
   public static queue: Queue;
   public static imageProcessingQueue: Queue;
+  public static photosImportQueue: Queue;
   protected static workers: Worker[] = [];
   protected static redisConnection = redisConnectionInfo();
   public static imageProcessingEvents: QueueEvents;
@@ -26,8 +28,13 @@ export class ImportQueueService implements OnModuleInit {
     ImportQueueService.imageProcessingEvents = new QueueEvents(ImportQueueService.imageProcessingQueueName, {
       connection: ImportQueueService.redisConnection
     });
+    ImportQueueService.photosImportQueue = new Queue(ImportQueueService.photosImportQueueName, {
+      connection: ImportQueueService.redisConnection
+    });
+
     ImportQueueService.queue.on('waiting', (job) => ImportQueueService.logger.log(`${ImportQueueService.queueName}: ${job.id}  now waiting`));
     ImportQueueService.imageProcessingQueue.on('waiting', (job) => ImportQueueService.logger.log(`${ImportQueueService.imageProcessingQueueName}: ${job.id}  now waiting`));
+    ImportQueueService.photosImportQueue.on('waiting', (job) => ImportQueueService.logger.log(`${ImportQueueService.photosImportQueue}: ${job.id}  now waiting`));
   }
 
   public static addWorker(worker: Processor, queueName) {

@@ -39,3 +39,4 @@ upload/*
 ES-Queries
 src/submodules/*
 .env
+client-configs/*
