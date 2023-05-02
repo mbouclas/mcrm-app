@@ -19,7 +19,7 @@ export class AddressController {
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
     return await new AddressService().find({ userId }, rels);
@@ -38,14 +38,14 @@ export class AddressController {
     @Param('uuid') uuid: string,
     @Body() body: IGenericObject,
   ) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     return await new AddressService().update(uuid, { ...body, userId });
   }
 
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
     return await new AddressService().store({ ...body, userId });
   }
 

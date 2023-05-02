@@ -33,7 +33,7 @@ export class OrderController {
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
     return await new OrderService().findAll({ userId }, rels);
@@ -80,7 +80,7 @@ export class OrderController {
     @Session() session: SessionData,
     @Body() body: IGenericObject,
   ) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     const orderService = new OrderService();
 
@@ -112,9 +112,8 @@ export class OrderController {
       throw new RecordNotFoundException('No items in cart');
     }
 
-    const userId = session.user && session.user.user['uuid'];
-    const email = session.user && session.user.user['email'];
-    console.log('email ', email);
+    const userId = session.user && session.user['uuid'];
+    const email = session.user && session.user['email'];
 
     const orderService = new OrderService();
 
@@ -319,12 +318,12 @@ export class OrderController {
 
     await session.cart.clearWithDb();
 
-    return order;
+    return await orderService.findOne({ uuid: order.uuid });
   }
 
   @Delete(`:uuid`)
   async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     return await new OrderService().delete(uuid, userId);
   }
@@ -335,7 +334,7 @@ export class OrderController {
     @Body() body: IGenericObject,
     @Param('uuid') uuid: string,
   ) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     const orderService = new OrderService();
 

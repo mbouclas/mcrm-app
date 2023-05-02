@@ -1,9 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Cart } from '../cart/Cart';
-import { store } from "~root/state";
-import { CacheService } from "~shared/services/cache.service";
-
-
+import { store } from '~root/state';
+import { CacheService } from '~shared/services/cache.service';
 
 @Injectable()
 export class CartMiddleware implements NestMiddleware {
@@ -30,12 +28,11 @@ export class CartMiddleware implements NestMiddleware {
       }
     }
 
-    if (req.session.user && req.session.user.user) {
-      userId = req.session.user.user['uuid'];
+    if (req.session.user && req.session.user) {
+      userId = req.session.user['uuid'];
     }
     //If no existing cart is found, a new one will be created and passed down to the controller
     await cart.initialize(sessionId, userId);
-
 
     req.session.cart = cart;
     res.header('x-sess-id', sessionId);

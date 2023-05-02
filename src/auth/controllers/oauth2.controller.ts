@@ -166,7 +166,7 @@ export class Oauth2Controller {
     @Session() session: SessionData,
     @Body() body: IGenericObject,
   ) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     const [, userExists] = await handleAsync(
       new UserService().update(userId, {
