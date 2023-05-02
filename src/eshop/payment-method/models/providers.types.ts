@@ -4,5 +4,12 @@ export interface IPaymentMethodProvider {
   setConfig: (config: IPaymentMethodProviderConfig) => any;
   getFields: () => any;
   getSettings: () => any;
-  sendTransaction: (email: string, price: number) => Promise<string>;
+  sendTransaction: (customerId: string, price: number) => Promise<string>;
+  createCustomer: (email: string) => Promise<string>;
+  deleteCustomer: (customerId: string) => Promise<boolean>;
+  attachPaymentMethod: (
+    paymentMethodId: string,
+    customerId: string,
+  ) => Promise<boolean>;
+  detachPaymentMethod: (paymentMethodId: string) => Promise<boolean>;
 }

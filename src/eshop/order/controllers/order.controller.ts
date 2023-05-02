@@ -11,8 +11,10 @@ import {
 } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderService } from '~eshop/order/services/order.service';
+import { CustomerService } from '~eshop/customer/services/customer.service';
 import { AddressService } from '~eshop/address/services/address.service';
 import { ProductService } from '~root/catalogue/product/services/product.service';
+import handleAsync from '~helpers/handleAsync';
 import { CartService } from '~eshop/cart/cart.service';
 import { SessionData } from 'express-session';
 import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
@@ -158,12 +160,12 @@ export class OrderController {
       uuid: body.paymentMethodId,
     });
 
-    const pamentProviderSettings = paymentMethod.providerSettings;
+    const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
       id: `${
-        pamentProviderSettings.providerName.charAt(0).toUpperCase() +
-        pamentProviderSettings.providerName.slice(1)
+        paymentProviderSettings.providerName.charAt(0).toUpperCase() +
+        paymentProviderSettings.providerName.slice(1)
       }Provider`,
     });
 
@@ -197,6 +199,20 @@ export class OrderController {
         productItem.price ? accumulator + productItem.price : accumulator,
       0,
     );
+
+    let [error, customer] = await handleAsync(
+      new CustomerService().findOne({
+        userId,
+        provider: paymentProviderSettings.providerName,
+      }),
+    );
+
+    if (error) {
+      customer = await new CustomerService().store({
+        userId,
+        provider: paymentProviderSettings.providerName,
+      });
+    }
 
     const paymentInfo = await paymentMethodProvider.sendTransaction(
       session.user.user.email,

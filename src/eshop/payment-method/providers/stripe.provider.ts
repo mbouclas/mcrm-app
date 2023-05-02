@@ -52,33 +52,65 @@ export class StripeProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public async sendTransaction(email, price) {
+  public async sendTransaction(customer_id, price) {
     try {
-      const customers = await this.stripe.customers.search({
-        query: `email:'${email}'`,
-      });
-
-      const existsCustomer = !!customers?.data?.length;
-
-      const customer = existsCustomer
-        ? customers.data[0]
-        : await this.stripe.customers.create({
-            email,
-          });
-
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: price * 100 || 50,
         currency: 'eur',
         setup_future_usage: 'off_session',
-        customer: customer.id,
+        customer: customer_id,
       });
 
       return JSON.stringify({
         client_secret: paymentIntent.client_secret,
-        customer_id: customer.id,
+        customer_id: customer_id,
         price,
         status: 'PENDING',
       });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  public async attachPaymentMethod(paymentMethodId, customerId) {
+    try {
+      await this.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      });
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  public async detachPaymentMethod(paymentMethodId) {
+    try {
+      await this.stripe.paymentMethods.detach(paymentMethodId);
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  public async createCustomer(email) {
+    try {
+      const customer = await this.stripe.customers.create({
+        email,
+      });
+
+      return customer.id;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  public async deleteCustomer(customerId) {
+    try {
+      const customer = await this.stripe.customers.del(customerId);
+
+      return true;
     } catch (err) {
       console.log(err);
     }

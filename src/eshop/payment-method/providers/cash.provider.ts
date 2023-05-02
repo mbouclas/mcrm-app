@@ -52,4 +52,36 @@ export class CashProvider implements IPaymentMethodProvider {
       price,
     });
   }
+
+  public async attachPaymentMethod(paymentMethodId, customerId) {
+    try {
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  public async detachPaymentMethod(paymentMethodId) {
+    try {
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  public async createCustomer(email) {
+    try {
+      return '';
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  public async deleteCustomer(customerId) {
+    try {
+      return true;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

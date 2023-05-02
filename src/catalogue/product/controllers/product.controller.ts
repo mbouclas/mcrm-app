@@ -1,6 +1,16 @@
-import { Body, Controller, Post, Get, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Session,
+  Get,
+  Delete,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { IGenericObject } from '~models/general';
+import { SessionData } from 'express-session';
 import { store } from '~root/state';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 
@@ -18,7 +28,6 @@ export class ProductController {
 
   @Post('/basic')
   async storeBasic(@Body() body: IGenericObject) {
-    console.log('body ', body);
     return await new ProductService().store(body);
   }
 
@@ -27,6 +36,13 @@ export class ProductController {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
     return await new ProductService().findOne({ uuid }, rels);
+  }
+
+  @Delete(':uuid')
+  async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
+    const userId = session.user && session.user.user['uuid'];
+
+    return await new ProductService().delete(uuid, userId);
   }
 
   @Post('')
