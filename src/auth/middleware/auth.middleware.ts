@@ -28,7 +28,9 @@ export class AuthMiddleware implements NestMiddleware {
     // We got a session header, get it from redis
     if (req.headers['x-sess-id']) {
       const session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
-      req.session.user = session.user;
+      if (session && session.user) {
+        req.session.user = session.user;
+      }
     }
 
     if (!req.session || !req.session.user) {

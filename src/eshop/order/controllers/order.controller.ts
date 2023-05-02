@@ -113,6 +113,8 @@ export class OrderController {
     }
 
     const userId = session.user && session.user.user['uuid'];
+    const email = session.user && session.user.user['email'];
+    console.log('email ', email);
 
     const orderService = new OrderService();
 
@@ -211,11 +213,12 @@ export class OrderController {
       customer = await new CustomerService().store({
         userId,
         provider: paymentProviderSettings.providerName,
+        email,
       });
     }
 
     const paymentInfo = await paymentMethodProvider.sendTransaction(
-      session.user.user.email,
+      customer.customerId,
       fullPrice,
     );
 
