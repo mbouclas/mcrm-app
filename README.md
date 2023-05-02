@@ -13,8 +13,8 @@ git submodule
 * Validate the properties and values
 
 ### TODO Photos Import
-* The first variants image is the main image. Add it to the product as thumb
-* If the image is main then add it to the variant as a thumb property
+* Allow for all products to be processed. Now we only allow 1
+
 
 
 ### Export products list

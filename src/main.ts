@@ -43,7 +43,8 @@ async function bootstrap() {
     cors: {
       credentials: true,
       origin: true,
-      exposedHeaders: ['x-sess-id'],
+      exposedHeaders: ['x-sess-id', 'Set-Cookie'],
+      methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
     }
   });
 
@@ -59,6 +60,7 @@ async function bootstrap() {
       secret: 'keyboard cat',
       cookie: {
         secure: false,
+        sameSite: 'none',
         maxAge: tokenExpiry * 1000, //Needs to be in milliseconds
         httpOnly: false,
       },
@@ -67,6 +69,20 @@ async function bootstrap() {
       resave: true,
     }),
   );
+  app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header(
+      'Access-Control-Allow-Methods',
+      'GET,PUT,POST,DELETE,UPDATE,OPTIONS'
+    );
+    res.header(
+      'Access-Control-Allow-Headers',
+      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Set-Cookie'
+    );
+    next();
+  });
+  app.enable('trust proxy');
   app.useStaticAssets(publicDir);
   app.setBaseViewsDir(viewsDir);
   app.engine('liquid', ViewEngine.express());
@@ -80,6 +96,8 @@ async function bootstrap() {
   await app.listen(process.env.PORT || 3000);
   console.log(`App is running on port ${process.env.PORT}`)
 }
+
+
 createDriver(defaultNeo4JConfig)
   .then(async driver => {
     Neo4jService.driverInstance = driver;

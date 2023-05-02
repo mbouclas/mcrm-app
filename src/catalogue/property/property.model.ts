@@ -17,7 +17,19 @@ export class PropertyModel extends BaseModel
   public static modelConfig: INeo4jModel = {
     select: 'property:Property',
     as: 'property',
-    relationships: {},
+    relationships: {
+      propertyValues: {
+        rel: 'HAS_VALUE',
+        alias: 'propertyValueRelationship',
+        model: 'PropertyValue',
+        modelAlias: 'propertyValue',
+        type: 'normal',
+        isCollection: true,
+        isSortableCount: true,
+        sortableCountDefaultAlias: 'propertyValue',
+        defaultProperty: 'name',
+      },
+    },
   }
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
