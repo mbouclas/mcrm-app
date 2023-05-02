@@ -8,8 +8,15 @@ import { IGenericObject, IPagination } from '~models/general';
 
 export class CustomerPaymentMethodModelDto {
   userId?: string;
-  providerCustomerId?: string;
   provider?: string;
+  providerCustomerId?: string;
+  providerPaymentMethodId?: string;
+  card?: {
+    brand: string;
+    last4: number;
+    expiryMonth: number;
+    expiryYear: number;
+  };
 }
 
 @Injectable()
@@ -51,7 +58,19 @@ export class CustomerPaymentMethodService extends BaseNeoService {
   }
 
   async store(record: CustomerPaymentMethodModelDto, userId?: string) {
-    const r = await super.store(record, userId);
+    const r = await super.store(
+      {
+        userId,
+        provider: record.provider,
+        providerCustomerId: record.providerCustomerId,
+        providerPaymentMethodId: record.providerPaymentMethodId,
+        cardBrand: record.card.brand,
+        cardLast4: record.card.last4,
+        cardExpiryMonth: record.card.expiryMonth,
+        cardExpiryYear: record.card.expiryYear,
+      },
+      userId,
+    );
 
     return r;
   }

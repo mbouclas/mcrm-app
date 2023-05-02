@@ -84,4 +84,12 @@ export class CashProvider implements IPaymentMethodProvider {
       console.log(err);
     }
   }
+
+  public async getCardInfo(paymentMethodId) {
+    try {
+      return {};
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

@@ -73,10 +73,18 @@ export class CustomerPaymentMethodModel
     },
 
     {
+      varName: 'last4',
+      label: 'Last4',
+      placeholder: 'Last4',
+      type: 'number',
+      group: 'main',
+    },
+
+    {
       varName: 'cardExpiryMonth',
       label: 'CardExpiryMonth',
       placeholder: 'CardExpiryMonth',
-      type: 'text',
+      type: 'number',
       group: 'main',
     },
 
@@ -84,7 +92,7 @@ export class CustomerPaymentMethodModel
       varName: 'cardExpiryYear',
       label: 'CardExpiryYear',
       placeholder: 'CardExpiryYear',
-      type: 'text',
+      type: 'number',
       group: 'main',
     },
 

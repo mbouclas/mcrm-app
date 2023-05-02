@@ -12,4 +12,5 @@ export interface IPaymentMethodProvider {
     customerId: string,
   ) => Promise<boolean>;
   detachPaymentMethod: (paymentMethodId: string) => Promise<boolean>;
+  getCardInfo: (paymentMethodId: string) => Promise<object>;
 }
