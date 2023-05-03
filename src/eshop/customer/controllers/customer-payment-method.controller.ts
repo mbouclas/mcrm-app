@@ -58,6 +58,12 @@ export class CustomerPaymentMethodController {
       expiryYear: paymentInfo.card.exp_year,
       brand: paymentInfo.card.brand,
     };
+
+    await provider.attachPaymentMethod(
+      body.providerPaymentMethodId,
+      customer.customerId,
+    );
+
     return await new CustomerPaymentMethodService().store({
       userId,
       provider: body.provider,
