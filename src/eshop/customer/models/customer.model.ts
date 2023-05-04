@@ -19,8 +19,7 @@ export class CustomerModel extends BaseModel implements OnModuleInit {
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public uuid: string;
-  public title: string;
-  public providerSettings: Record<string, any>;
+  public customerId: string;
   async onModuleInit() {}
 
   public static displayedColumns = [];

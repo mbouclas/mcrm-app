@@ -115,4 +115,16 @@ export class StripeProvider implements IPaymentMethodProvider {
       console.log(err);
     }
   }
+
+  public async getCardInfo(paymentMethodId) {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.retrieve(
+        paymentMethodId,
+      );
+
+      return paymentMethod;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

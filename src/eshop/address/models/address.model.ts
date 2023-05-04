@@ -26,8 +26,8 @@ export class AddressModel extends BaseModel implements OnModuleInit {
   public static displayedColumns = [];
 
   public static modelConfig: INeo4jModel = {
-    select: 'order:Address',
-    as: 'order',
+    select: 'address:Address',
+    as: 'address',
     relationships: {},
   };
 

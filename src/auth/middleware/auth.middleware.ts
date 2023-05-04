@@ -19,21 +19,17 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   async use(req: ExpressRequest, res: ExpressResponse, next: () => void) {
-
     if (
       process.env.NODE_ENV === 'development' &&
       process.env.APPLY_AUTH_MIDDLEWARE === 'false'
     ) {
       return next();
     }
-    // We got a session header, get it from redis
-    if (req.headers['x-sess-id']) {
-      const session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
-      req.session.user = session.user;
-    }
 
     if (req.headers['authorization']) {
-      const session = await this.cache.get(`token-${req.headers['authorization'].replace('Bearer ', '')}`);
+      const session = await this.cache.get(
+        `token-${req.headers['authorization'].replace('Bearer ', '')}`,
+      );
       req.session.user = session.user;
     }
 

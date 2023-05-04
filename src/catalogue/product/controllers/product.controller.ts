@@ -40,7 +40,7 @@ export class ProductController {
 
   @Delete(':uuid')
   async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
-    const userId = session.user && session.user.user['uuid'];
+    const userId = session.user && session.user['uuid'];
 
     return await new ProductService().delete(uuid, userId);
   }
