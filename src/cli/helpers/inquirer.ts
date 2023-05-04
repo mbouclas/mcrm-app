@@ -1,4 +1,4 @@
-import inquirer = require('inquirer');
+const inquirer = require('inquirer');
 
 export class Inquirer {
   /**

@@ -1,25 +1,22 @@
-import {  Injectable, OnApplicationShutdown } from "@nestjs/common";
+import { Inject, Injectable, OnApplicationShutdown } from "@nestjs/common";
 import { Client } from "@elastic/elasticsearch";
-import {  ELASTIC_SEARCH_DRIVER } from "./elastic-search.module";
-import { ModuleRef } from "@nestjs/core";
+import { store } from "../state";
 import {
-  IBaseModelEs,
-  IElasticSearchAggregation,
-  IElasticSearchAggregationBucket,
-  IElasticSearchAggregationBucketResult,
+  IElasticSearchAggregation, IElasticSearchAggregationBucket, IElasticSearchAggregationBucketResult,
   IElasticSearchAggregationResult,
   IElasticSearchFilter,
   IElasticSearchFilterMap,
-  IElasticSearchGeoFilter,
-  IElasticSearchHit,
-  IElasticSearchRangeOption,
-  IElasticSearchResults,
+  IElasticSearchGeoFilter, IElasticSearchHit, IElasticSearchOptions, IElasticSearchRangeOption, IElasticSearchResults,
   IElasticSearchTextFilter
-} from "~root/elastic-search/elastic-search.models";
+} from "./elastic-search.models";
 import { IGenericObject } from "~models/general";
-import { store } from "~root/state";
-import { findIndex } from "lodash";
+import {findIndex} from 'lodash';
+import { ELASTIC_SEARCH_CONFIG, ELASTIC_SEARCH_DRIVER } from "./elastic-search.module";
+import { ModuleRef } from "@nestjs/core";
 import { highlighter, qsMatcher } from "~helpers/highlighter";
+import { IProductModelEs } from "~catalogue/export/sync-elastic-search.service";
+
+
 
 interface IElasticSearchQueryAggregation extends IElasticSearchAggregation{
 }
@@ -28,24 +25,39 @@ interface IElasticSearchQueryAggregation extends IElasticSearchAggregation{
 export class ElasticSearchService implements OnApplicationShutdown {
   protected lang = 'en';
   protected index: string;
-  protected defaultAggregationSize = 10;
-  public client: Client;
-  protected autoCompleteFields: string[] = [
-    'title',
-    'description',
+  protected defaultAggregationSize = 30;
+  aggregationFields: IElasticSearchFilterMap[] = [
+    {
+      name: 'price',
+      type: "range",
+      isKeyword: false,
+      size: this.defaultAggregationSize,
+      field: 'price',
+      ranges: [
+        { to: 60000.0 },
+        { from: 60000.0, to: 100000.0 },
+        { from: 100000.0, to: 500000.0 },
+        { from: 500000.0, to: 1000000.0 },
+        { from: 1000000.0 }
+      ],
+      boost: 2,
+    },
+
   ];
 
   protected extraFilters: string[] = [
     'categories_uuid',
   ];
-
-  protected aggregationFields: IElasticSearchFilterMap[] = [
-
+  protected autoCompleteFields: string[] = [
+    'title',
+    'id',
+    'description',
+    'sku'
   ];
-
   protected appliedFilters: IElasticSearchFilter<IElasticSearchGeoFilter|IElasticSearchTextFilter>[] = [];
   protected queries: IGenericObject[] = [];
   protected searchWithAggregations = true;
+  public client: Client;
   protected defaultIndex = process.env.ELASTICSEARCH_INDEX;
   protected applyQueryStringFilterOnAggregations;
   protected filters: IGenericObject[] = [];
@@ -60,18 +72,20 @@ export class ElasticSearchService implements OnApplicationShutdown {
     // @Inject(ELASTIC_SEARCH_DRIVER) private readonly client: Client
   ) {
     this.client = this.moduleRef.get(ELASTIC_SEARCH_DRIVER);
-    this.lang = store.getState().defaultLanguageCode || 'en';
+    this.lang = store.getState().defaultLanguageCode;
+
+/*    if (opts.aggregationFields) {
+      this.aggregationFields = opts.aggregationFields;
+    }
+
+    if (opts.lang) {
+      this.lang = opts.lang;
+    }*/
+
   }
 
-  public setAggregationFields(fields: IElasticSearchFilterMap[], append = false) {
-
-  }
-
-  public setAutocompleteFields(fields: string[], append = false) {
-
-  }
-
-  public setExtraFilters(filters: string[], append = false) {
+  async indexExists(index: string): Promise<boolean> {
+    return  await this.client.indices.exists({index});
 
   }
 
@@ -81,19 +95,31 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return this;
   }
 
+  public getIndex() {
+    return this.index;
+  }
+
   public setDebugMode(mode: boolean) {
     this.debug = mode;
 
     return this;
   }
 
-  async onApplicationShutdown(signal?: string) {
-    await this.client.close();
+  public setAutoCompleteFields(fields: string[]) {
+    this.autoCompleteFields = fields;
+
+    return this;
   }
 
-  async indexExists(index: string): Promise<boolean> {
-    return  await this.client.indices.exists({index});
+  public setAggregationFields(fields: IElasticSearchFilterMap[]) {
+    this.aggregationFields = fields;
 
+
+    return this;
+  }
+
+  public getAggregationFields() {
+    return this.aggregationFields;
   }
 
   /**
@@ -127,6 +153,10 @@ export class ElasticSearchService implements OnApplicationShutdown {
   resetIndex() {
     this.index = this.defaultIndex;
   }
+
+  async onApplicationShutdown(signal?: string) {
+        await this.client.close();
+    }
 
   public async search(limit = 10, page = 1) {
     const from = limit * (page - 1);
@@ -181,10 +211,14 @@ export class ElasticSearchService implements OnApplicationShutdown {
     }
   }
 
-  public async rawQuery(query: IGenericObject, size = 10, page = 1, from = 0) {
+  public async rawQuery(query: IGenericObject, size = 10, page = 1, from = 0, sort: IGenericObject = null) {
     const body: IGenericObject = {
       from,
       size
+    }
+
+    if (sort) {
+      body.sort = sort;
     }
 
     if (query.query) {
@@ -224,7 +258,8 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return this;
   }
 
-  public addAutoCompleteQuery(q: string, type: 'should'|'must' = 'should') {
+  public addAutoCompleteQuery(q: string, type: 'should'|'must' = 'should', returnQueries = false) {
+
     const queries: any[] = this.aggregationFields
       .filter(field => Array.isArray(field.inAutoComplete))
       .map(field => {
@@ -251,6 +286,10 @@ export class ElasticSearchService implements OnApplicationShutdown {
         "query": q
       }
     });
+
+    if (returnQueries) {
+      return queries;
+    }
 
     type === 'must' ? this.addMustQuery(queries) : this.addShouldQuery(queries);
 
@@ -309,7 +348,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
   }
 
   private composeQuery() {
-    const query: {bool: {filter?: IGenericObject; must?: IGenericObject[], should?: IGenericObject[]} } = {
+    const query: {bool?: {filter?: IGenericObject; must?: IGenericObject[], should?: IGenericObject[]} } = {
       bool: {}
     };
 
@@ -320,11 +359,13 @@ export class ElasticSearchService implements OnApplicationShutdown {
     if (this.queries.length > 0) {
 
       this.queries.forEach(q => {
+
         if (q.type === 'should') {
           if (!Array.isArray(query.bool.should)) {query.bool.should = [];}
           query.bool.should = query.bool.should.concat(q.queries);
           return;
         }
+
 
         if (!Array.isArray(query.bool.must)) {query.bool.must = [];}
         // @ts-ignore
@@ -408,10 +449,10 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return q;
   }
 
-  private composeResult(body: Record<string, any>, limit: number, page: number, from: number): IElasticSearchResults<IBaseModelEs> {
+  private composeResult(body: Record<string, any>, limit: number, page: number, from: number): IElasticSearchResults<IProductModelEs> {
     let aggregations: IElasticSearchAggregationBucketResult[] = [];
     let total = (body.hits && body.hits.total && body.hits.total.value) ? body.hits.total.value : 0;
-    let data: IBaseModelEs[] = [];
+    let data: IProductModelEs[] = [];
 
     if (body.aggregations && this.searchWithAggregations) {
       aggregations = (this.returnRawAggregations) ? body.aggregations : this.extractAggregationResults(body.aggregations);
@@ -466,7 +507,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return tmp;
   }
 
-  private extractQueryResults(hits: IElasticSearchHit<IBaseModelEs>[]) {
+  private extractQueryResults(hits: IElasticSearchHit<IProductModelEs>[]) {
     return hits.map(hit => hit._source);
   }
 
@@ -477,6 +518,8 @@ export class ElasticSearchService implements OnApplicationShutdown {
     this.index = this.defaultIndex;
     this.sort = [this.defaultSort];
     this.returnRawAggregations = false;
+    this.setAggregationFields([]);
+    this.setAutoCompleteFields([]);
     this.setSearchWithAggregations(false);
     return this;
   }
@@ -578,6 +621,10 @@ export class ElasticSearchService implements OnApplicationShutdown {
 
     const query = {range: term};
 
+    if (Array.isArray(values)) {
+      values = this.extractRangeValuesFromArray(values);
+    }
+
     if (values.from) {
       query.range[key][fromType] = values.from;
     }
@@ -592,6 +639,34 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return this;
   }
 
+  extractRangeValuesFromArray(values: string[]) {
+    const ret = {
+      from: 0,
+      to: 0
+    };
+    const vals = values[0].split('-');
+
+    return {
+      from: vals[0] === '*' ? 0 : parseInt(vals[0]),
+      to: vals[1] === '*' ? null : parseInt(vals[1])
+    }
+  }
+
+  public formMultiMatchQuery(path: string, searchValue: string, fields: string[] = []) {
+    return {
+      nested: {
+        path,
+        query: {
+          multi_match: {
+            query: searchValue,
+            type: 'best_fields',
+            operator: 'and',
+            fields
+          }
+        },
+      }
+    }
+  }
   private extractBucketsFromRangeAggregation(field: IElasticSearchFilterMap, agg: any) {
     agg.buckets.forEach(bucket => {
       bucket.slug = `${bucket.from || '*'}-${bucket.to || '*'}`;
@@ -620,7 +695,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
   addNestedAggregation(aggregationName: string, aggregationPath: string, aggregationBody: {name: string; field: string; size?: number; order: { [key: string]: string } }[]) {
     const agg = {};
     let aggs = {};
-    aggregationBody.forEach(a => {
+     aggregationBody.forEach(a => {
       const temp = {};
       const terms = {
         size: (a.size) ? a.size: 10,

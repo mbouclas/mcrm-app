@@ -10,12 +10,14 @@ export class CommandRunner {
     const options = command.options.args || {};
 
     args = except(args, ["_", "$0", "command"]);
+
     if (args.options) {
       CommandRunner.printOptions(command, args);
       return;
     }
 
     const requiredOptions = Object.keys(options).filter((k) => options[k].req);
+
     const noInputFound = [];
     for (const option of requiredOptions) {
       if (!args[option]) noInputFound.push(option);
@@ -25,6 +27,7 @@ export class CommandRunner {
       _cli.error(` Missing arguments: ${noInputFound.join(", ")} `);
       return;
     }
+
 
     await (new command.target).handle(args);
     return;

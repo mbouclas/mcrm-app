@@ -5,7 +5,7 @@ import { Client } from "@elastic/elasticsearch";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { ConfigModule } from "@nestjs/config";
-import { ImportService } from './import.service';
+import { ModuleRef } from "@nestjs/core";
 
 export const ELASTIC_SEARCH_DRIVER = "ELASTIC_SEARCH_DRIVER";
 export const ELASTIC_SEARCH_CONFIG = "ELASTIC_SEARCH_CONFIG";
@@ -21,13 +21,18 @@ const connectionFactory = {
   providers: [
     connectionFactory,
     ElasticSearchService,
-    ImportService,
   ],
   exports: [
     ElasticSearchService,
   ]
 })
 export class ElasticSearchModule {
+  static moduleRef: ModuleRef;
+  constructor(
+    private m: ModuleRef,
+  ) {
+    ElasticSearchModule.moduleRef = m;
+  }
 /*  static forRoot(config: IElasticSearchOptions = {} as IElasticSearchOptions): DynamicModule {
     return {
       module: ElasticSearchModule,
@@ -75,6 +80,7 @@ export class ElasticSearchModule {
 }
 
 async function createElasticSearchDriver(config: IElasticSearchOptions) {
+
   return new Client({
     node: process.env.ELASTIC_SEARCH_URL,
     auth: {

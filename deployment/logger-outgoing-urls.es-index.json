@@ -1,0 +1,80 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "autocomplete_filter": {
+          "type": "edge_ngram",
+          "min_gram": 1,
+          "max_gram": 20
+        },
+        "greek_stop": {
+          "type": "stop",
+          "stopwords": "_greek_"
+        },
+        "greek_lowercase": {
+          "type": "lowercase",
+          "language": "greek"
+        },
+        "greek_stemmer": {
+          "type": "stemmer",
+          "language": "greek"
+        }
+      },
+      "analyzer": {
+        "autocomplete": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "autocomplete_filter"
+          ]
+        },
+        "rebuilt_greek": {
+          "tokenizer": "standard",
+          "filter": [
+            "greek_lowercase",
+            "greek_stop",
+            "greek_stemmer"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "siteName": {
+        "type": "text",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "uuid": {
+        "type": "text",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "url": {
+        "type": "text",
+        "search_analyzer": "standard",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "createdAt": {
+        "type": "date"
+      },
+      "ip": {
+        "type": "ip"
+      }
+    }
+  }
+}

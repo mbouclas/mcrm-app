@@ -15,7 +15,7 @@ import { IGenericObject } from '~models/general';
 import { UserService } from '~user/services/user.service';
 import handleAsync from '~helpers/handleAsync';
 import { AuthService, hashPassword } from '~root/auth/auth.service';
-import { SessionData } from 'express-session';
+
 import {
   InvalidCredentials,
   UserExists,
@@ -24,6 +24,8 @@ import {
   InvalidForgotPasswordToken,
   UserFailedUpdate,
 } from '../exceptions';
+import { ISessionData } from "~shared/models/session.model";
+
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -163,7 +165,7 @@ export class Oauth2Controller {
 
   @Post('/update-user')
   async updateUser(
-    @Session() session: SessionData,
+    @Session() session: ISessionData,
     @Body() body: IGenericObject,
   ) {
     const userId = session.user && session.user.user['uuid'];

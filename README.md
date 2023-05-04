@@ -23,3 +23,9 @@ git submodule
 * Foreach of the images with model `Product`, attach the image to the product list
 * Foreach of the images with model `ProductVariant`, attach the image to the product variant within the product list
 * Get all properties and values, will use them for lookups 
+
+### ES
+* Create a new index
+* variants is nested and contains the id, title, price, thumb, color, sku, slug
+* color is a nested property on the root. Contains code, id, name, slug
+* categories is a nested property

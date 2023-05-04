@@ -8,9 +8,9 @@ export class ProductsSyncAstroController {
   }
 
   @Get('')
-  async products(@Query('page') page = 1, @Query('limit') limit = 10, @Query('rels') rels = undefined) {
+  async products(@Query('page') page = 1, @Query('limit') limit = 10, @Query('rels') rels = undefined, @Query('id') uuids = undefined) {
     const productService = new ProductService();
-    const items = await productService.find({active: true, page, limit}, rels);
+    const items = await productService.find({active: true, page, limit, uuids}, rels);
 
     return items;
   }

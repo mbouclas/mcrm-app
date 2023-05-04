@@ -24,7 +24,7 @@ export class SmtpDriver implements IBaseMailServiceDriver {
       maxMessages: 5,
     };
 
-    console.log(process.env.SMTP_USERNAME, process.env.SMTP_PASSWORD);
+    // console.log(process.env.SMTP_USERNAME, process.env.SMTP_PASSWORD);
     const smtpOptions = {
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT as string),

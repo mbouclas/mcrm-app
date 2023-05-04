@@ -7,26 +7,53 @@ import { IBaseFilter } from "~models/general";
 import { ElasticSearchService } from "~es/elastic-search.service";
 
 export interface IPropertyEs {
-
+  uuid: string;
+  name: string;
+  slug: string;
+  type: 'color'|'text';
+  code?: string;
+  image?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IVariantEs {
-
+  uuid: string;
+  title: string;
+  slug: string;
+  price: number;
+  color: string;
+  variantId: string;
+  sku: string;
+  updateAd: Date;
 }
 
 export interface IProductCategoryEs {
-
+  uuid: string;
+  title: string;
+  slug: string;
 }
 
 export interface ITagEs {
+  uuid: string;
+  title: string;
+  slug: string;
+}
 
+export interface IProductManufacturerEs {
+  id: string;
+  title: string;
+  slug: string;
 }
 
 export interface IProductModelEs extends IBaseModelEs  {
+  price: number;
+  sku: string;
   properties: IPropertyEs[];
   variants: IVariantEs[];
-  tag: ITagEs[];
+  tags: ITagEs[];
   categories: IProductCategoryEs[];
+  manufacturer: IProductManufacturerEs;
 }
 
 @Injectable()
