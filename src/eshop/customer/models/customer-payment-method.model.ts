@@ -73,7 +73,7 @@ export class CustomerPaymentMethodModel
     },
 
     {
-      varName: 'last4',
+      varName: 'cardLast4',
       label: 'Last4',
       placeholder: 'Last4',
       type: 'number',
