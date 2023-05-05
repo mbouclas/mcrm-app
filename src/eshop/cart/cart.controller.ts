@@ -1,27 +1,33 @@
-import { Controller, Get, Put, Post, Session, Body, Delete, Param } from "@nestjs/common";
-import { SessionData } from "express-session";
-import { CartService } from "~eshop/cart/cart.service";
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Session,
+  Body,
+  Delete,
+  Param,
+} from '@nestjs/common';
+import { SessionData } from 'express-session';
+import { CartService } from '~eshop/cart/cart.service';
 import { IGenericObject } from '~models/general';
 
 export class AddToCartDto {
   id: string;
   variantId?: string;
   quantity: number;
-  metaData?: IGenericObject
+  metaData?: IGenericObject;
 }
 
 export class ManageCartDto {
   quantity: number;
   variantId?: string;
-  metaData?: IGenericObject
+  metaData?: IGenericObject;
 }
 
 @Controller('cart')
 export class CartController {
-  constructor(
-    protected cartService: CartService,
-  ) {
-  }
+  constructor(protected cartService: CartService) {}
 
   @Get('get')
   async get(@Session() session: SessionData) {
@@ -39,19 +45,16 @@ export class CartController {
         item.quantity,
         item.variantId,
         item.metaData,
-        userId
-
-      )
-    }
-    catch (e) {
+        userId,
+      );
+    } catch (e) {
       return { success: false, reason: 'ProductNotFound' };
     }
 
     try {
       session.cart.add(cartItem);
-    }
-    catch (e) {
-      console.log(e)
+    } catch (e) {
+      console.log(e);
     }
 
     await session.cart.save();
@@ -67,8 +70,7 @@ export class CartController {
       await session.cart.save();
 
       return session.cart.toObject();
-    }
-    catch (e) {
+    } catch (e) {
       return { success: false, reason: 'CouldNotClear' };
     }
   }
@@ -79,16 +81,18 @@ export class CartController {
       //  session.cart.remove({ uuid });
       //  // need to disassociate the cart from the user with detach
       //  await session.cart.save();
-
       //  return session.cart.toObject();
-    }
-    catch (e) {
+    } catch (e) {
       return { success: false, reason: 'ProductNotFound' };
     }
   }
 
   @Put(':id')
-  async manageCart(@Session() session: SessionData, @Param('id') productId: string, @Body() item: ManageCartDto) {
+  async manageCart(
+    @Session() session: SessionData,
+    @Param('id') productId: string,
+    @Body() item: ManageCartDto,
+  ) {
     const userId = session.user && session.user['uuid'];
 
     try {
@@ -97,7 +101,7 @@ export class CartController {
         item.quantity,
         item.variantId,
         item.metaData,
-        userId
+        userId,
       );
 
       let idx = session.cart.existingItem(cartItem);
@@ -114,13 +118,12 @@ export class CartController {
         session.cart.manageUpdateQuantity(idx, item.quantity);
       }
 
-
       await session.cart.save();
+      await session.cart.attachCartToUser({ uuid: userId });
     } catch (e) {
       return { success: false, reason: 'ProductNotFound' };
     }
 
     return session.cart.toObject();
   }
-
 }
