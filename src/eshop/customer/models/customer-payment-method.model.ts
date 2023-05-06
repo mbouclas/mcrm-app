@@ -22,8 +22,7 @@ export class CustomerPaymentMethodModel
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public uuid: string;
-  public title: string;
-  public providerSettings: Record<string, any>;
+  public providerPaymentMethodId: string;
   async onModuleInit() {}
 
   public static displayedColumns = [];

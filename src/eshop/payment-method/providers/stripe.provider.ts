@@ -52,18 +52,20 @@ export class StripeProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public async sendTransaction(customer_id, price) {
+  public async sendTransaction(customerId, price, paymentMethodId) {
     try {
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: price * 100 || 50,
         currency: 'eur',
         setup_future_usage: 'off_session',
-        customer: customer_id,
+        customer: customerId,
+        payment_method: paymentMethodId,
+        confirm: true,
       });
 
       return JSON.stringify({
-        client_secret: paymentIntent.client_secret,
-        customer_id: customer_id,
+        clientSecret: paymentIntent.client_secret,
+        customerId,
         price,
         status: 'PENDING',
       });
