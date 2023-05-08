@@ -28,9 +28,18 @@ import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.t
 import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers.types';
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
+import {
+  BillingAddressFailed,
+  BillingAddressDoesNotExist,
+  ShippingAddressFailed,
+  ShippingAddressDoesNotExist,
+  OrderFailed,
+  OrderDoesNotExist,
+} from '../../exceptions';
+
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
@@ -44,7 +53,15 @@ export class OrderController {
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new OrderService().findOne({ uuid }, rels);
+    const [error, result] = await handleAsync(
+      new OrderService().findOne({ uuid }, rels),
+    );
+
+    if (error) {
+      throw new OrderDoesNotExist();
+    }
+
+    return result;
   }
 
   @Post('/webhooks')
@@ -122,40 +139,67 @@ export class OrderController {
     let billingAddress;
 
     if (!body.shippingAddressId) {
-      shippingAddress = await new AddressService().store({
-        city: body.newShippingAddress.city,
-        country: body.newShippingAddress.country,
-        zipcode: body.newShippingAddress.zipcode,
-        street: body.newShippingAddress.street,
-        note: body.newShippingAddress.note,
-        type: 'SHIPPING',
-        userId,
-      });
+      const [error, result] = await handleAsync(
+        new AddressService().store({
+          city: body.newShippingAddress.city,
+          country: body.newShippingAddress.country,
+          zipcode: body.newShippingAddress.zipcode,
+          street: body.newShippingAddress.street,
+          note: body.newShippingAddress.note,
+          type: 'SHIPPING',
+          userId,
+        }),
+      );
+
+      if (error) {
+        throw new ShippingAddressFailed();
+      }
+      shippingAddress = result;
     } else {
-      shippingAddress = await new AddressService().findOne({
-        uuid: body.shippingAddressId,
-        type: 'SHIPPING',
-      });
+      const [error, result] = await handleAsync(
+        new AddressService().findOne({
+          uuid: body.shippingAddressId,
+          type: 'SHIPPING',
+        }),
+      );
+      if (error) {
+        throw new ShippingAddressDoesNotExist();
+      }
+
+      shippingAddress = result;
     }
 
     if (!body.billingAddressId) {
-      billingAddress = await new AddressService().store({
-        city: body.newBillingAddress.city,
-        country: body.newBillingAddress.country,
-        zipcode: body.newBillingAddress.zipcode,
-        street: body.newBillingAddress.street,
-        note: body.newBillingAddress.note,
-        type: 'BILLING',
-        userId,
-      });
+      const [error, result] = await handleAsync(
+        new AddressService().store({
+          city: body.newBillingAddress.city,
+          country: body.newBillingAddress.country,
+          zipcode: body.newBillingAddress.zipcode,
+          street: body.newBillingAddress.street,
+          note: body.newBillingAddress.note,
+          type: 'BILLING',
+          userId,
+        }),
+      );
+
+      if (error) {
+        throw new BillingAddressFailed();
+      }
+
+      billingAddress = result;
     } else {
-      billingAddress = await new AddressService().findOne({
-        uuid: body.billingAddressId,
-        type: 'BILLING',
-      });
-    }
-    if (!billingAddress || !shippingAddress) {
-      throw new Error('Billing and shipping address required');
+      const [error, result] = await handleAsync(
+        new AddressService().findOne({
+          uuid: body.billingAddressId,
+          type: 'BILLING',
+        }),
+      );
+
+      if (error) {
+        throw new BillingAddressDoesNotExist();
+      }
+
+      billingAddress = result;
     }
 
     const paymentMethod = await new PaymentMethodService().findOne({
@@ -170,10 +214,9 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${
-        paymentProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() +
         paymentProviderSettings.providerName.slice(1)
-      }Provider`,
+        }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider =
@@ -186,10 +229,9 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
         shippingProviderSettings.providerName.slice(1)
-      }Provider`,
+        }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider =
@@ -228,7 +270,7 @@ export class OrderController {
       customerPaymentMethod.providerPaymentMethodId,
     );
 
-    const order = await orderService.store({
+    const [orderError, order] = await handleAsync(orderService.store({
       status: 1,
       paymentMethod: paymentMethod.title,
       shippingMethod: shippingMethod.title,
@@ -240,9 +282,13 @@ export class OrderController {
       paymentInfo,
       shippingInfo,
       userId,
-    });
+    }));
 
-    await orderService.attachModelToAnotherModel(
+    if (orderError) {
+      throw new OrderFailed()
+    }
+
+    const [orderShippingAddressError,] = await handleAsync(orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
         uuid: order.uuid,
@@ -252,9 +298,14 @@ export class OrderController {
         uuid: shippingAddress.uuid,
       },
       'address',
-    );
+    ));
 
-    await orderService.attachModelToAnotherModel(
+
+    if (orderShippingAddressError) {
+      throw new OrderFailed();
+    }
+
+    const [orderBillingAddressError,] = await handleAsync(orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
         uuid: order.uuid,
@@ -264,9 +315,15 @@ export class OrderController {
         uuid: billingAddress.uuid,
       },
       'address',
-    );
+    ));
 
-    await orderService.attachModelToAnotherModel(
+    if (orderBillingAddressError) {
+      throw new OrderFailed();
+    }
+
+
+
+    const [orderPaymentMethodError,] = await handleAsync(orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
         uuid: order.uuid,
@@ -276,9 +333,15 @@ export class OrderController {
         uuid: paymentMethod.uuid,
       },
       'paymentMethod',
-    );
+    ));
 
-    await orderService.attachModelToAnotherModel(
+
+    if (orderPaymentMethodError) {
+      throw new OrderFailed();
+    }
+
+
+    const [orderShippingMethodError,] = await handleAsync(orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
         uuid: order.uuid,
@@ -288,9 +351,13 @@ export class OrderController {
         uuid: shippingMethod.uuid,
       },
       'shippingMethod',
-    );
+    ));
 
-    await orderService.attachModelToAnotherModel(
+    if (orderShippingMethodError) {
+      throw new OrderFailed();
+    }
+
+    const [orderUserError,] = await handleAsync(orderService.attachModelToAnotherModel(
       store.getState().models['Order'],
       {
         uuid: order.uuid,
@@ -300,11 +367,15 @@ export class OrderController {
         uuid: userId,
       },
       'user',
-    );
+    ));
+
+    if (orderUserError) {
+      throw new OrderFailed();
+    }
 
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
-        await orderService.attachModelToAnotherModel(
+        const [orderProductError,] = await handleAsync(orderService.attachModelToAnotherModel(
           store.getState().models['Order'],
           {
             uuid: order.uuid,
@@ -319,13 +390,22 @@ export class OrderController {
               (item) => item.productId === productItem.uuid,
             ).quantity,
           },
-        );
+        ));
+
+        if (orderProductError) {
+          throw new OrderFailed()
+        }
       }),
     );
 
     await session.cart.clearWithDb();
 
-    return await orderService.findOne({ uuid: order.uuid });
+    const [finalResultError, finalResult] = await handleAsync(orderService.findOne({ uuid: order.uuid }));
+    if (finalResultError) {
+      throw new OrderFailed();
+    }
+
+    return finalResult
   }
 
   @Delete(`:uuid`)
