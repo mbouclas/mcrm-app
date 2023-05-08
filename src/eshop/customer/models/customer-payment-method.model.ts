@@ -22,8 +22,7 @@ export class CustomerPaymentMethodModel
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public uuid: string;
-  public title: string;
-  public providerSettings: Record<string, any>;
+  public providerPaymentMethodId: string;
   async onModuleInit() {}
 
   public static displayedColumns = [];
@@ -73,7 +72,7 @@ export class CustomerPaymentMethodModel
     },
 
     {
-      varName: 'last4',
+      varName: 'cardLast4',
       label: 'Last4',
       placeholder: 'Last4',
       type: 'number',

@@ -46,10 +46,11 @@ export class CashProvider implements IPaymentMethodProvider {
 
   public getSettings() {}
 
-  public async sendTransaction(email, price) {
+  public async sendTransaction(email, price, paymentMethodId) {
     return JSON.stringify({
       provider: 'cash',
       price,
+      paymentMethodId,
     });
   }
 

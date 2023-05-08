@@ -14,18 +14,12 @@ export class CartMiddleware implements NestMiddleware {
     let userId;
     let sessionId = req.session.id;
     // We got a session header, get it from redis
-    if (req.headers['x-sess-id']) {
-      const session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
-      if (session) {
-        req.sessionID = req.headers['x-sess-id'];
-        req.sessionStore.get(req.headers['x-sess-id'], function (err, sess) {
-          // This attaches the session to the req.
-          req.sessionStore.createSession(req, session);
-        });
-
-        req.session.user = session;
-        sessionId = req.sessionID;
-      }
+    //
+    if (req.headers['authorization']) {
+      const session = await this.cache.get(
+        `token-${req.headers['authorization'].replace('Bearer ', '')}`,
+      );
+      req.session.user = session.user;
     }
 
     if (req.session.user && req.session.user) {

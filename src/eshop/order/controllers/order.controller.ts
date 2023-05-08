@@ -12,6 +12,7 @@ import {
 import { IGenericObject } from '~models/general';
 import { OrderService } from '~eshop/order/services/order.service';
 import { CustomerService } from '~eshop/customer/services/customer.service';
+import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
 import { AddressService } from '~eshop/address/services/address.service';
 import { ProductService } from '~root/catalogue/product/services/product.service';
 import handleAsync from '~helpers/handleAsync';
@@ -161,6 +162,11 @@ export class OrderController {
       uuid: body.paymentMethodId,
     });
 
+    const customerPaymentMethod =
+      await new CustomerPaymentMethodService().findOne({
+        uuid: body.customerPaymentMethodId,
+      });
+
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
@@ -219,6 +225,7 @@ export class OrderController {
     const paymentInfo = await paymentMethodProvider.sendTransaction(
       customer.customerId,
       fullPrice,
+      customerPaymentMethod.providerPaymentMethodId,
     );
 
     const order = await orderService.store({

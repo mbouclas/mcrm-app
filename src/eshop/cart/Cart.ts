@@ -1,16 +1,16 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { CartService, ICart, ICartItem } from "~eshop/cart/cart.service";
-import { ICondition } from "~eshop/cart/condition.service";
-import { ICoupon } from "~eshop/cart/coupon.service";
-import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
-import { v4 } from "uuid";
-import { IBaseFilter, IGenericObject } from "~models/general";
-import { Condition, IConditionCollection } from "~eshop/cart/Condition";
-import { find, findIndex, isEqual } from "lodash";
-import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
-import { SharedModule } from "~shared/shared.module";
-import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { CartService, ICart, ICartItem } from '~eshop/cart/cart.service';
+import { ICondition } from '~eshop/cart/condition.service';
+import { ICoupon } from '~eshop/cart/coupon.service';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { v4 } from 'uuid';
+import { IBaseFilter, IGenericObject } from '~models/general';
+import { Condition, IConditionCollection } from '~eshop/cart/Condition';
+import { find, findIndex, isEqual } from 'lodash';
+import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
+import { SharedModule } from '~shared/shared.module';
+import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 
 export interface ICartSettings {
   formatNumbers: boolean;
@@ -21,7 +21,7 @@ export interface ICartSettings {
 
 @McmsDi({
   id: 'Cart',
-  type: "class"
+  type: 'class',
 })
 @Injectable()
 export class Cart implements OnModuleInit, ICart {
@@ -52,13 +52,15 @@ export class Cart implements OnModuleInit, ICart {
     formatNumbers: false,
     decimals: 2,
     decPoint: '.',
-    thousandsSep: ','
+    thousandsSep: ',',
   };
   protected settings: ICartSettings;
 
   constructor(id?: string, settings?: ICartSettings) {
     this.cartService = new CartService();
-    if (id) { this.id = id; }
+    if (id) {
+      this.id = id;
+    }
     /*    this.initialize(id)
           .then(cart => {})
           .catch(err => console.log(err));*/
@@ -66,14 +68,10 @@ export class Cart implements OnModuleInit, ICart {
     this.setCartSettings(settings ? settings : this.settingsDefaults);
   }
 
-  async onModuleInit() {
-
-  }
+  async onModuleInit() {}
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {
-
-  }
+  async onAppLoaded() {}
 
   public getCartDefaultSettings() {
     return this.settingsDefaults;
@@ -85,13 +83,16 @@ export class Cart implements OnModuleInit, ICart {
 
   public add(item: ICartItem) {
     let found;
-    this.items.forEach(it => {
+    this.items.forEach((it) => {
       if (item.uuid) {
         found = it;
         return;
       }
 
-      if (it.productId === item.productId && isEqual(item.metaData, it.metaData)) {
+      if (
+        it.productId === item.productId &&
+        isEqual(item.metaData, it.metaData)
+      ) {
         found = it;
       }
     });
@@ -107,14 +108,20 @@ export class Cart implements OnModuleInit, ICart {
       this.remove({ id: item.productId });
       this.updateTotals();
 
-      this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
+      this.eventEmitter.emit(Cart.itemAddedEventName, {
+        item,
+        cart: this.toObject(),
+      });
       return this;
     }
 
     found.quantity++;
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemAddedEventName, {
+      item,
+      cart: this.toObject(),
+    });
     return this;
   }
 
@@ -122,13 +129,18 @@ export class Cart implements OnModuleInit, ICart {
     const { key, value } = extractSingleFilterFromObject(filter);
 
     const idx = findIndex(this.items, [key, value]);
-    if (idx === -1) { throw new RecordNotFoundException('ProductNotFound') }
+    if (idx === -1) {
+      throw new RecordNotFoundException('ProductNotFound');
+    }
 
     const item = Object.assign({}, this.items[idx]);
     this.items.splice(idx, 1);
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemRemovedEventName, { item, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemRemovedEventName, {
+      item,
+      cart: this.toObject(),
+    });
     return this;
   }
 
@@ -137,7 +149,9 @@ export class Cart implements OnModuleInit, ICart {
 
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.cartClearedEventName, { cart: this.toObject() });
+    this.eventEmitter.emit(Cart.cartClearedEventName, {
+      cart: this.toObject(),
+    });
     return this;
   }
 
@@ -148,16 +162,25 @@ export class Cart implements OnModuleInit, ICart {
     return this;
   }
 
-  public updateQuantity(filter: IBaseFilter, quantity = 1, appendToExisting = true) {
+  public updateQuantity(
+    filter: IBaseFilter,
+    quantity = 1,
+    appendToExisting = true,
+  ) {
     const { key, value } = extractSingleFilterFromObject(filter);
 
     const item = find(this.items, [key, value]);
 
-    item.quantity = (appendToExisting) ? item.quantity + quantity : item.quantity = quantity;
+    item.quantity = appendToExisting
+      ? item.quantity + quantity
+      : (item.quantity = quantity);
 
     this.updateTotals();
 
-    this.eventEmitter.emit(Cart.itemUpdatedEventName, { item, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemUpdatedEventName, {
+      item,
+      cart: this.toObject(),
+    });
     return this;
   }
 
@@ -170,7 +193,6 @@ export class Cart implements OnModuleInit, ICart {
     return this.items.length === 0;
   }
 
-
   public getItem(filter: IBaseFilter) {
     const { key, value } = extractSingleFilterFromObject(filter);
 
@@ -178,7 +200,9 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public count() {
-    return this.items.map(item => item.quantity).reduce((pre, curr) => pre + curr, 0);
+    return this.items
+      .map((item) => item.quantity)
+      .reduce((pre, curr) => pre + curr, 0);
   }
 
   public async initialize(id?: string, userId?: string) {
@@ -188,21 +212,20 @@ export class Cart implements OnModuleInit, ICart {
       cart = await this.cartService.findUserCart({ uuid: userId });
 
       this.loadExistingCart(cart);
-      this.eventEmitter.emit(Cart.cartReadyEventName, { cart: this.toObject() });
+      this.eventEmitter.emit(Cart.cartReadyEventName, {
+        cart: this.toObject(),
+      });
       return this;
-    }
-    catch (e) {
+    } catch (e) {
       // No cart found... Move on
     }
 
-
     // IF not, try to find it by the session
     try {
-      cart = await (new CartService).findOne({ id });
+      cart = await new CartService().findOne({ id });
       this.loadExistingCart(cart);
-    }
-    catch (e) {
-      console.log(e)
+    } catch (e) {
+      console.log(e);
     }
 
     if (!cart) {
@@ -256,7 +279,7 @@ export class Cart implements OnModuleInit, ICart {
       metaData: this.metaData,
       appliedConditions: this.appliedConditions,
       couponApplied: this.couponApplied,
-    }
+    };
   }
 
   public toJSON() {
@@ -271,7 +294,6 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public async attachCartToUser(userFilter: IBaseFilter) {
-
     await this.cartService.attachCartToUser(userFilter, this.id);
   }
 
@@ -285,9 +307,9 @@ export class Cart implements OnModuleInit, ICart {
       return subTotal;
     }
 
-    this.appliedConditions.forEach(cond => {
+    this.appliedConditions.forEach((cond) => {
       // const condition = (new Condition(cond)).apply({subtotal: subTotal});
-    })
+    });
 
     this.subTotal = subTotal;
 
@@ -297,7 +319,7 @@ export class Cart implements OnModuleInit, ICart {
   public calculateTotals() {
     this.calculateSubtotal();
     const subtotal = this.subTotal;
-    let newTotal = 0.00;
+    let newTotal = 0.0;
     let process = 0;
 
     // Figure out conditions here
@@ -331,38 +353,44 @@ export class Cart implements OnModuleInit, ICart {
   public setMetaData(filter: IBaseFilter, metaData: IGenericObject) {
     const { key, value } = extractSingleFilterFromObject(filter);
     const item = find(this.items, [key, value]);
-    Object.keys(metaData).forEach(key => {
+    Object.keys(metaData).forEach((key) => {
       item.metaData[key] = metaData[key];
     });
 
-    this.eventEmitter.emit(Cart.itemMetaDataUpdatedEventName, { item, metaData, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemMetaDataUpdatedEventName, {
+      item,
+      metaData,
+      cart: this.toObject(),
+    });
 
     return this;
   }
 
   protected itemsTotal() {
-    return this.items.map(item => {
-      let conditionsTotal = 0,
-        price = item.price;
-      if (Array.isArray(item.conditions)) {
-        //line 308
-      }
+    return this.items
+      .map((item) => {
+        let conditionsTotal = 0,
+          price = item.price;
+        if (Array.isArray(item.conditions)) {
+          //line 308
+        }
 
-      /*      if (item.attributesPrice) {
+        /*      if (item.attributesPrice) {
               price = price + item.attributesPrice;
             }*/
 
-      price = price + conditionsTotal;
+        price = price + conditionsTotal;
 
-      return price * item.quantity;
-    })
+        return price * item.quantity;
+      })
       .reduce((pre, curr) => pre + curr, 0);
   }
 
   private loadExistingCart(cart) {
-    Object.keys(cart).forEach(key => {
-      this[key] = this.jsonFields.indexOf(key) !== -1 ? JSON.parse(cart[key]) : cart[key];
-    })
+    Object.keys(cart).forEach((key) => {
+      this[key] =
+        this.jsonFields.indexOf(key) !== -1 ? JSON.parse(cart[key]) : cart[key];
+    });
   }
 
   public setCartSettings(settings: ICartSettings) {
@@ -372,10 +400,16 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public existingItem(item: ICartItem) {
-    return this.items.findIndex(it => {
-      if (item.productId === it.productId && isEqual(item.metaData, it.metaData)) {
-        if ((!item.variantId && !it.variantId) || (item.variantId === it.variantId)) {
-          return true
+    return this.items.findIndex((it) => {
+      if (
+        item.productId === it.productId &&
+        isEqual(item.metaData, it.metaData)
+      ) {
+        if (
+          (!item.variantId && !it.variantId) ||
+          item.variantId === it.variantId
+        ) {
+          return true;
         }
       }
     });
@@ -384,7 +418,10 @@ export class Cart implements OnModuleInit, ICart {
   public manageAdd(item: ICartItem) {
     this.items.push({ ...item, uuid: v4() });
     this.updateTotals();
-    this.eventEmitter.emit(Cart.itemAddedEventName, { item, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemAddedEventName, {
+      item,
+      cart: this.toObject(),
+    });
     return this;
   }
 
@@ -392,7 +429,10 @@ export class Cart implements OnModuleInit, ICart {
     const foundItem = Object.assign({}, this.items[idx]);
     this.items.splice(idx, 1);
     this.updateTotals();
-    this.eventEmitter.emit(Cart.itemRemovedEventName, { item: foundItem, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemRemovedEventName, {
+      item: foundItem,
+      cart: this.toObject(),
+    });
 
     return this;
   }
@@ -402,7 +442,10 @@ export class Cart implements OnModuleInit, ICart {
     this.updateTotals();
 
     const item = this.items[idx];
-    this.eventEmitter.emit(Cart.itemUpdatedEventName, { item, cart: this.toObject() });
+    this.eventEmitter.emit(Cart.itemUpdatedEventName, {
+      item,
+      cart: this.toObject(),
+    });
     return this;
   }
 }
