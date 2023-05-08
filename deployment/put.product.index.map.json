@@ -95,6 +95,27 @@
          }
        }
      },
+     "properties": {
+       "type": "nested",
+       "properties": {
+         "uuid": {
+           "type": "keyword"
+         },
+         "slug": {
+           "type": "keyword"
+         },
+         "title": {
+           "type": "text",
+           "analyzer": "autocomplete",
+           "search_analyzer": "standard",
+           "fields": {
+             "keyword": {
+               "type": "keyword"
+             }
+           }
+         }
+       }
+     },
      "tags": {
        "type": "nested",
        "properties": {

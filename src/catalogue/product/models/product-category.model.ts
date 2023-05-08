@@ -16,6 +16,7 @@ export class ProductCategoryModel extends BaseModel
   public modelName = modelName;
   public static modelName = modelName;
   public children: ProductCategoryModel[] = [];
+  public parents: ProductCategoryModel[] = [];
 
   public static modelConfig: INeo4jModel = {
     select: 'productCategory:ProductCategory',
@@ -52,5 +53,6 @@ export class ProductCategoryModel extends BaseModel
       translatable: true,
       group: 'main'
     },
+
   ];
 }

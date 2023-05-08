@@ -16,7 +16,12 @@ import { ModuleRef } from "@nestjs/core";
 import { highlighter, qsMatcher } from "~helpers/highlighter";
 import { IProductModelEs } from "~catalogue/export/sync-elastic-search.service";
 
-
+export interface ISearchArgs {
+  page?: number;
+  limit?: number
+  queryParameters?: IGenericObject;
+  q?: string;
+}
 
 interface IElasticSearchQueryAggregation extends IElasticSearchAggregation{
 }
@@ -387,7 +392,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
       } else if (f.type === 'range') {
         aggs[`${f.name}`] = this.rangedAggregation(f);
       } else {
-        aggs[`${f.name}`] =this.nestedAggregation(f);
+        aggs[`${f.alias || f.name}`] =this.nestedAggregation(f);
       }
 
       // aggs[`${f.name}`] = (f.type === 'simple') ? this.simpleAggregation(f) : this.nestedAggregation(f);
@@ -481,26 +486,28 @@ export class ElasticSearchService implements OnApplicationShutdown {
 
     for (let idx = 0; this.aggregationFields.length > idx; idx++) {
       const field = this.aggregationFields[idx];
-      if (!aggs[field.name]) {continue;}
+      const aggName = field.alias || field.name;
+
+      if (!aggs[aggName]) {continue;}
 
       if (field.buckets && field.buckets.length > 0) {
-        tmp.push(this.extractBucketsFromNestedAggregation(field, aggs[field.name]));
+        tmp.push(this.extractBucketsFromNestedAggregation(field, aggs[aggName]));
         continue;
       }
 
-      if (field.type === 'simple' && Array.isArray(aggs[field.name].buckets)) {
-        tmp.push(this.extractBucketsFromSimpleAggregation(field, aggs[field.name]));
+      if (field.type === 'simple' && Array.isArray(aggs[aggName].buckets)) {
+        tmp.push(this.extractBucketsFromSimpleAggregation(field, aggs[aggName]));
 
         continue;
       }
 
       if (field.type === 'range') {
-        this.extractBucketsFromRangeAggregation(field, aggs[field.name])
+        this.extractBucketsFromRangeAggregation(field, aggs[aggName])
       }
 
       tmp.push({
-        key: field.name,
-        results: aggs[field.name].buckets,
+        key: aggName,
+        results: aggs[aggName].buckets,
       })
     }
 
@@ -550,14 +557,21 @@ export class ElasticSearchService implements OnApplicationShutdown {
   }
 
   private extractBucketsFromNestedAggregation(field: IElasticSearchFilterMap, agg: any) {
+    const aggName = field.alias || field.name;
     if (!field.buckets || field.buckets.length === 0) {
       return {
-        key: field.name,
+        key: aggName,
         results: []
       };
     }
 
     const mainBucket = Object.keys(agg).filter(bucket => bucket !== 'slug' && bucket !== 'doc_count')[0];
+    if (!mainBucket) {
+      return {
+        key: aggName,
+        results: []
+      };
+    }
 
     const results = agg[mainBucket].buckets.map((item: IElasticSearchAggregationBucket, idx: number) => {
       const highlighted_result = (this.applyQueryStringFilterOnAggregations && qsMatcher(item.key, this.applyQueryStringFilterOnAggregations)) ? highlighter(item.key, this.applyQueryStringFilterOnAggregations) : undefined;
@@ -571,7 +585,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
     });
 
     return {
-      key: field.name,
+      key: aggName,
       results
     };
   }
@@ -676,6 +690,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
   }
 
   private extractBucketsFromSimpleAggregation(field: IElasticSearchFilterMap, agg: any) {
+    const aggName = field.alias || field.name;
     const results = agg.buckets.map(item => {
       const highlighted_result = (this.applyQueryStringFilterOnAggregations && qsMatcher(item.key, this.applyQueryStringFilterOnAggregations)) ? highlighter(item.key, this.applyQueryStringFilterOnAggregations) : undefined;
 
@@ -687,7 +702,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
       }
     });
     return {
-      key: field.name,
+      key: aggName,
       results
     }
   }

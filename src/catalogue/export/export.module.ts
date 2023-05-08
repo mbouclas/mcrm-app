@@ -3,6 +3,7 @@ import { SharedModule } from "~shared/shared.module";
 import { ProductModule } from "~catalogue/product/product.module";
 import { SyncElasticSearchService } from "~catalogue/export/sync-elastic-search.service";
 import { ElasticSearchService } from "~es/elastic-search.service";
+import { ExportController } from './export.controller';
 
 
 @Module({
@@ -12,7 +13,8 @@ import { ElasticSearchService } from "~es/elastic-search.service";
   ],
   providers: [
     SyncElasticSearchService
-  ]
+  ],
+  controllers: [ExportController]
 })
 export class ExportModule {
   private readonly logger = new Logger(ExportModule.name);

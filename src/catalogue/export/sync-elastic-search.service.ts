@@ -12,9 +12,8 @@ export interface IPropertyEs {
   slug: string;
   type: 'color'|'text';
   code?: string;
+  value?: string;
   image?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface IVariantEs {
@@ -46,14 +45,24 @@ export interface IProductManufacturerEs {
   slug: string;
 }
 
+export interface IImageEs {
+  uuid: string;
+  url: string;
+  caption?: string;
+  alt?: string;
+  title?: string;
+}
+
 export interface IProductModelEs extends IBaseModelEs  {
   price: number;
   sku: string;
+  thumb?: string;
   properties: IPropertyEs[];
   variants: IVariantEs[];
   tags: ITagEs[];
   categories: IProductCategoryEs[];
   manufacturer: IProductManufacturerEs;
+  images: IImageEs[];
 }
 
 @Injectable()
@@ -78,7 +87,7 @@ export class SyncElasticSearchService implements OnModuleInit, OnApplicationBoot
 
   }
 
-  @OnEvent(SyncElasticSearchService.onSyncSingleEvent)
+/*  @OnEvent(SyncElasticSearchService.onSyncSingleEvent)
   async onSyncSingle(filter: IBaseFilter) {
     try {
       await this.one(filter);
@@ -100,7 +109,7 @@ export class SyncElasticSearchService implements OnModuleInit, OnApplicationBoot
     catch (e) {
       this.logger.error(`Sync all Failed`, e.message);
     }
-  }
+  }*/
 
   async one(filter: IBaseFilter, syncWithEs = false) {
     const res = await (new ProductService).findOne(filter, ['*']) as ProductModel;

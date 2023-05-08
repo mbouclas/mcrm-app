@@ -5,6 +5,9 @@ import { OnEvent } from "@nestjs/event-emitter";
 import { IProductModelEs } from "~catalogue/export/sync-elastic-search.service";
 import { IPagination } from "~models/general";
 import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductConverterService } from "~catalogue/sync/product-converter.service";
+import { SyncModule } from "~catalogue/sync/sync.module";
+import { ProductModel } from "~catalogue/product/models/product.model";
 
 @Injectable()
 export class SyncEsService {
@@ -13,6 +16,7 @@ export class SyncEsService {
   static onSyncAllEvent = 'sync.all.complete';
   static onSyncMultipleEvent = 'sync.multiple.complete';
   private readonly logger = new Logger(SyncEsService.name);
+  protected rels = ['propertyValues', 'properties', 'category', 'manufacturer', 'variants', 'images', 'tags'];
 
   constructor(
     private readonly httpService: HttpService,
@@ -22,7 +26,8 @@ export class SyncEsService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    // SyncModule.event.emit(SyncService.onSyncAllEvent, {limit: 40, saveOnEs: true})
+    // SyncModule.event.emit(SyncEsService.onSyncAllEvent, {limit: 40, saveOnEs: true})
+    // SyncModule.event.emit(SyncEsService.onSyncSingleEvent, '7cad2fb1-e0d6-4f5e-aca7-d5d08423efe6')
   }
 
   @OnEvent(SyncEsService.onSyncSingleEvent)
@@ -60,21 +65,56 @@ export class SyncEsService {
 
   async one(uuid: string, syncWithEs = false) {
     const service = new ProductService();
-    const product = await service.findOne({uuid});
+
+    const product = await service.findOne({uuid}, this.rels);
+    const item = await (new ProductConverterService()).convert(product);
+    //get similar/related products
+    //const similar = await (new SimilarItemsService(this.es)).search(item.id, {})
+
+
+    if (syncWithEs) {
+      await this.syncOne(item);
+    }
+
+    return  item;
   }
 
   async all(limit = 40, syncWithEs = false): Promise<IProductModelEs[]> {
-    return [];
+    let data = [];
+    const service = new ProductService();
+    const converter = new ProductConverterService();
+
+    const firstQuery = await service.find({limit}, this.rels);
+    for (let idx = 0; idx < firstQuery.data.length; idx++) {
+      data.push(await converter.convert(firstQuery.data[idx] as ProductModel))
+    }
+
+
+    if (syncWithEs) {
+      await this.syncWithEs(data);
+    }
+
+    // now that we have the pagination info, we can loop through the pages
+    // Start from 1 cause we've already processed the 1st page
+    for (let idx = 1; firstQuery.pages > idx; idx++) {
+      const page = idx+1;
+      console.log(`processing page ${page}`);
+      const res = await service.find({limit, page}, this.rels);
+      console.log(`done with page ${page} - ${res.pages}, we now have ${data.length} items`);
+      for (let idx = 0; idx < res.data.length; idx++) {
+        res.data[idx] = await converter.convert(res.data[idx] as ProductModel) as unknown as any;
+      }
+
+      if (syncWithEs) {
+        await this.syncWithEs(res.data as unknown as IProductModelEs[]);
+      }
+      data = data.concat(res.data);
+    }
+
+    return data;
   }
 
-  async find(page = 1, limit = 10): Promise<IPagination<IProductModelEs>> {
-    return {
-      data: [],
-      total: 0,
-      page,
-      limit,
-    }
-  }
+
 
   async syncWithEs(data: IProductModelEs[]) {
     if (!await this.es.indexExists(this.esIndexName)) {
@@ -91,7 +131,8 @@ export class SyncEsService {
 
     }
 
-    const operations = data.flatMap(doc => [{ index: { _index: this.esIndexName, _id: doc.id } }, doc]);
+    const operations = data.flatMap(doc => [{ index: { _index: this.esIndexName, _id: doc.id || doc['uuid'] } }, doc]);
+
     const bulkResponse = await this.es.client.bulk({ refresh: true, operations });
 
     if (bulkResponse.errors) {

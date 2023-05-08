@@ -91,6 +91,7 @@ export interface IElasticSearchRangeOption {
 
 export interface IElasticSearchFilterMap {
   name: string;
+  alias?: string;
   type: 'nested'|'simple'|'range',
   key?: string,
   multilingual?: boolean;
