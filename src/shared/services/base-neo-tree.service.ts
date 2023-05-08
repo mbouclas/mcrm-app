@@ -166,7 +166,7 @@ export class BaseNeoTreeService extends BaseNeoService {
     return parent;
   }
 
-  async getRootTree(limitChildrenTo = 10) {
+  async getRootTree(limitChildrenTo = 10, withAncestors = false) {
 
     const limitQuery = (limitChildrenTo === 0) ? '' : `LIMIT ${limitChildrenTo}`;
     const query = `match (a:${this.model.modelName})
@@ -174,9 +174,10 @@ export class BaseNeoTreeService extends BaseNeoService {
                         CALL apoc.cypher.run('
                         WITH $a as a
                         OPTIONAL MATCH (a)-[:HAS_CHILD*1..5]->(b:${this.model.modelName})
-                        with b
+                         OPTIONAL MATCH (b)<-[:HAS_CHILD*1..5]-(p) where p.slug <> b.slug
+                        with b,p
  
-                        return coalesce(b) as category ORDER BY $a.name ${limitQuery}
+                        return coalesce(b) as category, coalesce(collect(distinct p)) as parents ORDER BY $a.title ${limitQuery}
                         ',{a:a}) YIELD value
 
           return a, collect(distinct value) as children;`;
@@ -187,12 +188,20 @@ export class BaseNeoTreeService extends BaseNeoService {
       let category = r.a;
 
       const children = r['children'];
+
       // This stupid check is for when there's no children and the query returns children: [{category: null}]. It happens on root categories mainly
       if (children.length === 1 && !children[0]) {
         return category;
       }
 
-      category.children = sortBy(children, 'order');
+
+
+      category.children = sortBy(children.map(child => {
+        return {
+          ...child.category,
+          ...{parents: child.parents}
+        }
+      }), 'order');
 
       return category;
     }), 'order');

@@ -1,5 +1,14 @@
-import { IGenericObject } from "../models/general";
-import { PropertyModel } from "~catalogue/property/property.model";
+import { IGenericObject } from "~models/general";
+
+export interface IBaseModelEs {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IElasticSearchOptions {
   index?: string;
   aggregationFields?: IElasticSearchFilterMap[];
@@ -82,6 +91,7 @@ export interface IElasticSearchRangeOption {
 
 export interface IElasticSearchFilterMap {
   name: string;
+  alias?: string;
   type: 'nested'|'simple'|'range',
   key?: string,
   multilingual?: boolean;
@@ -93,17 +103,7 @@ export interface IElasticSearchFilterMap {
   ranges?: IElasticSearchRangeOption[];
   dataType?: 'number'|'boolean'|'string';
   boost?: number;
-}
-
-
-export interface IBaseModelEs {
-  title: string;
-  name?: string;
-  uuid: string;
-  slug: string;
-
-  property?: PropertyModel[];
-  createdAt: Date;
-  updatedAt: Date;
-  [key: string]: any;
+  fieldType?: string;
+  isFilter?: boolean;
+  fixSlugs?: boolean;
 }

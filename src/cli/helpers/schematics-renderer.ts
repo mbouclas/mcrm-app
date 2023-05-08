@@ -1,9 +1,9 @@
 import { Liquid } from "liquidjs";
 import { dirname, resolve } from "path";
-import { IGenericObject } from "~models/general";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import * as dashify from 'dashify';
 import { fileExistsSync } from "tsconfig-paths/lib/filesystem";
+import { IGenericObject } from "~models/general";
 
 interface ISchematicRendererOptions {
   destinationDir: string;

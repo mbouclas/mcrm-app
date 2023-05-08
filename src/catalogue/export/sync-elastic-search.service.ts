@@ -7,26 +7,62 @@ import { IBaseFilter } from "~models/general";
 import { ElasticSearchService } from "~es/elastic-search.service";
 
 export interface IPropertyEs {
-
+  uuid: string;
+  name: string;
+  slug: string;
+  type: 'color'|'text';
+  code?: string;
+  value?: string;
+  image?: string;
 }
 
 export interface IVariantEs {
-
+  uuid: string;
+  title: string;
+  slug: string;
+  price: number;
+  color: string;
+  variantId: string;
+  sku: string;
+  updateAd: Date;
 }
 
 export interface IProductCategoryEs {
-
+  uuid: string;
+  title: string;
+  slug: string;
 }
 
 export interface ITagEs {
+  uuid: string;
+  title: string;
+  slug: string;
+}
 
+export interface IProductManufacturerEs {
+  id: string;
+  title: string;
+  slug: string;
+}
+
+export interface IImageEs {
+  uuid: string;
+  url: string;
+  caption?: string;
+  alt?: string;
+  title?: string;
 }
 
 export interface IProductModelEs extends IBaseModelEs  {
+  price: number;
+  sku: string;
+  thumb?: string;
   properties: IPropertyEs[];
   variants: IVariantEs[];
-  tag: ITagEs[];
+  tags: ITagEs[];
   categories: IProductCategoryEs[];
+  manufacturer: IProductManufacturerEs;
+  images: IImageEs[];
 }
 
 @Injectable()
@@ -51,7 +87,7 @@ export class SyncElasticSearchService implements OnModuleInit, OnApplicationBoot
 
   }
 
-  @OnEvent(SyncElasticSearchService.onSyncSingleEvent)
+/*  @OnEvent(SyncElasticSearchService.onSyncSingleEvent)
   async onSyncSingle(filter: IBaseFilter) {
     try {
       await this.one(filter);
@@ -73,7 +109,7 @@ export class SyncElasticSearchService implements OnModuleInit, OnApplicationBoot
     catch (e) {
       this.logger.error(`Sync all Failed`, e.message);
     }
-  }
+  }*/
 
   async one(filter: IBaseFilter, syncWithEs = false) {
     const res = await (new ProductService).findOne(filter, ['*']) as ProductModel;

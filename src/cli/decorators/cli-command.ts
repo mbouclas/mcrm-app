@@ -20,6 +20,7 @@ export interface CommandArguments {
 export function CliCommand(command: string, options?: CommandOptions) {
   options = options || ({} as CommandOptions);
   return function (...args: string[] | any[]) {
+
     switch (args.length) {
       case 1:
         Reflect.defineMetadata(COMMAND_NAME, command, args[0]);

@@ -20,8 +20,10 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public title: string;
+  public description: string;
   public price = 0;
   public slug;
+  public sku;
   public uuid: string;
 
   async onModuleInit() { }
@@ -592,6 +594,20 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       filterType: 'partial',
       isInSimpleQuery: true,
     },
+    {
+
+      "varName": "categoryFilter",
+      "label": "Category",
+      "placeholder": "Category",
+      "type": "tree-selector",
+
+      "relName": "businessType",
+      "isInSimpleQuery": false,
+      "model": "BusinessType",
+      "filterField": "uuid",
+      "order": 2,
+    }
+
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {

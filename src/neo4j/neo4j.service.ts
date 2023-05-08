@@ -131,7 +131,17 @@ export class Neo4jService implements OnApplicationShutdown {
       let item = obj[key];
 
       if (Array.isArray(item)) {
-        obj[key] = item.map((i) => Neo4jService.parseNeoProperties(i));
+        obj[key] = item.map((i) => {
+          if (isNode(i)) {
+            return Neo4jService.parseNeoProperties(i.properties);
+          }
+
+          return Neo4jService.parseNeoProperties(i);
+        });
+      }
+
+      if (!Array.isArray(item) && isNode(item)) {
+        obj[key] = Neo4jService.parseNeoProperties(item.properties);
       }
 
       if (isInt(item)) {

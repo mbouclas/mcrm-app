@@ -43,7 +43,7 @@ async function bootstrap() {
     cors: {
       credentials: true,
       origin: true,
-      exposedHeaders: ['x-sess-id', 'Set-Cookie'],
+      exposedHeaders: ['x-sess-id', 'set-cookie'],
       methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
     }
   });
@@ -59,14 +59,13 @@ async function bootstrap() {
       saveUninitialized: false,
       secret: 'keyboard cat',
       cookie: {
-        secure: false,
-        sameSite: 'none',
-        maxAge: tokenExpiry * 1000, //Needs to be in milliseconds
+        secure: 'auto',
+        path: '/',
+        maxAge: null, //Needs to be in milliseconds
         httpOnly: false,
       },
       name: 'app.sess.id',
-      rolling: true,
-      resave: true,
+      resave: false,
     }),
   );
   app.use(function(req, res, next) {
@@ -80,6 +79,7 @@ async function bootstrap() {
       'Access-Control-Allow-Headers',
       'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Set-Cookie'
     );
+    res.header('x-sess-id', req.session.id);
     next();
   });
   app.enable('trust proxy');

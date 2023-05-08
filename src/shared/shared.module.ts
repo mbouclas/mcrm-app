@@ -1,7 +1,5 @@
 import { CacheModule, Module, OnModuleInit } from "@nestjs/common";
 import { Neo4jModule } from "../neo4j/neo4j.module";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { Neo4jConfig } from "../neo4j/neo4j-config.interface";
 import * as redisStore from 'cache-manager-redis-store';
 import { ElasticSearchModule } from "../elastic-search/elastic-search.module";
 import { HttpModule } from "@nestjs/axios";
@@ -11,9 +9,7 @@ import { ServiceSchematic } from "~shared/schematics/service/service.schematic";
 import { ModuleRef } from "@nestjs/core";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { LocationModel } from "~shared/models/location.model";
-import { LocationService } from "~shared/services/location.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { BaseNeoTreeService } from './services/base-neo-tree.service';
 
 
 @Module({

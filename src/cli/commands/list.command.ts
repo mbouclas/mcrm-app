@@ -1,14 +1,17 @@
 import { CliCommand, CommandArguments } from "../decorators/cli-command";
 import { CommandMeta } from "../meta-data/command-meta";
 import { _cli } from "../helpers/_cli";
-import chalk from 'chalk';
+import * as chalk from 'chalk';
+import { Injectable } from "@nestjs/common";
 
+@Injectable()
 @CliCommand('list', {
   desc: 'List Available Commands',
 })
 export class ListCommand {
   public async handle(options: CommandArguments): Promise<void> {
     const commands = CommandMeta.getAllCommands();
+
 
     const keys = Object.keys(commands).sort().reverse();
 

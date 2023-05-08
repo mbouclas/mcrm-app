@@ -22,7 +22,6 @@ import { CommonModule } from './common/common.module';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
-import { ViewEngine } from './main';
 import { resolve } from 'path';
 import { store } from './state';
 import { ModelsService } from '~admin/services/models.service';
@@ -35,7 +34,7 @@ import { ChangeLogModule } from '~change-log/change-log.module';
 import { TagModule } from '~tag/tag.module';
 import { CartMiddleware } from '~eshop/middleware/cart.middleware';
 import { UploadModule } from './upload/upload.module';
-import { ImageModule } from './image/image.module';
+import { ImageModule } from "~image/image.module";
 import { loadConfigs } from '~helpers/load-config';
 import { SyncModule } from './sync/sync.module';
 const Lang = require('mcms-node-localization');
@@ -106,7 +105,11 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
     await modelService.mergeModels();
     // Object.keys(store.getState().models).forEach(model => console.log(model))
     //     console.log(store.getState().models['Product']);
-
+    /**
+     * It should not load during the cli mode cause it will include the main file which boots the server
+     */
+  if (!process.env.MODE || process.env.MODE !== 'cli') {
+    const ViewEngine = require('./main').ViewEngine;
     ViewEngine.options.globals = {
       ...ViewEngine.options.globals,
       ...{
@@ -114,6 +117,8 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
         isInProduction: process.env.NODE_ENV === 'production',
       },
     };
+  }
+/*    */
 
     Translate = new Lang({
       directory: resolve(__dirname, '../../', 'lang'),
