@@ -18,7 +18,12 @@ import handleAsync from '~helpers/handleAsync';
 
 import { McmsDiContainer } from '~helpers/mcms-component.decorator';
 
-import { PaymentMehodExists } from '../../exceptions';
+import {
+  CustomerDoesNotExist,
+  CustomerPaymentMehodExists,
+  CustomerPaymentMehodFailedCreate,
+  ProviderPaymentMethodDoesNotExist,
+} from '../../exceptions';
 
 @Controller('api/customer-payment-method')
 export class CustomerPaymentMethodController {
@@ -40,10 +45,16 @@ export class CustomerPaymentMethodController {
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
 
-    const customer = await new CustomerService().findOne({
-      userId,
-      provider: body.provider,
-    });
+    const [customerError, customer] = await handleAsync(
+      new CustomerService().findOne({
+        userId,
+        provider: body.provider,
+      }),
+    );
+
+    if (customerError) {
+      throw new CustomerDoesNotExist();
+    }
 
     const providerContainer = McmsDiContainer.get({
       id: `StripeProvider`,
@@ -51,9 +62,13 @@ export class CustomerPaymentMethodController {
 
     const provider: IPaymentMethodProvider = new providerContainer.reference();
 
-    const paymentInfo: any = await provider.getCardInfo(
-      body.providerPaymentMethodId,
+    const [paymentInfoError, paymentInfo]: any = await handleAsync(
+      provider.getCardInfo(body.providerPaymentMethodId),
     );
+
+    if (paymentInfoError) {
+      throw new ProviderPaymentMethodDoesNotExist();
+    }
 
     const card = {
       last4: parseInt(paymentInfo.card.last4),
@@ -74,21 +89,32 @@ export class CustomerPaymentMethodController {
     );
 
     if (exists) {
-      throw new PaymentMehodExists();
+      throw new CustomerPaymentMehodExists();
     }
 
-    await provider.attachPaymentMethod(
-      body.providerPaymentMethodId,
-      customer.customerId,
+    await handleAsync(
+      provider.attachPaymentMethod(
+        body.providerPaymentMethodId,
+        customer.customerId,
+      ),
     );
 
-    return await new CustomerPaymentMethodService().store({
-      userId,
-      provider: body.provider,
-      providerPaymentMethodId: body.providerPaymentMethodId,
-      card: card,
-      providerCustomerId: customer.customerId,
-    });
+    const [customerPaymentMethodError, customerPaymentMethodResult] =
+      await handleAsync(
+        new CustomerPaymentMethodService().store({
+          userId,
+          provider: body.provider,
+          providerPaymentMethodId: body.providerPaymentMethodId,
+          card: card,
+          providerCustomerId: customer.customerId,
+        }),
+      );
+
+    if (customerPaymentMethodError) {
+      throw new CustomerPaymentMehodFailedCreate();
+    }
+
+    return customerPaymentMethodResult;
   }
 
   @Delete()
