@@ -42,6 +42,14 @@ export class ImageModel extends BaseModel implements OnModuleInit {
       group: "main"
     },
     {
+      varName: "originalLocation",
+      label: "Original Location",
+      placeholder: "Original Location",
+      type: "text",
+      isSortable: false,
+      group: "hidden"
+    },
+    {
       varName: "path",
       label: "Path",
       placeholder: "Path",

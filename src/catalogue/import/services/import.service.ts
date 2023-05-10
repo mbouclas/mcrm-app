@@ -7,13 +7,14 @@ import { ProductCategoryModel } from "~catalogue/product/models/product-category
 import { PropertyModel } from "~catalogue/property/property.model";
 import { ProductCategoryService } from "~catalogue/product/services/product-category.service";
 import { PropertyService } from "~catalogue/property/property.service";
-import { ProductModelDto, ProductService } from "~catalogue/product/services/product.service";
+import { ProductService } from "~catalogue/product/services/product.service";
 import { store } from "~root/state";
 import { CacheService } from "~shared/services/cache.service";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { PropertyValueModel } from "~catalogue/property/property-value.model";
 import { ImageService } from "~image/image.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
+
 const slugify = require('slug');
 
 export interface ITransformerResult<T> {
@@ -99,8 +100,32 @@ export class ImportService implements OnApplicationBootstrap {
       type: "text"
     },
     {
-      importFieldName: "PIECES",
+      importFieldName: "PIECES PER BOX",
       name: "pieces",
+      required: false,
+      type: "number"
+    },
+    {
+      importFieldName: "Item Height",
+      name: "height",
+      required: false,
+      type: "number"
+    },
+    {
+      importFieldName: "Item Width",
+      name: "width",
+      required: false,
+      type: "number"
+    },
+    {
+      importFieldName: "Item Weight",
+      name: "weight",
+      required: false,
+      type: "number"
+    },
+    {
+      importFieldName: "Item Diameter",
+      name: "diameter",
       required: false,
       type: "number"
     },
@@ -126,11 +151,12 @@ export class ImportService implements OnApplicationBootstrap {
     },
     {
       importFieldName: "property.material",
-      name: "property.material",
+      name: "material",
       required: false,
       matchSourceValue: "slug",
       matchTargetValue: "slug",
-      type: "property"
+      type: "property",
+      slugifyValue: true
     }
   ];
 
@@ -167,10 +193,11 @@ export class ImportService implements OnApplicationBootstrap {
       "encoding": "7bit",
       "mimetype": "text/csv",
       "destination": "I:\\Work\\mcms-node\\upload",
-      "filename": "322962c5c2c857ef60f59da86ee5a974",
-      "path": "I:\\Work\\mcms-node\\mcrm\\upload\\78617933b0bf7c7c0e9722de029787b8",
+      "filename": "Product Import.csv",
+      "path": "I:\\Work\\mcms-node\\mcrm\\upload\\Product Import.csv",
       "size": 17760597
     };
+
     // setTimeout(async () => await ImportQueueService.queue.add(ImportService.jobEventName, dummyFile), 1000);
 
   }
@@ -330,6 +357,7 @@ export class ImportService implements OnApplicationBootstrap {
         return slugify(c, {lower: true});
       });
 
+
       product.assignedProperties = product.properties.map(prop => prop.key.trim().toLowerCase());
 
       delete product.properties;
@@ -337,7 +365,7 @@ export class ImportService implements OnApplicationBootstrap {
       product.variants = [];
       product.allProperties = [];
       row.forEach((r, index) => {
-        const name = [];
+        const name = [r.sku];
         const variantId = product.variantId ? product.variantId : `${r.sku}.${index}`;
 
         // console.log(r)
@@ -361,7 +389,8 @@ export class ImportService implements OnApplicationBootstrap {
             iterationName = foundValue && foundValue[foundField.matchTargetValue];
           }
 
-          name.push(iterationName);
+
+          name.push(p.key);
           const temp = {};
 
           temp[p.key.toLowerCase().trim()] = p.value;
@@ -382,6 +411,9 @@ export class ImportService implements OnApplicationBootstrap {
         }, r));
       });
 
+/*      if (product.sku === 'R7200') {
+        console.log(product.variants[1]);
+      }*/
 
       product.propertyValues = [];
       product.allProperties.forEach(prop => {
@@ -390,6 +422,7 @@ export class ImportService implements OnApplicationBootstrap {
       });
 
       idx++;
+
 
       return product;
     });
@@ -430,11 +463,11 @@ export class ImportService implements OnApplicationBootstrap {
     const s = new ProductService();
     const is = new ImportService();
 
+    // console.log(JSON.stringify(products.find(p => p.sku === "R7200")))
+    // return
     await is.pullAllProperties();
 
-    const propertiesVariantQuery = is.properties.map(prop => {
-      return `pv.${prop["slug"]} = variantProperties.${prop["slug"]}`;
-    });
+
 
     for (let idx = 0; products.length > idx; idx++) {
       products[idx].active = true;
@@ -447,25 +480,36 @@ export class ImportService implements OnApplicationBootstrap {
       }
     }
 
+
     const fieldQuery = store.getState().models.Product.fields
       // .filter(field => products[idx][field.varName])
       .map(field => {
-        return `n.${field.varName} = row.${field.varName}`;
-      }).join(", ");
+        return `CALL apoc.do.when(row.${field.varName} is not null, "SET n.${field.varName} = row.${field.varName}",'', {row:row, n:n}) yield value as value${field.varName}`;
+      });
 
+    ImportService.defaultFieldMap.forEach(field => {
+      const found = store.getState().models.Product.fields.find(f => f.varName === field.name);
+      if (found) {return;}
+      if (field.name.includes('property.')) { return; }
 
+      fieldQuery.push(`CALL apoc.do.when(row.${field.name} is not null, "SET n.${field.name} = row.${field.name}",'', {row:row, n:n}) yield value as value${field.name}`);
+    });
+
+// Using CALL apoc.do.when to eliminate empty field values. If the import runs on existing products, it will delete the values
     const mainQuery = `
     UNWIND $rows as row
     MERGE (n:Product {sku: row.sku})
-          ON CREATE SET ${fieldQuery}, n.updatedAt = datetime(), n.createdAt = datetime()
-          ON MATCH SET ${fieldQuery},  n.updatedAt = datetime()
-          
-          WITH row, n
-          
+          ON CREATE SET  n.updatedAt = datetime(), n.createdAt = datetime()
+          ON MATCH SET   n.updatedAt = datetime()
+   
+    WITH row, n
+   ${fieldQuery.join(' \n WITH row,n \n')}       
+
+          WITH n,row
           // now do the categories
           UNWIND row.categories as category
           MATCH (c:ProductCategory {slug:category})
-          MERGE (n)-[r:PRODUCT_HAS_CATEGORY]->(c) 
+          MERGE (n)-[r:HAS_CATEGORY]->(c) 
           ON CREATE SET  r.updatedAt = datetime(), r.createdAt = datetime()
           ON MATCH SET   r.updatedAt = datetime()
          /* 
@@ -502,16 +546,13 @@ export class ImportService implements OnApplicationBootstrap {
           ON MATCH SET   rpv.updatedAt = datetime()
        */
           
-          /*
-         // WITH row, n,variant
-         // UNWIND variant.properties as variantProperty
-         // MATCH (pv) SET ${propertiesVariantQuery}
-          */
+
            WITH row, n
           // images
                     
           RETURN *;
       `;
+    // console.log(mainQuery)
 // console.log('---------', products.length)
     // console.log(query);
 // console.log(products[1].variants)
@@ -566,28 +607,70 @@ export class ImportService implements OnApplicationBootstrap {
       console.log("Error in Variants", e);
     }
 
+    await this.importProperties(products);
+    await this.importPropertyValues(products);
+
     try {
+      // need to reshape the data to update all the variants in one go as well as attach the properties
+      let variants = [];
+      products.forEach(p => {
+        variants = variants.concat(p.variants.map(pv => {
+          const variant: any = {
+            variantId: pv.variantId,
+            sku: pv.sku,
+            propertyKeys: [],
+            properties: pv.properties,
+          };
+          // attach a property like color: red to the variant
+          pv.properties.forEach(prop => {
+            const key = Object.keys(prop)[0];
+            variant[key] = prop[key];
+            variant.propertyKeys.push(key);
+          });
+
+          return variant;
+        }));
+      });
+
+      const propertiesVariantQuery = is.properties.map(prop => {
+        return `pv.${prop["slug"]} = row.${prop["slug"]}`;
+      });
+
+      const variantsPropertyValuesQuery = is.properties.map((prop, idx) => {
+        const found = ImportService.defaultFieldMap.find((f ) => f.name === prop["slug"] && f.type ==='property');
+        if (!found) {return }
+
+        return `
+        MATCH (property${idx}:Property {slug: '${found.name}'})-[r${idx}:HAS_VALUE]->(propertyValue${idx}:PropertyValue {${found.matchSourceValue}: row.${found.name}})
+        MERGE (pv)-[rp${idx}:HAS_PROPERTY_VALUE]->(propertyValue${idx})
+        ON CREATE SET rp${idx}.createdAt = datetime(), rp${idx}.updatedAt = datetime()
+        ON MATCH SET rp${idx}.updatedAt = datetime()
+        `;
+      });
+
       await s.neo.write(`
       UNWIND $rows as row
       with row
-      UNWIND row.variants as variant
-            WITH row,variant
-      UNWIND variant.properties as variantProperties
-
-      MATCH (pv:ProductVariant {variantId: variant.variantId}) SET ${propertiesVariantQuery}
+      MATCH (pv:ProductVariant {variantId: row.variantId})
+      SET ${propertiesVariantQuery}
+      WITH *
+       ${variantsPropertyValuesQuery.join(`WITH *\n`)}
+       return *;
       `, {
-        rows: products
+        rows: variants
       });
+
+
 
       console.log("Updating variants to DB: All done");
     } catch (e) {
-      console.log(e);
+      console.log(`Error in Variants`, e);
     }
 
 
 // console.log('*********', JSON.stringify(products.find(p => p.sku === 'R7200')), '*********')
-    await this.importProperties(products);
-    await this.importPropertyValues(products);
+
+
     // await this.importImages(products);
   }
 
@@ -639,6 +722,8 @@ export class ImportService implements OnApplicationBootstrap {
         return *;
         `;
       });
+
+    // console.log(propertyMapQueryArr[0])
 
     for (let idx = 0; propertyMapQueryArr.length > idx; idx++) {
       try {

@@ -19,18 +19,33 @@ export interface IPropertyValueFieldMapper {
 export class PropertiesService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap()  {
-/*    const s = new PropertiesService();
+    // await PropertiesService.importColorsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\color-codes-with-photo-links.csv`)
+    // await PropertiesService.importMaterialsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\Product Import.csv`);
+  }
+
+  static async importMaterialsFromFile(file: string) {
+    const s = new PropertiesService();
     const fieldMapper = {
-        name: 'Color name',
-        icon: '',
-        image: 'image',
-        color: 'hex code',
-        code: 'Color code'
-      };
+      name: 'property.material',
+    }
 
-    const rows = await s.readPropertyValuesCsv(`I:\\Work\\mcms-node\\mcrm\\upload\\color-codes.csv`, fieldMapper)
-    await s.importPropertyValuesFromCsv({slug: 'color'}, rows, 'code');*/
+    const rows = await s.readPropertyValuesCsv(file, fieldMapper);
+    await s.importPropertyValuesFromCsv({slug: 'material'}, rows, 'slug');
 
+  }
+
+  static async importColorsFromFile(file: string) {
+    const s = new PropertiesService();
+    const fieldMapper = {
+      name: 'Color name',
+      icon: '',
+      image: 'image',
+      color: 'hex code',
+      code: 'Color code'
+    };
+
+    const rows = await s.readPropertyValuesCsv(file, fieldMapper)
+    await s.importPropertyValuesFromCsv({slug: 'color'}, rows, 'code');
   }
 
   async readPropertyValuesCsv(filename: string, fieldMapper: IPropertyValueFieldMapper): Promise<PropertyValueModel[]> {
@@ -56,8 +71,8 @@ export class PropertiesService implements OnApplicationBootstrap {
 
           // Set it to true for further processing
           if (temp['image']) {
-            temp['image'] = true;
-            temp['imagePending'] = true;
+            // temp['image'] = true;
+            temp['imagePending'] = false;
           }
 
           if (temp['icon']) {
@@ -87,6 +102,7 @@ export class PropertiesService implements OnApplicationBootstrap {
       })
     });
 
+
     const rowFieldsQuery = fields.map(field => {
       return `pv.${field} = row.${field}`;
     });
@@ -97,12 +113,11 @@ export class PropertiesService implements OnApplicationBootstrap {
     MATCH (property:Property {${key}:'${value}'})
     MERGE (pv:PropertyValue {${matchKey}: row['${matchKey}']})
     ON CREATE SET ${rowFieldsQuery.join(',')}, pv.createdAt = datetime()
-    ON MATCH SET pv.updatedAt = datetime()
+    ON MATCH SET pv.updatedAt = datetime(), ${rowFieldsQuery.join(',')}
     with row,pv,property
     MERGE (property)-[r1:HAS_VALUE]->(pv) ON CREATE SET r1.createdAt = datetime() ON MATCH SET r1.updatedAt = datetime()
     return *;
     `;
-
 
     try {
       const res = await service.neo.write(query, {rows})

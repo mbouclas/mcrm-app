@@ -13,6 +13,7 @@ export interface IImportProcessorFieldMap {
   isSlugFor?: string;
   matchSourceValue?: string;
   matchTargetValue?: string;
+  slugifyValue?: boolean;
 }
 
 @Injectable()

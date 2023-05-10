@@ -1,4 +1,4 @@
-import { OnApplicationBootstrap } from "@nestjs/common";
+import { Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { PhotosCsvProcessorService } from "~catalogue/import/services/photos-csv-processor.service";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { Job } from "bullmq";
@@ -20,6 +20,7 @@ const crypto = require('crypto')
 export class ImportProductPhotosService implements OnApplicationBootstrap {
   public static jobEventName = "import:photos";
   protected static readonly importResultCacheKey = "import-photos-job-";
+  private readonly logger = new Logger(ImportProductPhotosService.name);
   private static defaultFieldMap: IImportProcessorFieldMap[] = [
     {
       importFieldName: 'variantID',
@@ -46,7 +47,7 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.photosImportQueueName);
   }
 
-  async analyze(file: Express.Multer.File, limit = 10) {
+  async analyze(file: Express.Multer.File, limit?: number) {
     try {
       const processorService = new PhotosCsvProcessorService();
       processorService.setFieldMap(ImportProductPhotosService.defaultFieldMap);
@@ -78,8 +79,10 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
   async processFile(file: Express.Multer.File) {
     const s = new ImportProductPhotosService(new HttpService());
     const res = await s.analyze(file);
+
     // Group the products by SKU. This needs to be extracted from each item in the array
     const group = groupBy(res.data, 'sku');
+
     const products = Object.keys(group).map(sku => ({
       sku,
       variants: sortBy(group[sku], 'variantId'),
@@ -87,30 +90,26 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
 
     // Comes from config catalogue.import.overwriteImages in /config
     const overwriteImages = store.getState().configs.catalogue['import']['overwriteImages'];
-    // const job = await ImportQueueService.imageProcessingQueue.add(ImportService.processImageJobEventName, { ...products[0], ...{processForReal: true} });
-    try {
-
+/*    try {
 
 
       await s.handleProductPhotos(products[0], overwriteImages);
     }
     catch (e) {
       console.log(`Error processing photos for product ${products[0].sku}`, e);
-    }
+    }*/
 
-    /**
-     *     for (let idx = 0; products.length > idx; idx++) {
-     *           try {
-     *       // Comes from config catalogue.import.overwriteImages in /config
-     *
-     *
-     *       await s.handleProductPhotos(products[idx], overwriteImages);
-     *     }
-     *     catch (e) {
-     *       console.log(`Error processing photos for product ${products[idx].sku}`, e);
-     *     }
-     *     }
-     */
+    console.log('************', products.length);
+
+    for (let idx = 0; products.length > idx; idx++) {
+      try {
+        // Comes from config catalogue.import.overwriteImages in /config
+        await s.handleProductPhotos(products[idx], overwriteImages);
+        this.logger.log(`Processed photos for product ${products[idx].sku}`);
+      } catch (e) {
+        console.log(`Error processing photos for product ${products[idx].sku}`, e);
+      }
+    }
 
     console.log('All photos processed');
   }
@@ -124,38 +123,46 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     for (let idx = 0; product.variants.length > idx; idx++) {
       if (!product.variants[idx].image) {continue;}
       const variant = await (new ProductVariantService()).findOne({variantId: product.variants[idx].variantId}, ['images']);
-
       if (!variant) {continue;}
 
-      // If the variant already has images, don't overwrite them
-      if (Array.isArray(variant['images']) && variant['images'].length > 0 && !overwriteImages) {
-        //check in the DB for this image
-        const existingImage = await (new ImageService()).findOne({originalLocation: crypto.createHash('md5').update(product.variants[idx].image).digest("hex")});
-        if (existingImage) {
-          continue;
-        }
 
+      const imageHash = crypto.createHash('md5').update(product.variants[idx].image).digest("hex");
+      let existingImage;
+      try {
+        existingImage = await (new ImageService()).findOne({originalLocation: imageHash});
+      }
+      catch (e) {
+        this.logger.debug('---- Image Not Found', imageHash, product.variants[idx].image)
       }
 
+      // If the variant already has images, don't overwrite them
 
-      // Look up for the image in the DB, don't want to upload duplicates
-      // const existingImage = await (new ImageService()).findOne({url: product.variants[idx].image});
+      if (Array.isArray(variant['images']) && variant['images'].length > 0 && !overwriteImages) {
+        continue;
+      }
 
-      const image = await this.downloadImageFromUrl(product.variants[idx].image);
+      if (!existingImage) {
+        const image = await this.downloadImageFromUrl(product.variants[idx].image);
+        const newHash = crypto.createHash('md5').update(image.url).digest("hex");
+        existingImage = await service.handle(image.filename as string, 'remote', {
+          fromImport: true, originalFilename: path.basename(product.variants[idx].image),
+          originalLocation: newHash,
+        });
+        existingImage.uuid = existingImage.id;
+        await service.update(existingImage.id, {originalLocation: newHash});
+        this.logger.log(`Uploaded image ${existingImage.id} - ${newHash})`);
+      }
 
-      const img = await service.handle(image.filename as string, 'remote', {
-        fromImport: true, originalFilename: path.basename(product.variants[idx].image),
-        originalLocation: crypto.createHash('md5').update(image.url).digest("hex"),
-      });
-      await service.linkToObject({uuid: img.id}, 'ProductVariant', variant['uuid'], idx === 0 ? 'main' : 'additional', {fromImport: true});
+      await service.linkToObject({uuid: existingImage.uuid}, 'ProductVariant', variant['uuid'], idx === 0 ? 'main' : 'additional', {fromImport: true});
       if (idx === 0) {
         // set it as a thumb property on the variant
-        await (new ProductVariantService).update(variant['uuid'], {thumb: img.url});
+        await (new ProductVariantService).update(variant['uuid'], {thumb: existingImage.url});
         const found = await (new ProductService()).findOne({sku: product.sku});
-        await service.linkToObject({uuid: img.id}, 'Product', found['uuid'], 'main', {fromImport: true});
-        await (new ProductService()).update(found['uuid'], {thumb: img.url} as any);
+        await service.linkToObject({uuid: existingImage.uuid}, 'Product', found['uuid'], 'main', {fromImport: true});
+
+        await (new ProductService()).update(found['uuid'], {thumb: existingImage.url} as any);
       }
-      console.log(`Variant ${variant['variantId']} linked to image ${img.id}`)
+      console.log(`Variant ${variant['variantId']} linked to image ${existingImage.uuid}`)
     }
   }
 

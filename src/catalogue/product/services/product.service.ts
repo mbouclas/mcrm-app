@@ -110,6 +110,11 @@ export class ProductService extends BaseNeoService {
   }
 
   async store(record: ProductModelDto, userId?: string) {
+    // Handle SKU
+    if (!record.sku) {
+      record.sku = tokenGenerator(6);
+    }
+
     const r = await super.store(record, userId);
     // Add changelog?
 
@@ -117,10 +122,7 @@ export class ProductService extends BaseNeoService {
   }
 
   async update(uuid: string, record: ProductModelDto, userId?: string) {
-    // Handle SKU
-    if (!record.sku) {
-      record.sku = tokenGenerator(6);
-    }
+
     const r = await super.update(uuid, record, userId);
     // Handle Categories
     if (Array.isArray(record.categories)) {

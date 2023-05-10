@@ -8,6 +8,7 @@ import { ProductService } from "~catalogue/product/services/product.service";
 import { ProductConverterService } from "~catalogue/sync/product-converter.service";
 import { SyncModule } from "~catalogue/sync/sync.module";
 import { ProductModel } from "~catalogue/product/models/product.model";
+import { PropertyService } from "~catalogue/property/property.service";
 
 @Injectable()
 export class SyncEsService {
@@ -65,9 +66,9 @@ export class SyncEsService {
 
   async one(uuid: string, syncWithEs = false) {
     const service = new ProductService();
-
+    const allProperties = await (new PropertyService()).find({limit: 1000});
     const product = await service.findOne({uuid}, this.rels);
-    const item = await (new ProductConverterService()).convert(product);
+    const item = await (new ProductConverterService(allProperties)).convert(product);
     //get similar/related products
     //const similar = await (new SimilarItemsService(this.es)).search(item.id, {})
 
@@ -82,7 +83,9 @@ export class SyncEsService {
   async all(limit = 40, syncWithEs = false): Promise<IProductModelEs[]> {
     let data = [];
     const service = new ProductService();
-    const converter = new ProductConverterService();
+    const allProperties = await (new PropertyService()).find({limit: 1000});
+
+    const converter = new ProductConverterService(allProperties);
 
     const firstQuery = await service.find({limit}, this.rels);
     for (let idx = 0; idx < firstQuery.data.length; idx++) {

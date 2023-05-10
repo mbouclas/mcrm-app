@@ -55,11 +55,13 @@ export class CsvProcessorService extends BaseProcessorService {
 
     let isInvalid = false
     const invalidFields = [];
+
     Object.keys(rowData)
       .filter(key => {
         return this.fieldMap.findIndex(f => f.importFieldName === key.trim()) !== -1
       })
       .forEach(key => {
+
         const field = this.fieldMap.find(f => f.importFieldName === key.trim());
 
         if (field.required && !rowData[key]) {
@@ -88,11 +90,12 @@ export class CsvProcessorService extends BaseProcessorService {
 
         if (field.type === 'property') {
           if (['N/A'].indexOf(rowData[key]) !== -1) {return;}
-          data['properties'].push({key: key.replace('property.', ''), value: rowData[key]});
+          data['properties'].push({key: key.replace('property.', ''), value: field.slugifyValue ? slug(rowData[key], {trim: true, lower: true}) : rowData[key]});
         }
 
         if (field.type === 'variantId') {
           data['variantId'] = rowData[key];
+          data['variantSlug'] = slug(rowData[key], {trim: true, lower: true});
         }
 
         if (field.isSlugFor) {
