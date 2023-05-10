@@ -23,6 +23,8 @@ import {
   CustomerPaymentMehodExists,
   CustomerPaymentMehodFailedCreate,
   ProviderPaymentMethodDoesNotExist,
+  CustomerPaymentMethodDoesNotExist,
+  CustomerPaymentMethodFailedDelete,
 } from '../../exceptions';
 
 @Controller('api/customer-payment-method')
@@ -33,7 +35,15 @@ export class CustomerPaymentMethodController {
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new CustomerPaymentMethodService().findOne({ uuid }, rels);
+    const [error, result] = await handleAsync(
+      new CustomerPaymentMethodService().findOne({ uuid }, rels),
+    );
+
+    if (error) {
+      throw new CustomerPaymentMethodDoesNotExist();
+    }
+
+    return result;
   }
 
   @Patch(`:uuid`)
@@ -119,6 +129,14 @@ export class CustomerPaymentMethodController {
 
   @Delete()
   async delete(@Param('id') uuid: string) {
-    return await new CustomerPaymentMethodService().delete(uuid);
+    const [error, result] = await handleAsync(
+      new CustomerPaymentMethodService().delete(uuid),
+    );
+
+    if (error) {
+      throw new CustomerPaymentMethodFailedDelete();
+    }
+
+    return result;
   }
 }
