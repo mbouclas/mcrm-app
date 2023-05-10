@@ -30,16 +30,21 @@ import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 import {
   BillingAddressFailed,
-  BillingAddressDoesNotExist,
+  BillingAddressNotFound,
   ShippingAddressFailed,
-  ShippingAddressDoesNotExist,
+  ShippingAddressNotFound,
   OrderFailed,
-  OrderDoesNotExist,
+  OrderNotFound,
+  PaymentMethodNotFound,
+  CustomerPaymentMethodNotFound,
+  ShippingMethodNotFound,
+  ShippingMethodFaildTransaction,
+  PaymentMethodFailedTransaction,
 } from '../../exceptions';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
@@ -58,7 +63,7 @@ export class OrderController {
     );
 
     if (error) {
-      throw new OrderDoesNotExist();
+      throw new OrderNotFound();
     }
 
     return result;
@@ -163,7 +168,7 @@ export class OrderController {
         }),
       );
       if (error) {
-        throw new ShippingAddressDoesNotExist();
+        throw new ShippingAddressNotFound();
       }
 
       shippingAddress = result;
@@ -196,48 +201,71 @@ export class OrderController {
       );
 
       if (error) {
-        throw new BillingAddressDoesNotExist();
+        throw new BillingAddressNotFound();
       }
 
       billingAddress = result;
     }
 
-    const paymentMethod = await new PaymentMethodService().findOne({
-      uuid: body.paymentMethodId,
-    });
+    const [paymentMethodError, paymentMethod] = await handleAsync(
+      new PaymentMethodService().findOne({
+        uuid: body.paymentMethodId,
+      }),
+    );
 
-    const customerPaymentMethod =
-      await new CustomerPaymentMethodService().findOne({
-        uuid: body.customerPaymentMethodId,
-      });
+    if (paymentMethodError) {
+      throw new PaymentMethodNotFound();
+    }
+    const [errorCustomerPaymentMethod, customerPaymentMethod] =
+      await handleAsync(
+        new CustomerPaymentMethodService().findOne({
+          uuid: body.customerPaymentMethodId,
+        }),
+      );
 
+    if (errorCustomerPaymentMethod) {
+      throw new CustomerPaymentMethodNotFound();
+    }
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${
+        paymentProviderSettings.providerName.charAt(0).toUpperCase() +
         paymentProviderSettings.providerName.slice(1)
-        }Provider`,
+      }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider =
       new paymentProviderContainer.reference();
 
-    const shippingMethod = await new ShippingMethodService().findOne({
-      uuid: body.shippingMethodId,
-    });
+    const [errorShippingMethod, shippingMethod] = await handleAsync(
+      new ShippingMethodService().findOne({
+        uuid: body.shippingMethodId,
+      }),
+    );
+
+    if (errorShippingMethod) {
+      throw new ShippingMethodNotFound();
+    }
 
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() +
+      id: `${
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
         shippingProviderSettings.providerName.slice(1)
-        }Provider`,
+      }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider =
       new shippingProviderContainer.reference();
 
-    const shippingInfo = await shippingMethodProvider.sendTransaction();
+    const [shippingInfoError, shippingInfo] = await handleAsync(
+      shippingMethodProvider.sendTransaction(),
+    );
+    if (shippingInfoError) {
+      throw new ShippingMethodFaildTransaction();
+    }
 
     const products = await new ProductService().find({
       uuids: cart.items.map((item) => item.productId),
@@ -264,110 +292,122 @@ export class OrderController {
       });
     }
 
-    const paymentInfo = await paymentMethodProvider.sendTransaction(
-      customer.customerId,
-      fullPrice,
-      customerPaymentMethod.providerPaymentMethodId,
+    const [errorPaymentInfo, paymentInfo] = await handleAsync(
+      paymentMethodProvider.sendTransaction(
+        customer.customerId,
+        fullPrice,
+        customerPaymentMethod.providerPaymentMethodId,
+      ),
     );
-
-    const [orderError, order] = await handleAsync(orderService.store({
-      status: 1,
-      paymentMethod: paymentMethod.title,
-      shippingMethod: shippingMethod.title,
-      salesChannel: body.salesChannel,
-      billingAddressId: billingAddress.uuid,
-      shippingAddressId: shippingAddress.uuid,
-      paymentStatus: 1,
-      shippingStatus: 1,
-      paymentInfo,
-      shippingInfo,
-      userId,
-    }));
-
-    if (orderError) {
-      throw new OrderFailed()
+    if (errorPaymentInfo) {
+      throw new PaymentMethodFailedTransaction();
     }
 
-    const [orderShippingAddressError,] = await handleAsync(orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['Address'],
-      {
-        uuid: shippingAddress.uuid,
-      },
-      'address',
-    ));
+    const [orderError, order] = await handleAsync(
+      orderService.store({
+        status: 1,
+        paymentMethod: paymentMethod.title,
+        shippingMethod: shippingMethod.title,
+        salesChannel: body.salesChannel,
+        billingAddressId: billingAddress.uuid,
+        shippingAddressId: shippingAddress.uuid,
+        paymentStatus: 1,
+        shippingStatus: 1,
+        paymentInfo,
+        shippingInfo,
+        userId,
+      }),
+    );
 
+    if (orderError) {
+      throw new OrderFailed();
+    }
+
+    const [orderShippingAddressError] = await handleAsync(
+      orderService.attachModelToAnotherModel(
+        store.getState().models['Order'],
+        {
+          uuid: order.uuid,
+        },
+        store.getState().models['Address'],
+        {
+          uuid: shippingAddress.uuid,
+        },
+        'address',
+      ),
+    );
 
     if (orderShippingAddressError) {
       throw new OrderFailed();
     }
 
-    const [orderBillingAddressError,] = await handleAsync(orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['Address'],
-      {
-        uuid: billingAddress.uuid,
-      },
-      'address',
-    ));
+    const [orderBillingAddressError] = await handleAsync(
+      orderService.attachModelToAnotherModel(
+        store.getState().models['Order'],
+        {
+          uuid: order.uuid,
+        },
+        store.getState().models['Address'],
+        {
+          uuid: billingAddress.uuid,
+        },
+        'address',
+      ),
+    );
 
     if (orderBillingAddressError) {
       throw new OrderFailed();
     }
 
-
-
-    const [orderPaymentMethodError,] = await handleAsync(orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['PaymentMethod'],
-      {
-        uuid: paymentMethod.uuid,
-      },
-      'paymentMethod',
-    ));
-
+    const [orderPaymentMethodError] = await handleAsync(
+      orderService.attachModelToAnotherModel(
+        store.getState().models['Order'],
+        {
+          uuid: order.uuid,
+        },
+        store.getState().models['PaymentMethod'],
+        {
+          uuid: paymentMethod.uuid,
+        },
+        'paymentMethod',
+      ),
+    );
 
     if (orderPaymentMethodError) {
       throw new OrderFailed();
     }
 
-
-    const [orderShippingMethodError,] = await handleAsync(orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['ShippingMethod'],
-      {
-        uuid: shippingMethod.uuid,
-      },
-      'shippingMethod',
-    ));
+    const [orderShippingMethodError] = await handleAsync(
+      orderService.attachModelToAnotherModel(
+        store.getState().models['Order'],
+        {
+          uuid: order.uuid,
+        },
+        store.getState().models['ShippingMethod'],
+        {
+          uuid: shippingMethod.uuid,
+        },
+        'shippingMethod',
+      ),
+    );
 
     if (orderShippingMethodError) {
       throw new OrderFailed();
     }
 
-    const [orderUserError,] = await handleAsync(orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['User'],
-      {
-        uuid: userId,
-      },
-      'user',
-    ));
+    const [orderUserError] = await handleAsync(
+      orderService.attachModelToAnotherModel(
+        store.getState().models['Order'],
+        {
+          uuid: order.uuid,
+        },
+        store.getState().models['User'],
+        {
+          uuid: userId,
+        },
+        'user',
+      ),
+    );
 
     if (orderUserError) {
       throw new OrderFailed();
@@ -375,37 +415,41 @@ export class OrderController {
 
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
-        const [orderProductError,] = await handleAsync(orderService.attachModelToAnotherModel(
-          store.getState().models['Order'],
-          {
-            uuid: order.uuid,
-          },
-          store.getState().models['Product'],
-          {
-            uuid: productItem?.uuid,
-          },
-          'product',
-          {
-            quantity: cart.items.find(
-              (item) => item.productId === productItem.uuid,
-            ).quantity,
-          },
-        ));
+        const [orderProductError] = await handleAsync(
+          orderService.attachModelToAnotherModel(
+            store.getState().models['Order'],
+            {
+              uuid: order.uuid,
+            },
+            store.getState().models['Product'],
+            {
+              uuid: productItem?.uuid,
+            },
+            'product',
+            {
+              quantity: cart.items.find(
+                (item) => item.productId === productItem.uuid,
+              ).quantity,
+            },
+          ),
+        );
 
         if (orderProductError) {
-          throw new OrderFailed()
+          throw new OrderFailed();
         }
       }),
     );
 
     await session.cart.clearWithDb();
 
-    const [finalResultError, finalResult] = await handleAsync(orderService.findOne({ uuid: order.uuid }));
+    const [finalResultError, finalResult] = await handleAsync(
+      orderService.findOne({ uuid: order.uuid }),
+    );
     if (finalResultError) {
       throw new OrderFailed();
     }
 
-    return finalResult
+    return finalResult;
   }
 
   @Delete(`:uuid`)

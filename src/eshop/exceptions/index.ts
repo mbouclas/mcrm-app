@@ -13,21 +13,21 @@ export class CustomerPaymentMehodFailedCreate extends BaseHttpException {
   }
 }
 
-export class CustomerDoesNotExist extends BaseHttpException {
+export class CustomerNotFound extends BaseHttpException {
   constructor() {
-    super(errors.CUSTOMER_DOES_NOT_EXIST);
+    super(errors.CUSTOMER_NOT_FOUND);
   }
 }
 
-export class ProviderPaymentMethodDoesNotExist extends BaseHttpException {
+export class ProviderPaymentMethodNotFound extends BaseHttpException {
   constructor() {
-    super(errors.PROVIDER_PAYMENT_METHOD_DOES_NOT_EXIST);
+    super(errors.PROVIDER_PAYMENT_METHOD_NOT_FOUND);
   }
 }
 
-export class CustomerPaymentMethodDoesNotExist extends BaseHttpException {
+export class CustomerPaymentMethodNotFound extends BaseHttpException {
   constructor() {
-    super(errors.CUSTOMER_PAYMENT_METHOD_DOES_NOT_EXIST);
+    super(errors.CUSTOMER_PAYMENT_METHOD_NOT_FOUND);
   }
 }
 
@@ -37,9 +37,9 @@ export class CustomerPaymentMethodFailedDelete extends BaseHttpException {
   }
 }
 
-export class OrderDoesNotExist extends BaseHttpException {
+export class OrderNotFound extends BaseHttpException {
   constructor() {
-    super(errors.ORDER_DOES_NOT_EXIST);
+    super(errors.ORDER_NOT_FOUND);
   }
 }
 
@@ -55,9 +55,9 @@ export class BillingAddressFailed extends BaseHttpException {
   }
 }
 
-export class BillingAddressDoesNotExist extends BaseHttpException {
+export class BillingAddressNotFound extends BaseHttpException {
   constructor() {
-    super(errors.BILLING_ADDRESS_DOES_NOT_EXIST);
+    super(errors.BILLING_ADDRESS_NOT_FOUND);
   }
 }
 
@@ -67,8 +67,32 @@ export class ShippingAddressFailed extends BaseHttpException {
   }
 }
 
-export class ShippingAddressDoesNotExist extends BaseHttpException {
+export class ShippingAddressNotFound extends BaseHttpException {
   constructor() {
-    super(errors.SHIPPING_ADDRESS_DOES_NOT_EXIST);
+    super(errors.SHIPPING_ADDRESS_NOT_FOUND);
+  }
+}
+
+export class PaymentMethodNotFound extends BaseHttpException {
+  constructor() {
+    super(errors.PAYMENT_METHOD_NOT_FOUND);
+  }
+}
+
+export class ShippingMethodNotFound extends BaseHttpException {
+  constructor() {
+    super(errors.SHIPPING_METHOD_NOT_FOUND);
+  }
+}
+
+export class PaymentMethodFailedTransaction extends BaseHttpException {
+  constructor() {
+    super(errors.PAYMENT_METHOD_FAILED_TRANSACTION);
+  }
+}
+
+export class ShippingMethodFaildTransaction extends BaseHttpException {
+  constructor() {
+    super(errors.SHIPPING_METHOD_FAILED_TRANSACTION);
   }
 }

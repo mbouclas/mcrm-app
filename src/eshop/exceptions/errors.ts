@@ -13,23 +13,23 @@ export default {
     statusCode: 400,
   },
 
-  CUSTOMER_DOES_NOT_EXIST: {
-    error: 'CUSTOMER_DOES_NOT_EXIST',
-    reason: 'Customer does not exist',
+  CUSTOMER_NOT_FOUND: {
+    error: 'CUSTOMER_NOT_FOUND',
+    reason: 'Customer not found',
     code: '400.102',
     statusCode: 400,
   },
 
-  PROVIDER_PAYMENT_METHOD_DOES_NOT_EXIST: {
-    error: 'PROVIDER_PAYMENT_METHOD_DOES_NOT_EXIST',
-    reason: 'Provider payment method does not exist',
+  PROVIDER_PAYMENT_METHOD_NOT_FOUND: {
+    error: 'PROVIDER_PAYMENT_METHOD_NOT_FOUND',
+    reason: 'Provider payment method not found',
     code: '400.103',
     statusCode: 400,
   },
 
-  CUSTOMER_PAYMENT_METHOD_DOES_NOT_EXIST: {
-    error: 'CUSTOMER_PAYMENT_METHOD_DOES_NOT_EXIST',
-    reason: 'Customer payment method does not exist',
+  CUSTOMER_PAYMENT_METHOD_NOT_FOUND: {
+    error: 'CUSTOMER_PAYMENT_METHOD_NOT_FOUND',
+    reason: 'Customer payment method not found',
     code: '400.104',
     statusCode: 400,
   },
@@ -41,9 +41,9 @@ export default {
     statusCode: 400,
   },
 
-  ORDER_DOES_NOT_EXIST: {
-    error: 'ORDER_DOES_NOT_EXIST',
-    reason: 'Order does not exist',
+  ORDER_NOT_FOUND: {
+    error: 'ORDER_NOT_FOUND',
+    reason: 'Order not found',
     code: '400.106',
     statusCode: 400,
   },
@@ -69,17 +69,45 @@ export default {
     statusCode: 400,
   },
 
-  SHIPPING_ADDRESS_DOES_NOT_EXIST: {
-    error: 'SHIPPING_ADDRESS_DOES_NOT_EXIST',
-    reason: 'Shipping address does not exist',
+  SHIPPING_ADDRESS_NOT_FOUND: {
+    error: 'SHIPPING_ADDRESS_NOT_FOUND',
+    reason: 'Shipping address not found',
     code: '400.110',
     statusCode: 400,
   },
 
-  BILLING_ADDRESS_DOES_NOT_EXIST: {
-    error: 'BILLING_ADDRESS_DOES_NOT_EXIST',
-    reason: 'Billing address does not exist',
+  BILLING_ADDRESS_NOT_FOUND: {
+    error: 'BILLING_ADDRESS_NOT_FOUND',
+    reason: 'Billing address not found',
     code: '400.111',
+    statusCode: 400,
+  },
+
+  PAYMENT_METHOD_NOT_FOUND: {
+    error: 'PAYMENT_METHOD_NOT_FOUND',
+    reason: 'Payment method not found',
+    code: '400.112',
+    statusCode: 400,
+  },
+
+  SHIPPING_METHOD_NOT_FOUND: {
+    error: 'SHIPPING_METHOD_NOT_FOUND',
+    reason: 'Shipping method not found',
+    code: '400.113',
+    statusCode: 400,
+  },
+
+  PAYMENT_METHOD_FAILED_TRANSACTION: {
+    error: 'PAYMENT_METHOD_FAILED_TRANSACTION',
+    reason: 'Payment method failed transaction',
+    code: '400.114',
+    statusCode: 400,
+  },
+
+  SHIPPING_METHOD_FAILED_TRANSACTION: {
+    error: 'SHIPPING_METHOD_FAILED_TRANSACTION',
+    reason: 'Shipping method failed transaction',
+    code: '400.115',
     statusCode: 400,
   },
 };
