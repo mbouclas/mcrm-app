@@ -19,11 +19,11 @@ import handleAsync from '~helpers/handleAsync';
 import { McmsDiContainer } from '~helpers/mcms-component.decorator';
 
 import {
-  CustomerDoesNotExist,
+  CustomerNotFound,
   CustomerPaymentMehodExists,
   CustomerPaymentMehodFailedCreate,
-  ProviderPaymentMethodDoesNotExist,
-  CustomerPaymentMethodDoesNotExist,
+  ProviderPaymentMethodNotFound,
+  CustomerPaymentMethodNotFound,
   CustomerPaymentMethodFailedDelete,
 } from '../../exceptions';
 
@@ -40,7 +40,7 @@ export class CustomerPaymentMethodController {
     );
 
     if (error) {
-      throw new CustomerPaymentMethodDoesNotExist();
+      throw new CustomerPaymentMethodNotFound();
     }
 
     return result;
@@ -63,7 +63,7 @@ export class CustomerPaymentMethodController {
     );
 
     if (customerError) {
-      throw new CustomerDoesNotExist();
+      throw new CustomerNotFound();
     }
 
     const providerContainer = McmsDiContainer.get({
@@ -77,7 +77,7 @@ export class CustomerPaymentMethodController {
     );
 
     if (paymentInfoError) {
-      throw new ProviderPaymentMethodDoesNotExist();
+      throw new ProviderPaymentMethodNotFound();
     }
 
     const card = {
