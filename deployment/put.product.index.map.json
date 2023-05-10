@@ -104,6 +104,9 @@
          "slug": {
            "type": "keyword"
          },
+         "image": {
+           "type": "text"
+         },
          "title": {
            "type": "text",
            "analyzer": "autocomplete",

@@ -1,10 +1,20 @@
 import { ProductModel } from "../product/models/product.model";
 import { IProductModelEs, IPropertyEs, IVariantEs } from "~catalogue/export/sync-elastic-search.service";
 import { ProductCategoryService } from "~catalogue/product/services/product-category.service";
+import { IPagination } from "~models/general";
+import { PropertyModel } from "~catalogue/property/property.model";
+const slugify = require('slug');
+
 
 export class ProductConverterService {
+  constructor(protected properties: IPagination<PropertyModel>) {
+
+  }
   async convert(product: ProductModel) {
     let result: IProductModelEs = {} as IProductModelEs;
+    if (product.sku === 'R7200') {
+      console.log(product)
+    }
 
     result.sku = product.sku;
     result.slug = product.slug;
@@ -54,16 +64,23 @@ export class ProductConverterService {
 
     if (Array.isArray(product["variants"])) {
       result.variants  = product["variants"].map(variant => {
-        return {
+        const item = {
           uuid: variant.uuid,
           title: variant.name.length > 0 ? variant.name : product.title,
-          slug: `${product.slug}-${variant.slug}`,
+          slug: `${product.slug}-${slugify(variant.variantId, {lower: true})}`,
           price: variant.price,
           sku: variant.sku,
-          color: variant.color,
           variantId: variant.variantId,
           image: variant.thumb || null,
         } as unknown as IVariantEs;
+
+        this.properties.data.forEach(property => {
+          if (variant[property['slug']]) {
+            item[property['slug']] = variant[property['slug']];
+          }
+        });
+
+        return item;
       });
     }
 

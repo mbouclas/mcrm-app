@@ -6,7 +6,7 @@ import { IItemImage } from "~image/models/image.types";
 import { IImageProcessingProvider } from "~image/models/providers.types";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { IFileUploadHandlerResult } from "~root/upload/uploader.service";
-
+const crypto = require('crypto')
 
 @Injectable()
 export class ImageService extends BaseNeoService implements OnModuleInit {
