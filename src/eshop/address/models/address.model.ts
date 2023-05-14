@@ -1,10 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
@@ -20,6 +16,7 @@ export class AddressModel extends BaseModel implements OnModuleInit {
   public static defaultAggregationSize = 30;
   public orderId: string;
   public userId: string;
+  public uuid: string;
 
   async onModuleInit() {}
 
