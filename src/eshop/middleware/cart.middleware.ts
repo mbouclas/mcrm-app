@@ -15,6 +15,7 @@ export class CartMiddleware implements NestMiddleware {
     let sessionId = req.session.id;
     // We got a session header, get it from redis
     //
+
     if (req.headers['authorization']) {
       const session = await this.cache.get(
         `token-${req.headers['authorization'].replace('Bearer ', '')}`,

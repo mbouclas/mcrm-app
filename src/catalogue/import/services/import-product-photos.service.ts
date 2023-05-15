@@ -99,8 +99,6 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
       console.log(`Error processing photos for product ${products[0].sku}`, e);
     }*/
 
-    console.log('************', products.length);
-
     for (let idx = 0; products.length > idx; idx++) {
       try {
         // Comes from config catalogue.import.overwriteImages in /config

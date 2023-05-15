@@ -1,6 +1,6 @@
-import { AppStateModel } from "./models/appState.model";
+import { AppStateModel } from "~models/appState.model";
 import create from "zustand/vanilla";
-import { BaseModel } from "./models/base.model";
+import { BaseModel } from "~models/base.model";
 
 export const store = create<AppStateModel>(() => ({
   finishedBooting: false,
