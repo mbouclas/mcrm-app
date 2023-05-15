@@ -67,7 +67,13 @@ export class CustomerPaymentMethodController {
 
     const paymentProviderSettings = paymentMethod.providerSettings;
 
-    const provider = paymentProviderSettings.providerName;
+    const providerName = paymentProviderSettings.providerName;
+
+    const paymentProviderContainer = McmsDiContainer.get({
+      id: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider`,
+    });
+
+    const provider: IPaymentMethodProvider = new paymentProviderContainer.reference();
 
     const [paymentInfoError, paymentInfo]: any = await handleAsync(provider.getCardInfo(body.providerPaymentMethodId));
 
@@ -103,7 +109,7 @@ export class CustomerPaymentMethodController {
       new CustomerPaymentMethodService().store({
         userId,
         paymentMethodId: paymentMethod.uuid,
-        provider,
+        provider: providerName,
         providerPaymentMethodId: body.providerPaymentMethodId,
         card: card,
         providerCustomerId: customer.customerId,

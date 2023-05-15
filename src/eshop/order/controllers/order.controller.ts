@@ -128,6 +128,7 @@ export class OrderController {
       }),
     );
     if (shippingAddressError) {
+      console.log(shippingAddressError);
       throw new ShippingAddressNotFound();
     }
 
@@ -155,7 +156,7 @@ export class OrderController {
 
     const [paymentMethodError, paymentMethod] = await handleAsync(
       new PaymentMethodService().findOne({
-        uuid: body.paymentMethodId,
+        uuid: customerPaymentMethod.paymentMethodId,
       }),
     );
 

@@ -42,12 +42,7 @@ export class Cart implements OnModuleInit, ICart {
   public appliedConditions: IConditionCollection[] = [];
   public couponApplied: ICoupon = {};
   public cartService: CartService;
-  protected jsonFields = [
-    'couponApplied',
-    'items',
-    'metaData',
-    'appliedConditions',
-  ];
+  protected jsonFields = ['couponApplied', 'items', 'metaData', 'appliedConditions'];
   protected settingsDefaults: ICartSettings = {
     formatNumbers: false,
     decimals: 2,
@@ -89,10 +84,7 @@ export class Cart implements OnModuleInit, ICart {
         return;
       }
 
-      if (
-        it.productId === item.productId &&
-        isEqual(item.metaData, it.metaData)
-      ) {
+      if (it.productId === item.productId && isEqual(item.metaData, it.metaData)) {
         found = it;
       }
     });
@@ -162,18 +154,12 @@ export class Cart implements OnModuleInit, ICart {
     return this;
   }
 
-  public updateQuantity(
-    filter: IBaseFilter,
-    quantity = 1,
-    appendToExisting = true,
-  ) {
+  public updateQuantity(filter: IBaseFilter, quantity = 1, appendToExisting = true) {
     const { key, value } = extractSingleFilterFromObject(filter);
 
     const item = find(this.items, [key, value]);
 
-    item.quantity = appendToExisting
-      ? item.quantity + quantity
-      : (item.quantity = quantity);
+    item.quantity = appendToExisting ? item.quantity + quantity : (item.quantity = quantity);
 
     this.updateTotals();
 
@@ -200,9 +186,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public count() {
-    return this.items
-      .map((item) => item.quantity)
-      .reduce((pre, curr) => pre + curr, 0);
+    return this.items.map((item) => item.quantity).reduce((pre, curr) => pre + curr, 0);
   }
 
   public async initialize(id?: string, userId?: string) {
@@ -388,8 +372,7 @@ export class Cart implements OnModuleInit, ICart {
 
   private loadExistingCart(cart) {
     Object.keys(cart).forEach((key) => {
-      this[key] =
-        this.jsonFields.indexOf(key) !== -1 ? JSON.parse(cart[key]) : cart[key];
+      this[key] = this.jsonFields.indexOf(key) !== -1 ? JSON.parse(cart[key]) : cart[key];
     });
   }
 
@@ -401,14 +384,8 @@ export class Cart implements OnModuleInit, ICart {
 
   public existingItem(item: ICartItem) {
     return this.items.findIndex((it) => {
-      if (
-        item.productId === it.productId &&
-        isEqual(item.metaData, it.metaData)
-      ) {
-        if (
-          (!item.variantId && !it.variantId) ||
-          item.variantId === it.variantId
-        ) {
+      if (item.productId === it.productId && isEqual(item.metaData, it.metaData)) {
+        if ((!item.variantId && !it.variantId) || item.variantId === it.variantId) {
           return true;
         }
       }

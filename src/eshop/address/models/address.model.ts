@@ -33,7 +33,7 @@ export class AddressModel extends BaseModel implements OnModuleInit {
       varName: 'userId',
       label: 'UserId',
       placeholder: 'UserId',
-      type: 'number',
+      type: 'text',
       isSortable: true,
       group: 'main',
     },
