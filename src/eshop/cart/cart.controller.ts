@@ -8,6 +8,7 @@ export class AddToCartDto {
   variantId?: string;
   quantity: number;
   metaData?: IGenericObject;
+  overwriteQuantity?: boolean;
 }
 
 export class ManageCartDto {
@@ -43,7 +44,7 @@ export class CartController {
     }
 
     try {
-      session.cart.add(cartItem);
+      session.cart.add(cartItem, item.overwriteQuantity || false);
     } catch (e) {
       console.log(e);
     }
@@ -67,12 +68,12 @@ export class CartController {
   }
 
   @Delete(':id')
-  async delete(@Session() session: SessionData, @Param('id') uuid: string) {
+  async delete(@Session() session: SessionData, @Param('id') productId: string) {
     try {
-      //  session.cart.remove({ uuid });
+       session.cart.remove({ productId });
       //  // need to disassociate the cart from the user with detach
-      //  await session.cart.save();
-      //  return session.cart.toObject();
+       await session.cart.save();
+       return session.cart.toObject();
     } catch (e) {
       return { success: false, reason: 'ProductNotFound' };
     }

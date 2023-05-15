@@ -23,6 +23,9 @@ export interface ICartItem {
   title: string;
   conditions?: ICondition[];
   metaData?: IGenericObject;
+  thumb?: string;
+  slug?: string;
+  sku?: string;
 }
 
 export interface ICart {
@@ -69,19 +72,19 @@ export class CartService extends BaseNeoService {
                 slug: product.slug
               }
             };
-    
+
             // cart.add(cartItem);
             // cart.add(cartItem);
             // cart.add(cartItem);
-    
+
             try {
               // await s.save(cart);
             }
             catch (e) {
               console.log(e)
             }
-    
-    
+
+
             setTimeout(() => console.log(cart.toObject()), 600)*/
   }
 
@@ -119,10 +122,13 @@ export class CartService extends BaseNeoService {
     metaData?: IGenericObject,
     userId?: string,
   ): Promise<ICartItem> {
-    let product;
+    let product, thumb, sku, slug;
 
     try {
       product = await new ProductService().findOne({ uuid: id }, ['variants']);
+      thumb = (typeof product.thumb === 'string') ? product.thumb : product.thumb.url;
+      sku = product.sku;
+      slug = product.slug;
     } catch (e) {
       throw new RecordNotFoundException(e);
     }
@@ -130,16 +136,22 @@ export class CartService extends BaseNeoService {
     let price = product.price;
     if (variantId) {
       const variant = ProductService.findVariant(product, { uuid: variantId });
+      thumb = (typeof variant.thumb === 'string') ? variant.thumb : variant.thumb.url;
       price = variant.price;
+      sku = variant.sku;
+      slug = variant.slug;
     }
 
     return {
       productId: id,
       variantId,
       quantity,
+      sku,
+      slug,
       price,
       metaData,
       title: product.title,
+      thumb
     };
   }
 

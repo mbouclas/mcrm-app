@@ -3,7 +3,7 @@ import { store } from "~root/state";
 require('dotenv').config();
 import { Neo4jService } from "~root/neo4j/neo4j.service";
 import { Test, TestingModule } from '@nestjs/testing';
-import { CartService } from './cart.service';
+import { CartService, ICartItem } from "./cart.service";
 import { Cart } from "~eshop/cart/Cart";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { ModelsService } from "~admin/services/models.service";
@@ -23,7 +23,7 @@ describe('CartService', () => {
   let service: CartService;
   let productService: ProductService;
   const cartItem = {
-    id: '94dce94a-f3ab-460f-ab1b-c6ac3dc5e08b',
+    productId: '94dce94a-f3ab-460f-ab1b-c6ac3dc5e08b',
     title: 'Betty',
     price: 10,
     quantity: 1,
@@ -142,6 +142,32 @@ describe('CartService', () => {
     expect(cart.subTotal).toEqual(cartItem.price * 2);
   });
 
+  it("should adjust the quantity when adding the same item twice", () => {
+    const cart = new Cart();
+    const item1 = cloneCartItem(cartItem);
+    item1.quantity = 2;
+    cart.add(item1);
+    expect(cart.subTotal).toEqual(cartItem.price * 2);
+
+    const item2 = cloneCartItem(cartItem);
+    cart.add(item2);
+
+    expect(cart.subTotal).toEqual(cartItem.price * 3);
+  });
+
+  it("should overwrite the cart quantity when adding the same item with a different quantity and the overwriteQuantity flag is set", function() {
+    const cart = new Cart();
+    const item1 = cloneCartItem(cartItem);
+    item1.quantity = 2;
+    cart.add(item1);
+    expect(cart.subTotal).toEqual(cartItem.price * 2);
+
+    const item2 = cloneCartItem(cartItem);
+    cart.add(item2, true);
+
+    expect(cart.subTotal).toEqual(cartItem.price);
+  });
+
   it("should remove an item if the quantity is 0", () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
@@ -151,6 +177,7 @@ describe('CartService', () => {
     item.quantity = 0;
 
     cart.add(item);
+
     expect(cart.items.length).toEqual(0);
   });
 
@@ -158,18 +185,18 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    cart.updateQuantity({id: cartItem.id}, 2);
+    cart.updateQuantity({id: cartItem.productId}, 2);
 
-    expect(cart.getItem({id: cartItem.id}).quantity).toEqual(3);
+    expect(cart.getItem({id: cartItem.productId}).quantity).toEqual(3);
     expect(cart.subTotal).toEqual(cartItem.price * 3);
   });
 
   it("should update the quantity by filter", () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
-    cart.updateQuantity({id: cartItem.id}, 5, false);
+    cart.updateQuantity({id: cartItem.productId}, 5, false);
 
-    expect(cart.getItem({id: cartItem.id}).quantity).toEqual(5);
+    expect(cart.getItem({id: cartItem.productId}).quantity).toEqual(5);
     expect(cart.subTotal).toEqual(cartItem.price * 5);
   });
 
@@ -178,8 +205,9 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    const variant = Object.assign({}, cartItem);
+    const variant = Object.assign({}, cartItem) as unknown as ICartItem;
     variant.price = 12;
+
     variant.metaData = {...variant.metaData, ...{color: 'red'}};
 
     cart.add(variant);
@@ -213,7 +241,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    const variant = Object.assign({}, cartItem);
+    const variant = Object.assign({}, cartItem) as unknown as ICartItem;
     variant.price = 12;
     variant.metaData = {...variant.metaData, ...{color: 'red'}};
 
@@ -229,7 +257,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    expect(cart.toObject().items[0].id).toEqual(cartItem.id);
+    expect(cart.toObject().items[0].productId).toEqual(cartItem.productId);
     expect(cart.toObject().items[0].price).toEqual(cartItem.price);
   });
 
@@ -237,7 +265,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    cart.remove({id: cartItem.id});
+    cart.remove({id: cartItem.productId});
 
     expect(cart.items.length).toEqual(0);
   });
@@ -278,7 +306,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    expect(cart.getMetaData({id: cartItem.id})).toHaveProperty('slug');
+    expect(cart.getMetaData({id: cartItem.productId})).toHaveProperty('slug');
   });
 
   it("should get initialized with the default settings", () => {

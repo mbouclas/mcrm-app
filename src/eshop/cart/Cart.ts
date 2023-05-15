@@ -76,7 +76,7 @@ export class Cart implements OnModuleInit, ICart {
     return this.settings;
   }
 
-  public add(item: ICartItem) {
+  public add(item: ICartItem, overwriteQuantity = false) {
     let found;
     this.items.forEach((it) => {
       if (item.uuid) {
@@ -97,7 +97,7 @@ export class Cart implements OnModuleInit, ICart {
     }
 
     if (item.quantity === 0) {
-      this.remove({ id: item.productId });
+      this.remove({ productId: item.productId });
       this.updateTotals();
 
       this.eventEmitter.emit(Cart.itemAddedEventName, {
@@ -107,7 +107,14 @@ export class Cart implements OnModuleInit, ICart {
       return this;
     }
 
-    found.quantity++;
+    // The quantity needs to be adjusted based on the item being added
+    if (!overwriteQuantity){
+      found.quantity += item.quantity;
+    }
+    else {
+      found.quantity = item.quantity;
+    }
+
     this.updateTotals();
 
     this.eventEmitter.emit(Cart.itemAddedEventName, {
@@ -227,23 +234,23 @@ export class Cart implements OnModuleInit, ICart {
         catch (e) {
           console.log(e)
         }
-  
+
         if (!cart) {
           this.initializeDefaults(id);
         }
-  
+
         this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
         return this;
       }
       // Load a cart from the user relationship instead of using the id
       cart = await this.cartService.findUserCart(userId);
-  
+
       if (!cart) {
         this.initializeDefaults(id);
       }
-  
+
       this.loadExistingCart(cart);
-  
+
       this.eventEmitter.emit(Cart.cartReadyEventName, {cart: this.toObject()});
       return this;*/
   }
@@ -316,9 +323,9 @@ export class Cart implements OnModuleInit, ICart {
     /*    $conditions
           ->each(function (CartCondition $cond) use ($subTotal, &$newTotal, &$process) {
           $toBeCalculated = ($process > 0) ? $newTotal : $subTotal;
-    
+
           $newTotal = $cond->applyCondition($toBeCalculated);
-    
+
           $process++;
         });*/
 
