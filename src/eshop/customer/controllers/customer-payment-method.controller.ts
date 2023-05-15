@@ -44,16 +44,7 @@ export class CustomerPaymentMethodController {
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
-
-    const [customerError, customer] = await handleAsync(
-      new CustomerService().findOne({
-        userId,
-      }),
-    );
-
-    if (customerError) {
-      throw new CustomerNotFound();
-    }
+    const email = session.user && session.user['email'];
 
     const [paymentMethodError, paymentMethod] = await handleAsync(
       new PaymentMethodService().findOne({
@@ -79,6 +70,20 @@ export class CustomerPaymentMethodController {
 
     if (paymentInfoError) {
       throw new ProviderPaymentMethodNotFound();
+    }
+
+    let [customerError, customer] = await handleAsync(
+      new CustomerService().findOne({
+        userId,
+      }),
+    );
+
+    if (customerError) {
+      customer = await new CustomerService().store({
+        userId,
+        provider: paymentProviderSettings.providerName,
+        email,
+      });
     }
 
     const card = {

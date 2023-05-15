@@ -28,6 +28,7 @@ import {
   ShippingMethodNotFound,
   ShippingMethodFaildTransaction,
   PaymentMethodFailedTransaction,
+  CustomerNotFound,
 } from '../../exceptions';
 
 @Controller('api/order')
@@ -116,7 +117,6 @@ export class OrderController {
     }
 
     const userId = session.user && session.user['uuid'];
-    const email = session.user && session.user['email'];
 
     const orderService = new OrderService();
 
@@ -216,11 +216,7 @@ export class OrderController {
     );
 
     if (error) {
-      customer = await new CustomerService().store({
-        userId,
-        provider: paymentProviderSettings.providerName,
-        email,
-      });
+      throw new CustomerNotFound();
     }
 
     const [errorPaymentInfo, paymentInfo] = await handleAsync(
