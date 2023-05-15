@@ -16,14 +16,26 @@ export class AuthMiddleware implements NestMiddleware {
     if (process.env.NODE_ENV === 'development' && process.env.APPLY_AUTH_MIDDLEWARE === 'false') {
       return next();
     }
+    let session,
+    sessionId;
 
     if (req.headers['authorization']) {
-      const session = await this.cache.get(`token-${req.headers['authorization'].replace('Bearer ', '')}`);
-      req.session.user = session.user;
+      session = await this.cache.get(`token-${req.headers['authorization'].replace('Bearer ', '')}`);
+    }
+
+    if (req.headers['x-sess-id']) {
+      session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
+      sessionId = req.headers['x-sess-id'];
     }
 
     if (!req.session || !req.session.user) {
       return res.status(401).json({ success: false, reason: 'Unauthorized', code: `500.1` });
+    }
+
+    if (session) {
+      Object.keys(session).forEach((key) => {
+        req.session[key] = session[key];
+      });
     }
 
     let authResult;
