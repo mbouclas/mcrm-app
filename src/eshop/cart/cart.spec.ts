@@ -185,18 +185,18 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    cart.updateQuantity({id: cartItem.productId}, 2);
+    cart.updateQuantity({productId: cartItem.productId}, 2);
 
-    expect(cart.getItem({id: cartItem.productId}).quantity).toEqual(3);
+    expect(cart.getItem({productId: cartItem.productId}).quantity).toEqual(3);
     expect(cart.subTotal).toEqual(cartItem.price * 3);
   });
 
   it("should update the quantity by filter", () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
-    cart.updateQuantity({id: cartItem.productId}, 5, false);
+    cart.updateQuantity({productId: cartItem.productId}, 5, false);
 
-    expect(cart.getItem({id: cartItem.productId}).quantity).toEqual(5);
+    expect(cart.getItem({productId: cartItem.productId}).quantity).toEqual(5);
     expect(cart.subTotal).toEqual(cartItem.price * 5);
   });
 
@@ -265,7 +265,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    cart.remove({id: cartItem.productId});
+    cart.remove({productId: cartItem.productId});
 
     expect(cart.items.length).toEqual(0);
   });
@@ -306,7 +306,7 @@ describe('CartService', () => {
     const cart = new Cart();
     cart.add(cloneCartItem(cartItem));
 
-    expect(cart.getMetaData({id: cartItem.productId})).toHaveProperty('slug');
+    expect(cart.getMetaData({productId: cartItem.productId})).toHaveProperty('slug');
   });
 
   it("should get initialized with the default settings", () => {
