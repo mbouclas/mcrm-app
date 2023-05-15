@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Session,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Session, Query } from '@nestjs/common';
 import { SessionData } from 'express-session';
 import { IGenericObject } from '~models/general';
 import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
@@ -25,7 +15,9 @@ import {
   ProviderPaymentMethodNotFound,
   CustomerPaymentMethodNotFound,
   CustomerPaymentMethodFailedDelete,
+  PaymentMethodNotFound,
 } from '../../exceptions';
+import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
 
 @Controller('api/customer-payment-method')
 export class CustomerPaymentMethodController {
@@ -35,9 +27,7 @@ export class CustomerPaymentMethodController {
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    const [error, result] = await handleAsync(
-      new CustomerPaymentMethodService().findOne({ uuid }, rels),
-    );
+    const [error, result] = await handleAsync(new CustomerPaymentMethodService().findOne({ uuid }, rels));
 
     if (error) {
       throw new CustomerPaymentMethodNotFound();
@@ -54,30 +44,46 @@ export class CustomerPaymentMethodController {
   @Post()
   async store(@Session() session: SessionData, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
+    const email = session.user && session.user['email'];
 
-    const [customerError, customer] = await handleAsync(
+    const [paymentMethodError, paymentMethod] = await handleAsync(
+      new PaymentMethodService().findOne({
+        uuid: body.paymentMethodId,
+      }),
+    );
+
+    if (paymentMethodError) {
+      throw new PaymentMethodNotFound();
+    }
+
+    const paymentProviderSettings = paymentMethod.providerSettings;
+
+    const providerName = paymentProviderSettings.providerName;
+
+    const paymentProviderContainer = McmsDiContainer.get({
+      id: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider`,
+    });
+
+    const provider: IPaymentMethodProvider = new paymentProviderContainer.reference();
+
+    const [paymentInfoError, paymentInfo]: any = await handleAsync(provider.getCardInfo(body.providerPaymentMethodId));
+
+    if (paymentInfoError) {
+      throw new ProviderPaymentMethodNotFound();
+    }
+
+    let [customerError, customer] = await handleAsync(
       new CustomerService().findOne({
         userId,
-        provider: body.provider,
       }),
     );
 
     if (customerError) {
-      throw new CustomerNotFound();
-    }
-
-    const providerContainer = McmsDiContainer.get({
-      id: `StripeProvider`,
-    });
-
-    const provider: IPaymentMethodProvider = new providerContainer.reference();
-
-    const [paymentInfoError, paymentInfo]: any = await handleAsync(
-      provider.getCardInfo(body.providerPaymentMethodId),
-    );
-
-    if (paymentInfoError) {
-      throw new ProviderPaymentMethodNotFound();
+      customer = await new CustomerService().store({
+        userId,
+        provider: paymentProviderSettings.providerName,
+        email,
+      });
     }
 
     const card = {
@@ -90,7 +96,7 @@ export class CustomerPaymentMethodController {
     const [error, exists] = await handleAsync(
       new CustomerPaymentMethodService().findOne({
         providerCustomerId: customer.customerId,
-        provider: body.provider,
+        paymentMethodId: paymentMethod.uuid,
         cardBrand: card.brand,
         cardExpiryMonth: card.expiryMonth,
         cardExpiryYear: card.expiryYear,
@@ -102,23 +108,18 @@ export class CustomerPaymentMethodController {
       throw new CustomerPaymentMehodExists();
     }
 
-    await handleAsync(
-      provider.attachPaymentMethod(
-        body.providerPaymentMethodId,
-        customer.customerId,
-      ),
-    );
+    await handleAsync(provider.attachPaymentMethod(body.providerPaymentMethodId, customer.customerId));
 
-    const [customerPaymentMethodError, customerPaymentMethodResult] =
-      await handleAsync(
-        new CustomerPaymentMethodService().store({
-          userId,
-          provider: body.provider,
-          providerPaymentMethodId: body.providerPaymentMethodId,
-          card: card,
-          providerCustomerId: customer.customerId,
-        }),
-      );
+    const [customerPaymentMethodError, customerPaymentMethodResult] = await handleAsync(
+      new CustomerPaymentMethodService().store({
+        userId,
+        paymentMethodId: paymentMethod.uuid,
+        provider: providerName,
+        providerPaymentMethodId: body.providerPaymentMethodId,
+        card: card,
+        providerCustomerId: customer.customerId,
+      }),
+    );
 
     if (customerPaymentMethodError) {
       throw new CustomerPaymentMehodFailedCreate();
@@ -129,9 +130,7 @@ export class CustomerPaymentMethodController {
 
   @Delete()
   async delete(@Param('id') uuid: string) {
-    const [error, result] = await handleAsync(
-      new CustomerPaymentMethodService().delete(uuid),
-    );
+    const [error, result] = await handleAsync(new CustomerPaymentMethodService().delete(uuid));
 
     if (error) {
       throw new CustomerPaymentMethodFailedDelete();

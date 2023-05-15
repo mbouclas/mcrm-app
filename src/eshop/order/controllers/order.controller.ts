@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Session,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Session } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderService } from '~eshop/order/services/order.service';
 import { CustomerService } from '~eshop/customer/services/customer.service';
@@ -29,9 +19,7 @@ import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 
 import {
-  BillingAddressFailed,
   BillingAddressNotFound,
-  ShippingAddressFailed,
   ShippingAddressNotFound,
   OrderFailed,
   OrderNotFound,
@@ -40,6 +28,7 @@ import {
   ShippingMethodNotFound,
   ShippingMethodFaildTransaction,
   PaymentMethodFailedTransaction,
+  CustomerNotFound,
 } from '../../exceptions';
 
 @Controller('api/order')
@@ -58,9 +47,7 @@ export class OrderController {
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    const [error, result] = await handleAsync(
-      new OrderService().findOne({ uuid }, rels),
-    );
+    const [error, result] = await handleAsync(new OrderService().findOne({ uuid }, rels));
 
     if (error) {
       throw new OrderNotFound();
@@ -76,10 +63,7 @@ export class OrderController {
 
       // clientSecret = 'pi_3MMaBpFVnCuD42ua2CDyjXPL_secret_BwHVPZzQYElqvG9LZgwjdHSCj';
 
-      const order = await new OrderService().findByRegex(
-        'paymentInfo',
-        clientSecret,
-      );
+      const order = await new OrderService().findByRegex('paymentInfo', clientSecret);
 
       if (order) {
         const paymentInfo = JSON.parse(order.paymentInfo);
@@ -99,10 +83,7 @@ export class OrderController {
   }
 
   @Post('/basic')
-  async storeBasic(
-    @Session() session: SessionData,
-    @Body() body: IGenericObject,
-  ) {
+  async storeBasic(@Session() session: SessionData, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
 
     const orderService = new OrderService();
@@ -136,107 +117,62 @@ export class OrderController {
     }
 
     const userId = session.user && session.user['uuid'];
-    const email = session.user && session.user['email'];
 
     const orderService = new OrderService();
 
-    let shippingAddress;
-    let billingAddress;
-
-    if (!body.shippingAddressId) {
-      const [error, result] = await handleAsync(
-        new AddressService().store({
-          city: body.newShippingAddress.city,
-          country: body.newShippingAddress.country,
-          zipcode: body.newShippingAddress.zipcode,
-          street: body.newShippingAddress.street,
-          note: body.newShippingAddress.note,
-          type: 'SHIPPING',
-          userId,
-        }),
-      );
-
-      if (error) {
-        throw new ShippingAddressFailed();
-      }
-      shippingAddress = result;
-    } else {
-      const [error, result] = await handleAsync(
-        new AddressService().findOne({
-          uuid: body.shippingAddressId,
-          type: 'SHIPPING',
-        }),
-      );
-      if (error) {
-        throw new ShippingAddressNotFound();
-      }
-
-      shippingAddress = result;
+    const [shippingAddressError, shippingAddress] = await handleAsync(
+      new AddressService().findOne({
+        uuid: body.shippingAddressId,
+        type: 'SHIPPING',
+        userId,
+      }),
+    );
+    if (shippingAddressError) {
+      console.log(shippingAddressError);
+      throw new ShippingAddressNotFound();
     }
 
-    if (!body.billingAddressId) {
-      const [error, result] = await handleAsync(
-        new AddressService().store({
-          city: body.newBillingAddress.city,
-          country: body.newBillingAddress.country,
-          zipcode: body.newBillingAddress.zipcode,
-          street: body.newBillingAddress.street,
-          note: body.newBillingAddress.note,
-          type: 'BILLING',
-          userId,
-        }),
-      );
+    const [billingAddressError, billingAddress] = await handleAsync(
+      new AddressService().findOne({
+        uuid: body.billingAddressId,
+        type: 'BILLING',
+        userId,
+      }),
+    );
 
-      if (error) {
-        throw new BillingAddressFailed();
-      }
+    if (billingAddressError) {
+      throw new BillingAddressNotFound();
+    }
 
-      billingAddress = result;
-    } else {
-      const [error, result] = await handleAsync(
-        new AddressService().findOne({
-          uuid: body.billingAddressId,
-          type: 'BILLING',
-        }),
-      );
+    const [errorCustomerPaymentMethod, customerPaymentMethod] = await handleAsync(
+      new CustomerPaymentMethodService().findOne({
+        uuid: body.customerPaymentMethodId,
+      }),
+    );
 
-      if (error) {
-        throw new BillingAddressNotFound();
-      }
-
-      billingAddress = result;
+    if (errorCustomerPaymentMethod) {
+      throw new CustomerPaymentMethodNotFound();
     }
 
     const [paymentMethodError, paymentMethod] = await handleAsync(
       new PaymentMethodService().findOne({
-        uuid: body.paymentMethodId,
+        uuid: customerPaymentMethod.paymentMethodId,
       }),
     );
 
     if (paymentMethodError) {
       throw new PaymentMethodNotFound();
     }
-    const [errorCustomerPaymentMethod, customerPaymentMethod] =
-      await handleAsync(
-        new CustomerPaymentMethodService().findOne({
-          uuid: body.customerPaymentMethodId,
-        }),
-      );
 
-    if (errorCustomerPaymentMethod) {
-      throw new CustomerPaymentMethodNotFound();
-    }
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
       id: `${
-        paymentProviderSettings.providerName.charAt(0).toUpperCase() +
-        paymentProviderSettings.providerName.slice(1)
+        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
       }Provider`,
     });
 
-    const paymentMethodProvider: IPaymentMethodProvider =
-      new paymentProviderContainer.reference();
+    const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
 
     const [errorShippingMethod, shippingMethod] = await handleAsync(
       new ShippingMethodService().findOne({
@@ -252,17 +188,13 @@ export class OrderController {
 
     const shippingProviderContainer = McmsDiContainer.get({
       id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() +
-        shippingProviderSettings.providerName.slice(1)
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
       }Provider`,
     });
 
-    const shippingMethodProvider: IShippingMethodProvider =
-      new shippingProviderContainer.reference();
+    const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
 
-    const [shippingInfoError, shippingInfo] = await handleAsync(
-      shippingMethodProvider.sendTransaction(),
-    );
+    const [shippingInfoError, shippingInfo] = await handleAsync(shippingMethodProvider.sendTransaction());
     if (shippingInfoError) {
       throw new ShippingMethodFaildTransaction();
     }
@@ -272,8 +204,7 @@ export class OrderController {
     });
 
     let fullPrice = products.data.reduce(
-      (accumulator, productItem: ProductModel) =>
-        productItem.price ? accumulator + productItem.price : accumulator,
+      (accumulator, productItem: ProductModel) => (productItem.price ? accumulator + productItem.price : accumulator),
       0,
     );
 
@@ -285,11 +216,7 @@ export class OrderController {
     );
 
     if (error) {
-      customer = await new CustomerService().store({
-        userId,
-        provider: paymentProviderSettings.providerName,
-        email,
-      });
+      throw new CustomerNotFound();
     }
 
     const [errorPaymentInfo, paymentInfo] = await handleAsync(
@@ -427,9 +354,7 @@ export class OrderController {
             },
             'product',
             {
-              quantity: cart.items.find(
-                (item) => item.productId === productItem.uuid,
-              ).quantity,
+              quantity: cart.items.find((item) => item.productId === productItem.uuid).quantity,
             },
           ),
         );
@@ -442,9 +367,7 @@ export class OrderController {
 
     await session.cart.clearWithDb();
 
-    const [finalResultError, finalResult] = await handleAsync(
-      orderService.findOne({ uuid: order.uuid }),
-    );
+    const [finalResultError, finalResult] = await handleAsync(orderService.findOne({ uuid: order.uuid }));
     if (finalResultError) {
       throw new OrderFailed();
     }
@@ -460,11 +383,7 @@ export class OrderController {
   }
 
   @Post(`:uuid`)
-  async update(
-    @Session() session: SessionData,
-    @Body() body: IGenericObject,
-    @Param('uuid') uuid: string,
-  ) {
+  async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
     const userId = session.user && session.user['uuid'];
 
     const orderService = new OrderService();
@@ -476,32 +395,16 @@ export class OrderController {
     }
 
     const paymentMethodBody = body.paymentMethod[0];
-    const paymentMethod = await new PaymentMethodService().update(
-      paymentMethodBody.uuid,
-      paymentMethodBody,
-    );
+    const paymentMethod = await new PaymentMethodService().update(paymentMethodBody.uuid, paymentMethodBody);
 
     const shippingMethodBody = body.shippingMethod[0];
-    const shippingMethod = await new ShippingMethodService().update(
-      shippingMethodBody.uuid,
-      shippingMethodBody,
-    );
+    const shippingMethod = await new ShippingMethodService().update(shippingMethodBody.uuid, shippingMethodBody);
 
-    const shippingAdressBody = body.address.find(
-      (address) => address.type === 'SHIPPING',
-    );
-    const shippingAddress = await new AddressService().update(
-      shippingAdressBody.uuid,
-      shippingAdressBody,
-    );
+    const shippingAdressBody = body.address.find((address) => address.type === 'SHIPPING');
+    const shippingAddress = await new AddressService().update(shippingAdressBody.uuid, shippingAdressBody);
 
-    const billingAdressBody = body.address.find(
-      (address) => address.type === 'BILLING',
-    );
-    const billingAddress = await new AddressService().update(
-      billingAdressBody.uuid,
-      billingAdressBody,
-    );
+    const billingAdressBody = body.address.find((address) => address.type === 'BILLING');
+    const billingAddress = await new AddressService().update(billingAdressBody.uuid, billingAdressBody);
 
     const order = await orderService.update(uuid, {
       status: 1,

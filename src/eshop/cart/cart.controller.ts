@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Post,
-  Session,
-  Body,
-  Delete,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Put, Post, Session, Body, Delete, Param } from '@nestjs/common';
 import { SessionData } from 'express-session';
 import { CartService } from '~eshop/cart/cart.service';
 import { IGenericObject } from '~models/general';
@@ -88,11 +79,7 @@ export class CartController {
   }
 
   @Put(':id')
-  async manageCart(
-    @Session() session: SessionData,
-    @Param('id') productId: string,
-    @Body() item: ManageCartDto,
-  ) {
+  async manageCart(@Session() session: SessionData, @Param('id') productId: string, @Body() item: ManageCartDto) {
     const userId = session.user && session.user['uuid'];
 
     try {

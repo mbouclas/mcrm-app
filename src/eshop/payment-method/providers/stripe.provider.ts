@@ -1,7 +1,4 @@
-import {
-  IPaymentMethodProvider,
-  IPaymentMethodProviderConfig,
-} from '~eshop/payment-method/models/providers.types';
+import { IPaymentMethodProvider, IPaymentMethodProviderConfig } from '~eshop/payment-method/models/providers.types';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import Stripe from 'stripe';
@@ -120,9 +117,7 @@ export class StripeProvider implements IPaymentMethodProvider {
 
   public async getCardInfo(paymentMethodId) {
     try {
-      const paymentMethod = await this.stripe.paymentMethods.retrieve(
-        paymentMethodId,
-      );
+      const paymentMethod = await this.stripe.paymentMethods.retrieve(paymentMethodId);
 
       return paymentMethod;
     } catch (err) {

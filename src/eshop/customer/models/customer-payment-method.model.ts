@@ -1,10 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
@@ -14,15 +10,13 @@ const modelName = 'CustomerPaymentMethod';
   type: 'model',
 })
 @Injectable()
-export class CustomerPaymentMethodModel
-  extends BaseModel
-  implements OnModuleInit
-{
+export class CustomerPaymentMethodModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public uuid: string;
   public providerPaymentMethodId: string;
+  public paymentMethodId: string;
   async onModuleInit() {}
 
   public static displayedColumns = [];
@@ -38,6 +32,13 @@ export class CustomerPaymentMethodModel
       varName: 'userId',
       label: 'UserId',
       placeholder: 'UserId',
+      type: 'text',
+      group: 'main',
+    },
+    {
+      varName: 'paymentMethodId',
+      label: 'PaymentMethodId',
+      placeholder: 'PaymentMethodId',
       type: 'text',
       group: 'main',
     },

@@ -11,6 +11,7 @@ export class CustomerPaymentMethodModelDto {
   provider?: string;
   providerCustomerId?: string;
   providerPaymentMethodId?: string;
+  paymentMethodId?: string;
   card?: {
     brand: string;
     last4: number;
@@ -34,25 +35,13 @@ export class CustomerPaymentMethodService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {}
 
-  async findOne(
-    filter: IGenericObject,
-    rels = [],
-  ): Promise<CustomerPaymentMethodModel> {
-    const item = (await super.findOne(
-      filter,
-      rels,
-    )) as unknown as CustomerPaymentMethodModel;
+  async findOne(filter: IGenericObject, rels = []): Promise<CustomerPaymentMethodModel> {
+    const item = (await super.findOne(filter, rels)) as unknown as CustomerPaymentMethodModel;
     return item;
   }
 
-  async findAll(
-    filter: IGenericObject,
-    rels = [],
-  ): Promise<IPagination<IGenericObject>> {
-    const items = (await super.find(
-      filter,
-      rels,
-    )) as IPagination<IGenericObject>;
+  async findAll(filter: IGenericObject, rels = []): Promise<IPagination<IGenericObject>> {
+    const items = (await super.find(filter, rels)) as IPagination<IGenericObject>;
 
     return items;
   }
@@ -68,6 +57,7 @@ export class CustomerPaymentMethodService extends BaseNeoService {
         cardLast4: record.card.last4,
         cardExpiryMonth: record.card.expiryMonth,
         cardExpiryYear: record.card.expiryYear,
+        paymentMethodId: record.paymentMethodId,
       },
       userId,
     );
@@ -75,11 +65,7 @@ export class CustomerPaymentMethodService extends BaseNeoService {
     return r;
   }
 
-  async update(
-    uuid: string,
-    record: CustomerPaymentMethodModelDto,
-    userId?: string,
-  ) {
+  async update(uuid: string, record: CustomerPaymentMethodModelDto, userId?: string) {
     const r = await super.update(uuid, record, userId);
 
     return r;
