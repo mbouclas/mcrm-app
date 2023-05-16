@@ -1,17 +1,10 @@
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
 import { IBaseFilter, IGenericObject, IPagination } from '~models/general';
-import {
-  BaseModel,
-  INeo4jModel,
-  INeo4jModelRelationshipConfig,
-} from '~models/base.model';
+import { BaseModel, INeo4jModel, INeo4jModelRelationshipConfig } from '~models/base.model';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SharedModule } from '~shared/shared.module';
-import {
-  extractFiltersFromObject,
-  extractSingleFilterFromObject,
-} from '~helpers/extractFiltersFromObject';
+import { extractFiltersFromObject, extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import {
   extractQueryParamsFilters,
   modelPostProcessing,
@@ -115,25 +108,10 @@ export class BaseNeoService {
     };
   }
 
-  async findOne(
-    filter: IGenericObject,
-    rels: string[] = [],
-  ): Promise<BaseModel> {
-    const filterQuery = extractFiltersFromObject(
-      filter,
-      this.model.modelConfig.as,
-      this.model.fields,
-    );
-    let { filters, relationships } = extractQueryParamsFilters(
-      { ...filter, ...{ with: rels } },
-      this.model,
-    );
-    let { returnVars, matches } = setupRelationShipsQuery(
-      this.model,
-      filter,
-      relationships,
-      filters,
-    );
+  async findOne(filter: IGenericObject, rels: string[] = []): Promise<BaseModel> {
+    const filterQuery = extractFiltersFromObject(filter, this.model.modelConfig.as, this.model.fields);
+    let { filters, relationships } = extractQueryParamsFilters({ ...filter, ...{ with: rels } }, this.model);
+    let { returnVars, matches } = setupRelationShipsQuery(this.model, filter, relationships, filters);
 
     const query = `MATCH (${this.model.modelConfig.select}) where ${filterQuery}
     WITH *
@@ -155,24 +133,24 @@ export class BaseNeoService {
     return result;
   }
 
-  async find(
-    params: IGenericObject = {},
-    rels: string[] = [],
-  ): Promise<IPagination<BaseModel>> {
+  async find(params: IGenericObject = {}, rels: string[] = []): Promise<IPagination<BaseModel>> {
     const model = this.model;
     const modelConfig = model.modelConfig;
     const modelAlias = modelConfig.as;
 
-    let { filters, way, limit, page, relationships, where } =
-      extractQueryParamsFilters(
-        { ...params, ...{ with: rels } },
-        model,
-        model.itemSelector,
-      );
+    let { filters, way, limit, page, relationships, where } = extractQueryParamsFilters(
+      { ...params, ...{ with: rels } },
+      model,
+      model.itemSelector,
+    );
 
     const whereQuery = where.length > 0 ? ` WHERE ${where.join(' AND ')}` : '';
-    let { returnVars, matches, returnAliases, orderBy } =
-      setupRelationShipsQuery(model, params, relationships, filters);
+    let { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(
+      model,
+      params,
+      relationships,
+      filters,
+    );
 
     const countQuery = `MATCH (${modelConfig.select}) ${whereQuery}
                 WITH ${modelAlias}
@@ -189,9 +167,7 @@ export class BaseNeoService {
     const query = `MATCH (${modelConfig.select}) ${whereQuery}
         WITH ${modelAlias}
         ${matches.join('\n')}
-        RETURN ${returnVars.join(
-          ',',
-        )} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
+        RETURN ${returnVars.join(',')} ORDER BY ${orderBy} ${way}  SKIP ${skip} LIMIT ${limit}`;
     // console.log('----------------\n',query,'\n----------');
     this.logger(query);
 
@@ -251,14 +227,7 @@ export class BaseNeoService {
     let results = this.neo.extractResultsFromArray(records, this.model);
 
     results = await modelsPostProcessing(results, this.model);
-    return this.createPaginationObject(
-      results,
-      limit,
-      page,
-      pages,
-      total,
-      skip,
-    );
+    return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 
   async store(record: IGenericObject, userId?: string): Promise<any> {
@@ -308,20 +277,12 @@ export class BaseNeoService {
     return ret;
   }
 
-  async update(
-    uuid: string,
-    record: IGenericObject,
-    userId?: string,
-  ): Promise<any> {
+  async update(uuid: string, record: IGenericObject, userId?: string): Promise<any> {
     let firstTimeQuery = '';
     let addressStr = '';
 
     const fields = this.model.fields;
-    let toUpdateQuery = postedDataToUpdatesQuery(
-      fields,
-      record,
-      this.model.modelConfig.as,
-    );
+    let toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
 
     if (record.tempUuid) {
       firstTimeQuery = `,${this.model.modelConfig.as}.tempUuid = null`;
@@ -388,7 +349,9 @@ export class BaseNeoService {
       this.eventEmitter.emit(this.constructor['updatedEventName'], res);
     }
 
-    return res[0][this.model.modelConfig.as];
+    let result = this.neo.mergeRelationshipsToParent(res[0], this.model);
+
+    return result;
   }
 
   async delete(uuid: string, userId?: string) {
@@ -422,9 +385,7 @@ export class BaseNeoService {
     try {
       await this.neo.write(query, { uuid });
     } catch (e) {
-      throw new RecordDeleteFailedException(
-        `Could not delete ${this.model.modelName} ${uuid}`,
-      );
+      throw new RecordDeleteFailedException(`Could not delete ${this.model.modelName} ${uuid}`);
     }
 
     if (this.constructor['deletedEventName']) {
@@ -439,9 +400,7 @@ export class BaseNeoService {
     try {
       await this.neo.write(query, { uuids });
     } catch (e) {
-      throw new RecordDeleteFailedException(
-        `Could not delete ${this.model.modelName} all from ${uuids}`,
-      );
+      throw new RecordDeleteFailedException(`Could not delete ${this.model.modelName} all from ${uuids}`);
     }
 
     return { success: true };
@@ -469,10 +428,8 @@ export class BaseNeoService {
     relationshipProps?: IGenericObject,
   ) {
     const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
-    const destinationFilterQuery =
-      extractSingleFilterFromObject(destinationFilter);
-    const relationship =
-      sourceModel.modelConfig.relationships[relationshipName];
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
+    const relationship = sourceModel.modelConfig.relationships[relationshipName];
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
@@ -486,9 +443,9 @@ export class BaseNeoService {
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${
-      relationship.rel
-    }]${relationship.type === 'normal' ? '->' : '-'}(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
@@ -496,6 +453,61 @@ export class BaseNeoService {
 
     try {
       const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async setRelationshipsByIds(
+    sourceModel: typeof BaseModel,
+    sourceId: string,
+    destinationIds: String,
+    relationshipName: string,
+    relationshipProps?: IGenericObject,
+  ) {
+    const relationship = sourceModel.modelConfig.relationships[relationshipName];
+
+    const createSetRelationship = relationshipProps
+      ? ', '.concat(
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
+      : '';
+
+    const relationshipStructure = (relSelector) => `
+    ${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }
+        `;
+
+    const query = `
+    MATCH (source { uuid: $sourceId })
+    OPTIONAL MATCH (source)${relationshipStructure('r')}(deleteDestination: ${relationship.model})
+    WHERE NOT deleteDestination.uuid IN $destinationIds
+    DELETE r
+
+    WITH source, $destinationIds AS ids
+    UNWIND ids AS id
+    MATCH (destination: ${relationship.model} { uuid: id })
+    MERGE (source)${relationshipStructure('newRel')}(destination)
+
+    ON CREATE SET newRel.updatedAt = datetime(), newRel.createdAt = datetime() ${createSetRelationship}
+    ON MATCH SET newRel.updatedAt = datetime()
+RETURN *;
+`;
+
+    try {
+      const res = await this.neo.write(query, {
+        sourceId,
+        destinationIds,
+      });
       if (!res?.records[0]) {
         return { success: false };
       }
@@ -514,13 +526,12 @@ export class BaseNeoService {
     relationshipName: string,
   ) {
     const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
-    const destinationFilterQuery =
-      extractSingleFilterFromObject(destinationFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
 
     const query = `
-    MATCH (n1:${sourceModelName} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})-[r:${relationshipName}]-(n2:${destinationModelName} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+MATCH(n1: ${sourceModelName} { ${sourceFilterQuery.key}: '${sourceFilterQuery.value}'}) - [r: ${relationshipName}] - (n2:${destinationModelName} {${destinationFilterQuery.key}: '${destinationFilterQuery.value}' })
     DELETE r RETURN r;
-    `;
+`;
 
     try {
       const res = await this.neo.write(query);
