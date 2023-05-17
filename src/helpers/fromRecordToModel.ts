@@ -37,6 +37,9 @@ export const fromRecordToModel = (
     }
 
     if (fieldType === 'json') {
+      if (!resItem[modelFieldName]) {
+        continue;
+      }
       newResItem[modelFieldName] = JSON.parse(resItem[modelFieldName]);
     }
 

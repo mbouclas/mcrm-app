@@ -7,6 +7,7 @@ import { PromotionsModule } from './promotions/promotions.module';
 import { CartModule } from './cart/cart.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { ShippingMethodModule } from './shipping-method/shipping-method.module';
+import { StoreController } from './controllers/store.controller';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { ShippingMethodModule } from './shipping-method/shipping-method.module';
     AddressModule,
   ],
   providers: [],
-  controllers: [],
+  controllers: [StoreController],
 })
 export class EshopModule {}
