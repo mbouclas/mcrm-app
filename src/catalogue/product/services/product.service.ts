@@ -100,10 +100,7 @@ export class ProductService extends BaseNeoService {
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
     const item = (await super.findOne(filter, rels)) as unknown as ProductModel;
-    item['images'] = await this.imageService.getItemImages(
-      'Product',
-      item['uuid'],
-    );
+    item['images'] = await this.imageService.getItemImages('Product', item['uuid']);
     item['thumb'] = item['images'].find((img) => img.type === 'main') || null;
 
     return item;
@@ -122,7 +119,6 @@ export class ProductService extends BaseNeoService {
   }
 
   async update(uuid: string, record: ProductModelDto, userId?: string) {
-
     const r = await super.update(uuid, record, userId);
     // Handle Categories
     if (Array.isArray(record.categories)) {
@@ -134,11 +130,7 @@ export class ProductService extends BaseNeoService {
     if (Array.isArray(record.tags)) {
       // await
       const tagService = new TagService();
-      await tagService.updateModelTags(
-        uuid,
-        record.tags,
-        this.model.modelConfig,
-      );
+      await tagService.updateModelTags(uuid, record.tags, this.model.modelConfig);
     }
 
     // Handle properties
@@ -170,11 +162,7 @@ export class ProductService extends BaseNeoService {
 
     const variants = combine(all as any);
     for (let idx = 0; variants.length > idx; idx++) {
-      await this.generateVariant(
-        product,
-        variants[idx],
-        `${product['sku']}.${idx}`,
-      );
+      await this.generateVariant(product, variants[idx], `${product['sku']}.${idx}`);
     }
 
     return this;
@@ -186,11 +174,7 @@ export class ProductService extends BaseNeoService {
    * @param variantName
    * @param variantId
    */
-  async generateVariant(
-    product: BaseModel,
-    variantName: string,
-    variantId: string,
-  ) {
+  async generateVariant(product: BaseModel, variantName: string, variantId: string) {
     // attach an isVariant property and a rel to the parent product. The variant needs a rel to that value only. All other rels need to be inherited
     const query = `MATCH (product:Product {uuid: $uuid})
     MERGE (variant:ProductVariant {name:$variantName}) set variant.price = product.price, variant.title = product.title, variant.quantity = product.quantity, variant.variantId = $variantId,
@@ -236,19 +220,9 @@ export class ProductService extends BaseNeoService {
     return this;
   }
 
-  async addRelated(
-    sourceFilter: IBaseFilter,
-    destinationModelName: string,
-    destinationFilter: IBaseFilter,
-  ) {
+  async addRelated(sourceFilter: IBaseFilter, destinationFilter: IBaseFilter) {
     try {
-      await this.attachModelToAnotherModel(
-        store.getState().models['Product'],
-        sourceFilter,
-        store.getState().models[destinationModelName],
-        destinationFilter,
-        'related',
-      );
+      await this.attachToModel(sourceFilter, destinationFilter, 'related');
     } catch (e) {
       console.log(e);
     }
@@ -256,21 +230,9 @@ export class ProductService extends BaseNeoService {
     return this;
   }
 
-  async removeRelated(
-    sourceFilter: IBaseFilter,
-    destinationModelName: string,
-    destinationFilter: IBaseFilter,
-  ) {
-    const rel =
-      store.getState().models['Product'].modelConfig.relationships['related']
-        .rel;
-    await this.detachOneModelFromAnother(
-      'Product',
-      sourceFilter,
-      destinationModelName,
-      destinationFilter,
-      rel,
-    );
+  async removeRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
+    const rel = store.getState().models['Product'].modelConfig.relationships['related'].rel;
+    await this.detachOneModelFromAnother('Product', sourceFilter, destinationModelName, destinationFilter, rel);
   }
 
   static findVariant(product: ProductModel, filter: IBaseFilter) {

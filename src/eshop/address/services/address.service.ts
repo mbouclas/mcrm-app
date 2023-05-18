@@ -48,17 +48,7 @@ export class AddressService extends BaseNeoService {
     }
     const r = await super.store(record, userId);
 
-    await new UserService().attachModelToAnotherModel(
-      store.getState().models['User'],
-      {
-        uuid: userId,
-      },
-      store.getState().models['Address'],
-      {
-        uuid: r.uuid,
-      },
-      'address',
-    );
+    await new UserService().attachToModelById(userId, r.uuid, 'address');
 
     return r;
   }

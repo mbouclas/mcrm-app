@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { ManufacturerService } from '~catalogue/manufacturer/services/manufacturer.service';
 import { store } from '~root/state';
@@ -41,27 +32,17 @@ export class ManufacturerController {
   }
 
   @Post(':uuid/attach')
-  async addToProduct(
-    @Param('uuid') uuid: string,
-    @Body() body: IGenericObject,
-  ) {
-    const relationships =
-      store.getState().models['Manufacturer'].modelConfig.relationships;
+  async addToProduct(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    const relationships = store.getState().models['Manufacturer'].modelConfig.relationships;
 
     const targetRelationship = relationships[body.targetModel];
     if (!targetRelationship) {
       throw new RecordStoreFailedException('Invalid target model');
     }
 
-    const response = await new ManufacturerService().attachModelToAnotherModel(
-      store.getState().models['Manufacturer'],
-      {
-        uuid,
-      },
-      store.getState().models[targetRelationship.model],
-      {
-        uuid: body.targetId,
-      },
+    const response = await new ManufacturerService().attachToModelById(
+      uuid,
+      body.targetId,
       targetRelationship.modelAlias,
     );
 

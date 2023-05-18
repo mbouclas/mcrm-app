@@ -419,10 +419,91 @@ export class BaseNeoService {
     return { success: true };
   }
 
+  async attachToModelById(
+    sourceId: string,
+    destinationId: string,
+    relationshipName: string,
+    relationshipProps?: IGenericObject,
+  ) {
+    const relationship = this.model.modelConfig.relationships[relationshipName];
+
+    const createSetRelationship = relationshipProps
+      ? ', '.concat(
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
+      : '';
+
+    const query = `
+    MATCH (n1 { uuid:'${sourceId}'})
+    MATCH (n2 { uuid:'${destinationId}'})
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2)
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async attachToModel(
+    sourceFilter: IGenericObject,
+    destinationFilter: IGenericObject,
+    relationshipName: string,
+    relationshipProps?: IGenericObject,
+  ) {
+    const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
+    const relationship = this.model.modelConfig.relationships[relationshipName];
+
+    const createSetRelationship = relationshipProps
+      ? ', '.concat(
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
+      : '';
+
+    const query = `
+    MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
+    MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2)
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
   async attachModelToAnotherModel(
     sourceModel: typeof BaseModel,
     sourceFilter: IGenericObject,
-    destinationModel: typeof BaseModel,
     destinationFilter: IGenericObject,
     relationshipName: string,
     relationshipProps?: IGenericObject,

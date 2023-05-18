@@ -93,17 +93,7 @@ export class OrderController {
       userId,
     });
 
-    await orderService.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['User'],
-      {
-        uuid: userId,
-      },
-      'user',
-    );
+    await orderService.attachToModelById(order.uuid, userId, 'user');
 
     return order;
   }
@@ -251,17 +241,7 @@ export class OrderController {
     }
 
     const [orderShippingAddressError] = await handleAsync(
-      orderService.attachModelToAnotherModel(
-        store.getState().models['Order'],
-        {
-          uuid: order.uuid,
-        },
-        store.getState().models['Address'],
-        {
-          uuid: shippingAddress.uuid,
-        },
-        'address',
-      ),
+      orderService.attachToModelById(order.uuid, shippingAddress.uuid, 'address'),
     );
 
     if (orderShippingAddressError) {
@@ -269,17 +249,7 @@ export class OrderController {
     }
 
     const [orderBillingAddressError] = await handleAsync(
-      orderService.attachModelToAnotherModel(
-        store.getState().models['Order'],
-        {
-          uuid: order.uuid,
-        },
-        store.getState().models['Address'],
-        {
-          uuid: billingAddress.uuid,
-        },
-        'address',
-      ),
+      orderService.attachToModelById(order.uuid, billingAddress.uuid, 'address'),
     );
 
     if (orderBillingAddressError) {
@@ -287,17 +257,7 @@ export class OrderController {
     }
 
     const [orderPaymentMethodError] = await handleAsync(
-      orderService.attachModelToAnotherModel(
-        store.getState().models['Order'],
-        {
-          uuid: order.uuid,
-        },
-        store.getState().models['PaymentMethod'],
-        {
-          uuid: paymentMethod.uuid,
-        },
-        'paymentMethod',
-      ),
+      orderService.attachToModelById(order.uuid, paymentMethod.uuid, 'paymentMethod'),
     );
 
     if (orderPaymentMethodError) {
@@ -305,36 +265,14 @@ export class OrderController {
     }
 
     const [orderShippingMethodError] = await handleAsync(
-      orderService.attachModelToAnotherModel(
-        store.getState().models['Order'],
-        {
-          uuid: order.uuid,
-        },
-        store.getState().models['ShippingMethod'],
-        {
-          uuid: shippingMethod.uuid,
-        },
-        'shippingMethod',
-      ),
+      orderService.attachToModelById(order.uuid, shippingMethod.uuid, 'shippingMethod'),
     );
 
     if (orderShippingMethodError) {
       throw new OrderFailed();
     }
 
-    const [orderUserError] = await handleAsync(
-      orderService.attachModelToAnotherModel(
-        store.getState().models['Order'],
-        {
-          uuid: order.uuid,
-        },
-        store.getState().models['User'],
-        {
-          uuid: userId,
-        },
-        'user',
-      ),
-    );
+    const [orderUserError] = await handleAsync(orderService.attachToModelById(order.uuid, userId, 'user'));
 
     if (orderUserError) {
       throw new OrderFailed();
@@ -343,20 +281,9 @@ export class OrderController {
     await Promise.all(
       products.data.map(async (productItem: ProductModel) => {
         const [orderProductError] = await handleAsync(
-          orderService.attachModelToAnotherModel(
-            store.getState().models['Order'],
-            {
-              uuid: order.uuid,
-            },
-            store.getState().models['Product'],
-            {
-              uuid: productItem?.uuid,
-            },
-            'product',
-            {
-              quantity: cart.items.find((item) => item.productId === productItem.uuid).quantity,
-            },
-          ),
+          orderService.attachToModelById(order.uuid, productItem?.uuid, 'product', {
+            quantity: cart.items.find((item) => item.productId === productItem.uuid).quantity,
+          }),
         );
 
         if (orderProductError) {

@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ChangeLogService } from "~change-log/change-log.service";
-import { store } from "~root/state";
-import { OnEvent } from "@nestjs/event-emitter";
-import { IsNotEmpty } from "class-validator";
-import { ITag, TagService } from "~tag/services/tag.service";
-import { PageCategoryModel } from "~cms/page/models/page-category.model";
-import { PageCategoryService } from "~cms/page/services/page-category.service";
-import { BaseNeoService } from "~shared/services/base-neo.service";
-import { PageModel } from "~cms/page/models/page.model";
-import { IBaseFilter, IGenericObject } from "~models/general";
-import { ImageService } from "~image/image.service";
+import { ChangeLogService } from '~change-log/change-log.service';
+import { store } from '~root/state';
+import { OnEvent } from '@nestjs/event-emitter';
+import { IsNotEmpty } from 'class-validator';
+import { ITag, TagService } from '~tag/services/tag.service';
+import { PageCategoryModel } from '~cms/page/models/page-category.model';
+import { PageCategoryService } from '~cms/page/services/page-category.service';
+import { BaseNeoService } from '~shared/services/base-neo.service';
+import { PageModel } from '~cms/page/models/page.model';
+import { IBaseFilter, IGenericObject } from '~models/general';
+import { ImageService } from '~image/image.service';
 
 export class PageModelDto {
   tempUuid?: string;
@@ -36,7 +36,6 @@ export class PageService extends BaseNeoService {
     super();
     this.model = store.getState().models.Page;
 
-
     this.changeLog = new ChangeLogService();
     this.imageService = new ImageService();
   }
@@ -45,9 +44,9 @@ export class PageService extends BaseNeoService {
   async onAppLoaded() {}
 
   async findOne(filter: IGenericObject, rels = []): Promise<PageModel> {
-    const item = await super.findOne(filter, rels) as unknown as PageModel;
+    const item = (await super.findOne(filter, rels)) as unknown as PageModel;
     item['images'] = await this.imageService.getItemImages('Page', item['uuid']);
-    item['thumb'] = item['images'].find(img => img.type === 'main') || null;
+    item['thumb'] = item['images'].find((img) => img.type === 'main') || null;
 
     return item;
   }
@@ -59,9 +58,9 @@ export class PageService extends BaseNeoService {
     return r;
   }
 
-  async update(uuid:string, record:PageModelDto, userId?:string) {
+  async update(uuid: string, record: PageModelDto, userId?: string) {
     const r = await super.update(uuid, record, userId);
-        // Handle Categories
+    // Handle Categories
     if (Array.isArray(record.categories)) {
       const pageCategoryService = new PageCategoryService();
       // await pageCategoryService.
@@ -79,12 +78,11 @@ export class PageService extends BaseNeoService {
     return r;
   }
 
-  async addRelated(sourceFilter: IBaseFilter, destinationModelName: string, destinationFilter: IBaseFilter) {
+  async addRelated(sourceFilter: IBaseFilter, destinationFilter: IBaseFilter) {
     try {
-      await this.attachModelToAnotherModel(store.getState().models['Page'], sourceFilter , store.getState().models[destinationModelName], destinationFilter, 'related');
-    }
-    catch (e) {
-      console.log(e)
+      await this.attachToModel(sourceFilter, destinationFilter, 'related');
+    } catch (e) {
+      console.log(e);
     }
 
     return this;
@@ -94,5 +92,4 @@ export class PageService extends BaseNeoService {
     const rel = store.getState().models['Page'].modelConfig.relationships['related'].rel;
     await this.detachOneModelFromAnother('Page', sourceFilter, destinationModelName, destinationFilter, rel);
   }
-
 }

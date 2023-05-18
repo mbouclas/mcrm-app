@@ -106,21 +106,14 @@ describe('OrderService', () => {
     neo4jService.setDriver(driver); // Manually add the driver instance cause the DI is worthless
     Neo4jService.driverInstance = driver; // Associate the driver
 
-    const modelService: ModelsService =
-      module.get<ModelsService>(ModelsService); //Get the model service so that we can load them into the store
+    const modelService: ModelsService = module.get<ModelsService>(ModelsService); //Get the model service so that we can load them into the store
     await modelService.mergeModels(); // Load all the models into the store
   });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot()],
-      providers: [
-        OrderService,
-        UserService,
-        ProductService,
-        PaymentMethodService,
-        ShippingMethodService,
-      ],
+      providers: [OrderService, UserService, ProductService, PaymentMethodService, ShippingMethodService],
     }).compile();
 
     service = module.get<OrderService>(OrderService);
@@ -132,13 +125,10 @@ describe('OrderService', () => {
     productService = module.get<ProductService>(ProductService);
     productService.setModel(store.getState().models['Product']);
 
-    paymentMethodService =
-      module.get<PaymentMethodService>(PaymentMethodService);
+    paymentMethodService = module.get<PaymentMethodService>(PaymentMethodService);
     paymentMethodService.setModel(store.getState().models['PaymentMethod']);
 
-    shippingMethodService = module.get<ShippingMethodService>(
-      ShippingMethodService,
-    );
+    shippingMethodService = module.get<ShippingMethodService>(ShippingMethodService);
     shippingMethodService.setModel(store.getState().models['ShippingMethod']);
   });
 
@@ -200,29 +190,9 @@ describe('OrderService', () => {
     const user = await userCrudOperator.create();
     const product = await productCrudOperator.create();
 
-    const relationship = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['User'],
-      {
-        uuid: user.uuid,
-      },
-      'user',
-    );
+    const relationship = await service.attachToModelById(order.uuid, user.uuid, 'user');
 
-    const relationship2 = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['Product'],
-      {
-        uuid: product.uuid,
-      },
-      'product',
-    );
+    const relationship2 = await service.attachToModelById(order.uuid, product.uuid, 'product');
 
     expect(relationship.success).toBe(true);
     expect(relationship2.success).toBe(true);
@@ -234,41 +204,15 @@ describe('OrderService', () => {
 
   it('should save order with user and product in db', async () => {
     const orderCrudOperator = crudOperator(service, orderItem);
-    const paymentMethodCrudOperator = crudOperator(
-      paymentMethodService,
-      paymentMethodItem,
-    );
-    const shippingMethodCrudOperator = crudOperator(
-      shippingMethodService,
-      shippingMethodItem,
-    );
+    const paymentMethodCrudOperator = crudOperator(paymentMethodService, paymentMethodItem);
+    const shippingMethodCrudOperator = crudOperator(shippingMethodService, shippingMethodItem);
     const order = await orderCrudOperator.create();
     const paymentMethod = await paymentMethodCrudOperator.create();
     const shippingMethod = await shippingMethodCrudOperator.create();
 
-    const relationship = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['PaymentMethod'],
-      {
-        uuid: paymentMethod.uuid,
-      },
-      'paymentMethod',
-    );
+    const relationship = await service.attachToModelById(order.uuid, paymentMethod.uuid, 'paymentMethod');
 
-    const relationship2 = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['ShippingMethod'],
-      {
-        uuid: shippingMethod.uuid,
-      },
-      'shippingMethod',
-    );
+    const relationship2 = await service.attachToModelById(order.uuid, shippingMethod.uuid, 'shippingMethod');
 
     await orderCrudOperator.update({
       shippingMethod: shippingMethod.title,
