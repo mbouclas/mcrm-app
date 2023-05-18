@@ -464,13 +464,12 @@ export class BaseNeoService {
   }
 
   async setRelationshipsByIds(
-    sourceModel: typeof BaseModel,
     sourceId: string,
     destinationIds: String,
     relationshipName: string,
     relationshipProps?: IGenericObject,
   ) {
-    const relationship = sourceModel.modelConfig.relationships[relationshipName];
+    const relationship = this.model.modelConfig.relationships[relationshipName];
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
