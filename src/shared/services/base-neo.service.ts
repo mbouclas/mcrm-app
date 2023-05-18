@@ -508,14 +508,11 @@ RETURN *;
         sourceId,
         destinationIds,
       });
-      if (!res?.records[0]) {
-        return { success: false };
-      }
+
+      return res.records.map((record) => record.get('id'));
     } catch (e) {
       throw new RecordUpdateFailedException(e);
     }
-
-    return { success: true };
   }
 
   async detachOneModelFromAnother(

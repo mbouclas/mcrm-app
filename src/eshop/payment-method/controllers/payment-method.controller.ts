@@ -24,14 +24,17 @@ export class PaymentMethodController {
 
   @Patch(`:uuid`)
   async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    await new PaymentMethodService().setRelationshipsByIds(
+    const shippingMethodIds = await new PaymentMethodService().setRelationshipsByIds(
       store.getState().models['PaymentMethod'],
       uuid,
       body.shippingMethodIds,
       'shippingMethod',
     );
 
-    return await new PaymentMethodService().update(uuid, body);
+    return {
+      ...(await new PaymentMethodService().update(uuid, body)),
+      shippingMethodIds,
+    };
   }
 
   @Post()
