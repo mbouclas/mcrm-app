@@ -1,4 +1,4 @@
-import { Controller, Inject, Post, Req, Res, Session } from '@nestjs/common';
+import { Controller, Delete, Inject, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
 import {
   Request as ExpressRequest,
   Response as ExpressResponse,
@@ -25,6 +25,7 @@ import {
   UserFailedUpdate,
 } from '../exceptions';
 import { ISessionData } from "~shared/models/session.model";
+
 
 
 const jwt = require('jsonwebtoken');
@@ -58,6 +59,11 @@ export class Oauth2Controller {
     } catch (e) {
       throw new InvalidCredentials();
     }
+  }
+
+  @Delete('/logout/:token')
+  async logout(@Req() req: ExpressRequest, @Res() res: ExpressResponse) {
+
   }
 
   @Post('/register')

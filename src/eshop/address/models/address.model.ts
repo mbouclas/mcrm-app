@@ -25,7 +25,16 @@ export class AddressModel extends BaseModel implements OnModuleInit {
   public static modelConfig: INeo4jModel = {
     select: 'address:Address',
     as: 'address',
-    relationships: {},
+    relationships: {
+      user: {
+        model: 'User',
+        modelAlias: 'user',
+        alias: 'userRelationship',
+        type: 'inverse',
+        isCollection: false,
+        rel: 'HAS_ADDRESS',
+      }
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -70,10 +79,58 @@ export class AddressModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
+      varName: 'region',
+      label: 'Region',
+      placeholder: 'Region',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
       varName: 'zipcode',
       label: 'Zipcode',
       placeholder: 'Zipcode',
       type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'phone',
+      label: 'Phone',
+      placeholder: 'Phone',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'firstName',
+      label: 'First Name',
+      placeholder: 'First Name',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'lastName',
+      label: 'Last Name',
+      placeholder: 'Last Name',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'notes',
+      label: 'Notes',
+      placeholder: 'Notes',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
+      varName: 'default',
+      label: 'Default',
+      placeholder: 'Default',
+      type: 'boolean',
       isSortable: true,
       group: 'main',
     },

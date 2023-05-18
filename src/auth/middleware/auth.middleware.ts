@@ -21,9 +21,10 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (req.headers['authorization']) {
       session = await this.cache.get(`token-${req.headers['authorization'].replace('Bearer ', '')}`);
+      req.session.user = session.user;
     }
 
-    if (req.headers['x-sess-id']) {
+    if (req.headers['x-sess-id'] && !session) {
       session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
       sessionId = req.headers['x-sess-id'];
     }

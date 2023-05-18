@@ -1,5 +1,6 @@
 import { compare, genSalt, hash } from "bcryptjs";
 import { IOauthToken } from "~models/auth";
+import OAuth2Server from "oauth2-server";
 
 export type HashPassword = (
   password: string,
@@ -52,4 +53,34 @@ export class AuthService {
     this.hasher = new BcryptHasher(10);
   }
 
+}
+
+export function cleanUpUserPayloadForRegularUsers(value: OAuth2Server.Token) {
+  const user = {
+    email : value.user.email,
+    firstName : value.user.firstName,
+    lastName : value.user.lastName,
+    gates: value.user.gates,
+    addresses: value.user['address'] ? value.user['address'].map(a => {
+      Object.keys(a).forEach(k => {
+        if (k === 'uuid') {
+          delete a[k];
+        }
+      });
+
+      return a;
+    }) : [],
+  };
+
+  const tokens = {
+    accessToken: value.accessToken,
+    refreshToken: value.refreshToken,
+    accessTokenExpiresAt: value.accessTokenExpiresAt,
+    refreshTokenExpiresAt: value.refreshTokenExpiresAt,
+  };
+
+  return {
+    ...tokens,
+    ...user,
+  }
 }

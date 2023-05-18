@@ -2,6 +2,7 @@ import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Injectable } from "@nestjs/common";
 import { BaseModel, INeo4jModel } from "~models/base.model";
 import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
+import { PropertyService } from "~catalogue/property/property.service";
 
 const modelName = 'ProductVariant';
 @McmsDi({
@@ -32,6 +33,43 @@ export class ProductVariantModel extends BaseModel {
         modelAlias: 'images',
         type: 'normal',
         isCollection: true,
+        defaultProperty: 'name',
+      },
+      properties: {
+        rel: 'HAS_PROPERTY',
+        alias: 'propertyRelationship',
+        model: 'Property',
+        modelAlias: 'property',
+        type: 'normal',
+        isCollection: true,
+        isSortableCount: true,
+        sortableCountDefaultAlias: 'property',
+        defaultProperty: 'title',
+        postProcessing: async (
+          record: Record<any, any>,
+          model: ProductVariantModel,
+        ) => {
+          if (record.property) {
+            record.property =
+              await new PropertyService().propertiesWithValuesByModel(
+                modelName,
+                record.uuid,
+                record.property.map((p) => p.uuid),
+              );
+          }
+
+          return record;
+        },
+      },
+      propertyValues: {
+        rel: 'HAS_PROPERTY_VALUE',
+        alias: 'propertyValueRelationship',
+        model: 'PropertyValue',
+        modelAlias: 'propertyValue',
+        type: 'normal',
+        isCollection: true,
+        isSortableCount: true,
+        sortableCountDefaultAlias: 'propertyValue',
         defaultProperty: 'name',
       },
     }

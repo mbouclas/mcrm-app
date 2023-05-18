@@ -180,6 +180,12 @@ export class ProductService extends BaseNeoService {
     return this;
   }
 
+  /**
+   * Used by generateVariantsFromProperty to create a single variant
+   * @param product
+   * @param variantName
+   * @param variantId
+   */
   async generateVariant(
     product: BaseModel,
     variantName: string,

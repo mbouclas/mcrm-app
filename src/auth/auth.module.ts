@@ -4,6 +4,7 @@ import { Oauth2Controller } from './controllers/oauth2.controller';
 import { oauth2Provider } from "./oauth2.provider";
 import { SharedModule } from "../shared/shared.module";
 import { GateService } from './gate.service';
+import { RegularUserController } from './controllers/regular-user.controller';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { GateService } from './gate.service';
     GateService,
   ],
   controllers: [
-    Oauth2Controller
+    Oauth2Controller,
+    RegularUserController
   ],
   exports: [
     oauth2Provider,

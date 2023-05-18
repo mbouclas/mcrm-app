@@ -21,7 +21,7 @@ export class StoreController {
   @UseInterceptors(StoreInitialQueryInterceptor)
   async get(): Promise<IStoreInitialQuery> {
     const config = store.getState().configs.store;
-    const paymentMethods = await new PaymentMethodService().find();
+    const paymentMethods = await new PaymentMethodService().find({ where: { status: true }}, ['shippingMethod']);
     const shippingMethods = await new ShippingMethodService().find();
     return {
       paymentMethods,
