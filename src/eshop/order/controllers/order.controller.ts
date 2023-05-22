@@ -118,7 +118,6 @@ export class OrderController {
       }),
     );
     if (shippingAddressError) {
-      console.log(shippingAddressError);
       throw new ShippingAddressNotFound();
     }
 
@@ -283,12 +282,7 @@ export class OrderController {
 
     await session.cart.clearWithDb();
 
-    const [finalResultError, finalResult] = await handleAsync(orderService.findOne({ uuid: order.uuid }));
-    if (finalResultError) {
-      throw new OrderFailed();
-    }
-
-    return finalResult;
+    return order;
   }
 
   @Delete(`:uuid`)

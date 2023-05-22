@@ -1,10 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PaymentMethodModel } from '../../payment-method/models/payment-method.model';
@@ -27,7 +23,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = [];
 
@@ -65,7 +61,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         modelAlias: 'paymentMethod',
         alias: 'paymentMethodRelationship',
         type: 'normal',
-        isCollection: true,
+        isCollection: false,
         rel: 'HAS_PAYMENT_METHOD',
         tabs: ['General'],
         group: 'right',
@@ -91,7 +87,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         modelAlias: 'shippingMethod',
         alias: 'shippingMethodRelationship',
         type: 'normal',
-        isCollection: true,
+        isCollection: false,
         rel: 'HAS_SHIPPING_METHOD',
         tabs: ['General'],
         group: 'right',
@@ -116,7 +112,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         modelAlias: 'address',
         alias: 'addressRelationship',
         type: 'normal',
-        isCollection: true,
+        isCollection: false,
         rel: 'HAS_ADDRESS',
         tabs: ['General'],
         fields: AddressModel.fields.map((field) => ({
@@ -134,7 +130,6 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             ],
           },
         })),
-
       },
     },
   };

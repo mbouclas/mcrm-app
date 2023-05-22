@@ -273,7 +273,7 @@ export class BaseNeoService {
     let ret;
 
     try {
-      ret = await this.update(newUuid, record, userId, relationships);
+      ret = await this.updateForStore({ uuid: newUuid, record, userId, relationships });
     } catch (e) {
       console.log('Query Error 501', e);
     }
@@ -283,6 +283,132 @@ export class BaseNeoService {
     }
 
     return ret;
+  }
+
+  async updateForStore({
+    uuid,
+    record,
+    userId,
+    relationships,
+  }: {
+    uuid: string;
+    record: IGenericObject;
+    userId: string;
+    relationships: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>;
+  }): Promise<any> {
+    let firstTimeQuery = '';
+    let addressStr = '';
+
+    const fields = this.model.fields;
+    let toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
+
+    if (record.tempUuid) {
+      firstTimeQuery = `,${this.model.modelConfig.as}.tempUuid = null`;
+    }
+
+    let translatableFieldsQuery = '';
+    /*
+        // This needs to be converted to flat fields like field_en
+        // const translatableFieldsQuery = postedDataToTranslatableUpdatesQuery(fields, business, IBusinessModel);
+    
+        // Need to check if this model requires location services. Otherwise extract it to the child class as a sond operation
+    /*    const locationService = new LocationsService();
+        const addressObj = await locationService.createStringFromModel(record);
+    
+        if (Object.keys(addressObj).length > 0) {
+          const addressParts = Object.keys(addressObj).map(k => `${IBusinessModel.modelConfig.as}.${k} = '${addressObj[k].replace(/'/g,`\\'`)}'`);
+          addressStr = addressParts.join(', ');
+          toUpdateQuery += `,${addressStr}`;
+        }
+    
+        */
+
+    let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
+        SET ${toUpdateQuery}
+        ${firstTimeQuery}
+        WITH ${this.model.modelConfig.as}
+        ${translatableFieldsQuery}
+        `;
+
+    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+    const relKeyMap = {};
+
+    if (relationships && relationships.length) {
+      relationships.forEach((destination, index) => {
+        const nodeSelector = `n${index + 1}`;
+        const relSelector = `r${index + 1}`;
+
+        relKeyMap[nodeSelector] = this.model.modelConfig.relationships[destination.name].modelAlias;
+
+        withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
+
+        const relationship = this.model.modelConfig.relationships[destination.name];
+        const createSetRelationship = destination.relationshipProps
+          ? ', '.concat(
+              Object.keys(destination.relationshipProps)
+                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+                .join()
+                .slice(0, -1),
+            )
+          : '';
+
+        query =
+          query +
+          `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${
+            relationship.rel
+          }]${relationship.type === 'normal' ? '->' : '-'}(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH ${withPropagate}
+        `;
+      });
+    }
+    query = query + 'RETURN *;';
+
+    let processedRecord = {};
+
+    for (const key in record) {
+      const value = record[key];
+
+      const field = this.model.fields.find((field) => field.varName === key);
+      if (field && field.type === 'nested') {
+        flattenObj(processedRecord, key, value);
+      } else if (field && field.type === 'json') {
+        processedRecord[key] = JSON.stringify(value);
+      } else {
+        processedRecord[key] = value;
+      }
+    }
+
+    const res = await this.neo.writeWithCleanUp(query, {
+      ...processedRecord,
+      ...{ uuid },
+    });
+
+    if (userId) {
+      const editorQuery = `MATCH (u:User {uuid:'${userId}'})
+            MATCH (${this.model.modelConfig.select} {uuid: '${uuid}'})
+            MERGE (u)-[r:HAS_EDITED]->(${this.model.modelConfig.as})
+                ON CREATE SET r.createdAt = datetime(), r.updatedAt = datetime()
+                ON MATCH SET r.updatedAt = datetime()
+                RETURN *
+            `;
+
+      await this.neo.write(editorQuery, {});
+    }
+
+    if (this.constructor['updatedEventName']) {
+      this.eventEmitter.emit(this.constructor['updatedEventName'], res);
+    }
+
+    let result = this.neo.mergeRelationshipsToParentWithAlias(res[0], this.model, relKeyMap);
+
+    return result;
   }
 
   async update(
