@@ -240,57 +240,48 @@ export class OrderController {
       throw new OrderFailed();
     }
 
-    const [orderShippingAddressError] = await handleAsync(
-      orderService.attachToModelById(order.uuid, shippingAddress.uuid, 'address'),
-    );
+    let rels = [
+      {
+        id: shippingAddress.uuid,
+        name: 'address',
+      },
 
-    if (orderShippingAddressError) {
+      {
+        id: billingAddress.uuid,
+        name: 'address',
+      },
+
+      {
+        id: paymentMethod.uuid,
+        name: 'paymentMethod',
+      },
+
+      {
+        id: shippingMethod.uuid,
+        name: 'shippingMethod',
+      },
+
+      {
+        id: userId,
+        name: 'user',
+      },
+    ];
+
+    products.data.forEach((productItem: ProductModel) => {
+      rels = [
+        ...rels,
+        {
+          id: productItem?.uuid,
+          name: 'product',
+        },
+      ];
+    });
+
+    const [relError] = await handleAsync(orderService.attachToManyById(order.uuid, rels));
+
+    if (relError) {
       throw new OrderFailed();
     }
-
-    const [orderBillingAddressError] = await handleAsync(
-      orderService.attachToModelById(order.uuid, billingAddress.uuid, 'address'),
-    );
-
-    if (orderBillingAddressError) {
-      throw new OrderFailed();
-    }
-
-    const [orderPaymentMethodError] = await handleAsync(
-      orderService.attachToModelById(order.uuid, paymentMethod.uuid, 'paymentMethod'),
-    );
-
-    if (orderPaymentMethodError) {
-      throw new OrderFailed();
-    }
-
-    const [orderShippingMethodError] = await handleAsync(
-      orderService.attachToModelById(order.uuid, shippingMethod.uuid, 'shippingMethod'),
-    );
-
-    if (orderShippingMethodError) {
-      throw new OrderFailed();
-    }
-
-    const [orderUserError] = await handleAsync(orderService.attachToModelById(order.uuid, userId, 'user'));
-
-    if (orderUserError) {
-      throw new OrderFailed();
-    }
-
-    await Promise.all(
-      products.data.map(async (productItem: ProductModel) => {
-        const [orderProductError] = await handleAsync(
-          orderService.attachToModelById(order.uuid, productItem?.uuid, 'product', {
-            quantity: cart.items.find((item) => item.productId === productItem.uuid).quantity,
-          }),
-        );
-
-        if (orderProductError) {
-          throw new OrderFailed();
-        }
-      }),
-    );
 
     await session.cart.clearWithDb();
 

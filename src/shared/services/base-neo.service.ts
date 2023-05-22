@@ -419,6 +419,54 @@ export class BaseNeoService {
     return { success: true };
   }
 
+  async attachToManyById(
+    sourceId: string,
+    destinations: {
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }[],
+  ) {
+    let query = `MATCH (n { uuid:'${sourceId}'})`;
+
+    destinations.forEach((destination, index) => {
+      const nodeSelector = `n${index + 1}`;
+      const relSelector = `r${index + 1}`;
+
+      const relationship = this.model.modelConfig.relationships[destination.name];
+      const createSetRelationship = destination.relationshipProps
+        ? ', '.concat(
+            Object.keys(destination.relationshipProps)
+              .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+              .join()
+              .slice(0, -1),
+          )
+        : '';
+
+      query =
+        query +
+        `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
+          relationship.type === 'normal' ? '->' : '-'
+        }(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH n
+        `;
+    });
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
   async attachToModelById(
     sourceId: string,
     destinationId: string,
