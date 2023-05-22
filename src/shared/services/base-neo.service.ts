@@ -230,9 +230,17 @@ export class BaseNeoService {
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 
-  async store(record: IGenericObject, userId?: string): Promise<any> {
+  async store(
+    record: IGenericObject,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+  ): Promise<any> {
     const uuid = v4();
-    const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
+    let query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
     try {
       await this.neo.write(query, { uuid });
@@ -265,7 +273,7 @@ export class BaseNeoService {
     let ret;
 
     try {
-      ret = await this.update(newUuid, record, userId);
+      ret = await this.update(newUuid, record, userId, relationships);
     } catch (e) {
       console.log('Query Error 501', e);
     }
@@ -277,7 +285,16 @@ export class BaseNeoService {
     return ret;
   }
 
-  async update(uuid: string, record: IGenericObject, userId?: string): Promise<any> {
+  async update(
+    uuid: string,
+    record: IGenericObject,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+  ): Promise<any> {
     let firstTimeQuery = '';
     let addressStr = '';
 
@@ -305,13 +322,44 @@ export class BaseNeoService {
 
         */
 
-    const query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
+    let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
         SET ${toUpdateQuery}
         ${firstTimeQuery}
         WITH ${this.model.modelConfig.as}
         ${translatableFieldsQuery}
-        RETURN *;
         `;
+
+    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+
+    if (relationships && relationships.length) {
+      relationships.forEach((destination, index) => {
+        const nodeSelector = `n${index + 1}`;
+        const relSelector = `r${index + 1}`;
+        withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
+
+        const relationship = this.model.modelConfig.relationships[destination.name];
+        const createSetRelationship = destination.relationshipProps
+          ? ', '.concat(
+              Object.keys(destination.relationshipProps)
+                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+                .join()
+                .slice(0, -1),
+            )
+          : '';
+
+        query =
+          query +
+          `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
+            relationship.type === 'normal' ? '->' : '-'
+          }(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH ${withPropagate}
+        `;
+      });
+    }
+    query = query + 'RETURN *;';
 
     let processedRecord = {};
 
@@ -428,10 +476,13 @@ export class BaseNeoService {
     }[],
   ) {
     let query = `MATCH (n { uuid:'${sourceId}'})`;
+    let withPropagate = 'n';
 
     destinations.forEach((destination, index) => {
       const nodeSelector = `n${index + 1}`;
       const relSelector = `r${index + 1}`;
+
+      withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
 
       const relationship = this.model.modelConfig.relationships[destination.name];
       const createSetRelationship = destination.relationshipProps
@@ -451,9 +502,11 @@ export class BaseNeoService {
           relationship.type === 'normal' ? '->' : '-'
         }(${nodeSelector})
         SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
-        WITH n
+        WITH ${withPropagate}
         `;
     });
+
+    query = query + ' RETURN *;';
 
     try {
       const res = await this.neo.write(query, {});

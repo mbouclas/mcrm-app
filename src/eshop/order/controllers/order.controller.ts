@@ -220,26 +220,6 @@ export class OrderController {
       throw new PaymentMethodFailedTransaction();
     }
 
-    const [orderError, order] = await handleAsync(
-      orderService.store({
-        status: 1,
-        paymentMethod: paymentMethod.title,
-        shippingMethod: shippingMethod.title,
-        salesChannel: body.salesChannel,
-        billingAddressId: billingAddress.uuid,
-        shippingAddressId: shippingAddress.uuid,
-        paymentStatus: 1,
-        shippingStatus: 1,
-        paymentInfo,
-        shippingInfo,
-        userId,
-      }),
-    );
-
-    if (orderError) {
-      throw new OrderFailed();
-    }
-
     let rels = [
       {
         id: shippingAddress.uuid,
@@ -277,9 +257,27 @@ export class OrderController {
       ];
     });
 
-    const [relError] = await handleAsync(orderService.attachToManyById(order.uuid, rels));
+    const [orderError, order] = await handleAsync(
+      orderService.store(
+        {
+          status: 1,
+          paymentMethod: paymentMethod.title,
+          shippingMethod: shippingMethod.title,
+          salesChannel: body.salesChannel,
+          billingAddressId: billingAddress.uuid,
+          shippingAddressId: shippingAddress.uuid,
+          paymentStatus: 1,
+          shippingStatus: 1,
+          paymentInfo,
+          shippingInfo,
+          userId,
+        },
+        '',
+        rels,
+      ),
+    );
 
-    if (relError) {
+    if (orderError) {
       throw new OrderFailed();
     }
 

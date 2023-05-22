@@ -114,21 +114,15 @@ export class OrderService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() { }
+  async onAppLoaded() {}
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;
     return item;
   }
 
-  async findAll(
-    filter: IGenericObject,
-    rels = [],
-  ): Promise<IPagination<IGenericObject>> {
-    const items = (await super.find(
-      filter,
-      rels,
-    )) as IPagination<IGenericObject>;
+  async findAll(filter: IGenericObject, rels = []): Promise<IPagination<IGenericObject>> {
+    const items = (await super.find(filter, rels)) as IPagination<IGenericObject>;
 
     return items;
   }
@@ -148,10 +142,16 @@ export class OrderService extends BaseNeoService {
     return res[0];
   }
 
-  async store(record: OrderModelDto, userId?: string) {
-    const existsStatus = OrderService.statuses.some(
-      (statusItem) => statusItem.id === record.status,
-    );
+  async store(
+    record: OrderModelDto,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+  ) {
+    const existsStatus = OrderService.statuses.some((statusItem) => statusItem.id === record.status);
 
     if (!existsStatus) {
       throw new RecordStoreFailedException('Invalid status');
@@ -177,7 +177,7 @@ export class OrderService extends BaseNeoService {
     record.orderId = orderId;
     record.VAT = OrderService.VAT;
 
-    const r = await super.store(record, userId);
+    const r = await super.store(record, userId, relationships);
     this.eventEmitter.emit('order.completed', r);
 
     return r;
