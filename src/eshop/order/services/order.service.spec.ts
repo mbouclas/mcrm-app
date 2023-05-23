@@ -225,10 +225,10 @@ describe('OrderService', () => {
     expect(order.status).toEqual(orderItem.status);
 
     await orderCrudOperator.delete();
-    await shippingMethodCrudOperator.delete();
     await billingAddressCrudOperator.delete();
     await shippingAddressCrudOperator.delete();
     await productCrudOperator.delete();
     await userCrudOperator.delete();
+    await shippingMethodCrudOperator.delete();
   });
 });

@@ -529,30 +529,33 @@ export class BaseNeoService {
   }
 
   async delete(uuid: string, userId?: string) {
-    let authorized = true;
-    const modelDeleteRule = this.model.modelConfig.deleteRules;
+    if (userId) {
+      let authorized = true;
 
-    if (modelDeleteRule) {
-      const mustDeleteRules = modelDeleteRule.must;
+      const modelDeleteRule = this.model.modelConfig.deleteRules;
 
-      if (mustDeleteRules && mustDeleteRules.length) {
-        const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
+      if (modelDeleteRule) {
+        const mustDeleteRules = modelDeleteRule.must;
 
-        let roles = await this.neo.readWithCleanUp(authorizeQuery);
-        const maxLevel = Math.max(...roles.map((role) => role.r.level));
+        if (mustDeleteRules && mustDeleteRules.length) {
+          const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
 
-        for (let i = 0; i < mustDeleteRules.length; i++) {
-          const rule = mustDeleteRules[i];
+          let roles = await this.neo.readWithCleanUp(authorizeQuery);
+          const maxLevel = Math.max(...roles.map((role) => role.r.level));
 
-          if (rule.type === 'role' && maxLevel < rule.value) {
-            authorized = false;
+          for (let i = 0; i < mustDeleteRules.length; i++) {
+            const rule = mustDeleteRules[i];
+
+            if (rule.type === 'role' && maxLevel < rule.value) {
+              authorized = false;
+            }
           }
         }
       }
-    }
 
-    if (!authorized) {
-      throw new Error('No permission');
+      if (!authorized) {
+        throw new Error('No permission');
+      }
     }
 
     const query = `MATCH (${this.model.modelConfig.select} {uuid: $uuid}) DETACH DELETE ${this.model.modelConfig.as} RETURN *`;

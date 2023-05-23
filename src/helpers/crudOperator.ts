@@ -1,6 +1,6 @@
 import { IGenericObject } from '~models/general';
 
-export const crudOperator = <T extends { [key: string]: unknown }>(service, item: T) => {
+export const crudOperator = <T extends { [key: string]: unknown } & { uuid?: string }>(service, item: T) => {
   const parsedItem: T = cloneItem(item);
 
   return {
@@ -11,7 +11,12 @@ export const crudOperator = <T extends { [key: string]: unknown }>(service, item
         name: string;
         relationshipProps?: IGenericObject;
       }>,
-    ): Promise<T & { uuid: string }> => createItem(service, parsedItem, userId, relationships),
+    ): Promise<T & { uuid: string }> => {
+      const item = await createItem(service, parsedItem, userId, relationships);
+      parsedItem.uuid = item.uuid;
+
+      return item;
+    },
     update: async (item) => updateItem(service, parsedItem.uuid, item),
     delete: async () => deleteItem(service, parsedItem),
     findOne: async (): Promise<T> => findOneItem(service, parsedItem.uuid),
