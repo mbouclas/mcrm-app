@@ -162,7 +162,7 @@ export class OrderService extends BaseNeoService {
     );
 
     if (!existsPaymentStatus) {
-      throw new RecordStoreFailedException('Invalid status');
+      throw new RecordStoreFailedException('Invalid payment status');
     }
 
     const existsShippingStatus = OrderService.shippingStatuses.some(
@@ -170,7 +170,7 @@ export class OrderService extends BaseNeoService {
     );
 
     if (!existsShippingStatus) {
-      throw new RecordStoreFailedException('Invalid status');
+      throw new RecordStoreFailedException('Invalid shipping status');
     }
 
     const orderId = v4();

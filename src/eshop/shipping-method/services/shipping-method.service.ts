@@ -38,14 +38,8 @@ export class ShippingMethodService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {}
 
-  async findOne(
-    filter: IGenericObject,
-    rels = [],
-  ): Promise<ShippingMethodModel> {
-    const item = (await super.findOne(
-      filter,
-      rels,
-    )) as unknown as ShippingMethodModel;
+  async findOne(filter: IGenericObject, rels = []): Promise<ShippingMethodModel> {
+    const item = (await super.findOne(filter, rels)) as unknown as ShippingMethodModel;
     return item;
   }
 
@@ -54,22 +48,16 @@ export class ShippingMethodService extends BaseNeoService {
     const settingsFieldKeys = Object.keys(settingsFields);
 
     const providerContainer = McmsDiContainer.get({
-      id: `${
-        providerName.charAt(0).toUpperCase() + providerName.slice(1)
-      }Provider`,
+      id: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider`,
     });
 
     const provider: IShippingMethodProvider = new providerContainer.reference();
 
     const allowedSettingsFields = provider.getFields();
 
-    const allowedSettingsKeys = allowedSettingsFields.map(
-      (field) => field.varName,
-    );
+    const allowedSettingsKeys = allowedSettingsFields.map((field) => field.varName);
 
-    const notAllowedFound = settingsFieldKeys.find(
-      (settingsField) => !allowedSettingsKeys.includes(settingsField),
-    );
+    const notAllowedFound = settingsFieldKeys.find((settingsField) => !allowedSettingsKeys.includes(settingsField));
 
     if (notAllowedFound) {
       throw new Error(`Unsupported key: ${notAllowedFound}`);

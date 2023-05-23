@@ -1,30 +1,45 @@
-export const crudOperator = <T extends { [key: string]: unknown }>(
-  service,
-  item: T,
-) => {
+import { IGenericObject } from '~models/general';
+
+export const crudOperator = <T extends { [key: string]: unknown }>(service, item: T) => {
   const parsedItem: T = cloneItem(item);
 
   return {
-    create: async (): Promise<T & { uuid: string }> => createPage(service, parsedItem),
-    update: async (item) => updatePage(service, parsedItem.uuid, item),
-    delete: async () => deletePage(service, parsedItem),
-    findOne: async (): Promise<T> => findOnePage(service, parsedItem.uuid),
+    create: async (
+      userId?: string,
+      relationships?: Array<{
+        id: string;
+        name: string;
+        relationshipProps?: IGenericObject;
+      }>,
+    ): Promise<T & { uuid: string }> => createItem(service, parsedItem, userId, relationships),
+    update: async (item) => updateItem(service, parsedItem.uuid, item),
+    delete: async () => deleteItem(service, parsedItem),
+    findOne: async (): Promise<T> => findOneItem(service, parsedItem.uuid),
   };
 };
 
-const createPage = async (service, item) => {
-  return await service.store(item);
+const createItem = async (
+  service,
+  item,
+  userId?: string,
+  relationships?: Array<{
+    id: string;
+    name: string;
+    relationshipProps?: IGenericObject;
+  }>,
+) => {
+  return await service.store(item, userId, relationships);
 };
 
-const updatePage = async (service, uuid, item) => {
+const updateItem = async (service, uuid, item) => {
   return await service.update(uuid, item);
 };
 
-const deletePage = async (service, item) => {
+const deleteItem = async (service, item) => {
   return await service.delete(item.uuid);
 };
 
-const findOnePage = async (service, uuid) => {
+const findOneItem = async (service, uuid) => {
   return await service.findOne({ uuid });
 };
 
