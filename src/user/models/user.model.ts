@@ -26,6 +26,7 @@ export class UserModel extends BaseModel {
   public forgotPasswordToken?: string;
   public tempPassword?: string;
   public uuid?: string;
+  public type?: 'user' | 'guest';
   public static modelConfig: INeo4jModel = {
     select: 'user:User',
     as: 'user',

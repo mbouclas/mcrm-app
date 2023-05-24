@@ -7,13 +7,14 @@ export interface IImportProcessorFieldMap {
   importFieldName: string;
   rename?: boolean;
   required?: boolean;
-  type?: 'text'|'number'|'float'|'category'|'property'|'image'|'variantId';
+  type?: 'text'|'number'|'float'|'boolean'|'category'|'property'|'image'|'variantId'|'productId'|'price'|'tag';
   relationships?: string[];//graph rels. If present they must be the ones present on the model
   validations?: Function[],// list of validations to run, each entry is a function
   isSlugFor?: string;
   matchSourceValue?: string;
   matchTargetValue?: string;
   slugifyValue?: boolean;
+  priceOnRequestFlag?: string;
 }
 
 @Injectable()

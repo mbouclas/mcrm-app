@@ -13,6 +13,7 @@ export class CartMiddleware implements NestMiddleware {
     const cart = new Cart();
     let userId;
     let sessionId = req.session.id;
+
     let session;
     // We got a session header, get it from redis
     //

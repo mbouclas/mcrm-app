@@ -87,9 +87,9 @@ export class AddressModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'zipcode',
-      label: 'Zipcode',
-      placeholder: 'Zipcode',
+      varName: 'postCode',
+      label: 'Postal Code',
+      placeholder: 'Postal Code',
       type: 'text',
       isSortable: true,
       group: 'main',

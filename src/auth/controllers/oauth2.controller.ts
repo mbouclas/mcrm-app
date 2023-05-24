@@ -90,6 +90,7 @@ export class Oauth2Controller {
       ...body,
       password: hashedPassword,
       confirmToken,
+      type: 'user',
       active: false,
     });
 

@@ -5,7 +5,7 @@ import { Job } from "bullmq";
 import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
 import { CacheService } from "~shared/services/cache.service";
 import { groupBy, sortBy } from "lodash";
-import { IImportSchema, ImportService } from "~catalogue/import/services/import.service";
+import { IImportSchema, ImportService, IProcessorResult } from "~catalogue/import/services/import.service";
 import { ImageService } from "~image/image.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 import { HttpService } from "@nestjs/axios";
@@ -15,11 +15,19 @@ import { uuid } from "uuidv4";
 import * as path from "path";
 import { store } from "~root/state";
 import { ProductService } from "~catalogue/product/services/product.service";
+import { OnEvent } from "@nestjs/event-emitter";
 const crypto = require('crypto')
+
+export interface IImportPhotosFromEventSchema {
+  productId?: string;
+  variantId?: string;
+  image: string;
+}
 
 export class ImportProductPhotosService implements OnApplicationBootstrap {
   public static jobEventName = "import:photos";
   protected static readonly importResultCacheKey = "import-photos-job-";
+  public static readonly importPhotosStartEventName = "import.photos.start";
   private readonly logger = new Logger(ImportProductPhotosService.name);
   private static defaultFieldMap: IImportProcessorFieldMap[] = [
     {
@@ -45,6 +53,17 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
   onApplicationBootstrap(): any {
     // register worker for this task
     ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.photosImportQueueName);
+  }
+
+  @OnEvent(ImportProductPhotosService.importPhotosStartEventName)
+  async onImportPhotosStart(data: IImportSchema[]) {
+    const s = new ImportProductPhotosService(new HttpService());
+    try {
+      await s.processData(data);
+    }
+    catch (e) {
+      console.log('Error processing photos', e);
+    }
   }
 
   async analyze(file: Express.Multer.File, limit?: number) {
@@ -80,36 +99,13 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     const s = new ImportProductPhotosService(new HttpService());
     const res = await s.analyze(file);
 
-    // Group the products by SKU. This needs to be extracted from each item in the array
-    const group = groupBy(res.data, 'sku');
-
-    const products = Object.keys(group).map(sku => ({
-      sku,
-      variants: sortBy(group[sku], 'variantId'),
-    }));
-
-    // Comes from config catalogue.import.overwriteImages in /config
-    const overwriteImages = store.getState().configs.catalogue['import']['overwriteImages'];
-/*    try {
-
-
-      await s.handleProductPhotos(products[0], overwriteImages);
+    try {
+      await this.processData(res.data);
     }
     catch (e) {
-      console.log(`Error processing photos for product ${products[0].sku}`, e);
-    }*/
-
-    for (let idx = 0; products.length > idx; idx++) {
-      try {
-        // Comes from config catalogue.import.overwriteImages in /config
-        await s.handleProductPhotos(products[idx], overwriteImages);
-        this.logger.log(`Processed photos for product ${products[idx].sku}`);
-      } catch (e) {
-        console.log(`Error processing photos for product ${products[idx].sku}`, e);
-      }
+      console.log('Error processing photos', e);
     }
 
-    console.log('All photos processed');
   }
 
   private async handleProductPhotos(product: { variants: IImportSchema[]; sku: string }, overwriteImages = false) {
@@ -139,6 +135,10 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
         continue;
       }
 
+      if (existingImage) {
+        await (new ProductVariantService).update(variant['uuid'], {thumb: existingImage.url});
+      }
+
       if (!existingImage) {
         const image = await this.downloadImageFromUrl(product.variants[idx].image);
         const newHash = crypto.createHash('md5').update(image.url).digest("hex");
@@ -150,6 +150,7 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
         await service.update(existingImage.id, {originalLocation: newHash});
         this.logger.log(`Uploaded image ${existingImage.id} - ${newHash})`);
       }
+
 
       await service.linkToObject({uuid: existingImage.uuid}, 'ProductVariant', variant['uuid'], idx === 0 ? 'main' : 'additional', {fromImport: true});
       if (idx === 0) {
@@ -181,5 +182,31 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
       writer.on('finish', () => resolve({ filename, url }));
       writer.on('error', (e)  => reject(e));
     });
+  }
+
+  private async processData(res: IImportSchema[]) {
+    const s = new ImportProductPhotosService(new HttpService());
+    // Group the products by SKU. This needs to be extracted from each item in the array
+    const group = groupBy(res, 'sku');
+
+    const products = Object.keys(group).map(sku => ({
+      sku,
+      variants: sortBy(group[sku], 'variantId'),
+    }));
+
+    // Comes from config catalogue.import.overwriteImages in /config
+    const overwriteImages = store.getState().configs.catalogue['import']['overwriteImages'];
+
+    for (let idx = 0; products.length > idx; idx++) {
+      try {
+        // Comes from config catalogue.import.overwriteImages in /config
+        await s.handleProductPhotos(products[idx], overwriteImages);
+        this.logger.log(`Processed photos for product ${products[idx].sku}`);
+      } catch (e) {
+        console.log(`Error processing photos for product ${products[idx].sku}`, e);
+      }
+    }
+
+    console.log('All photos processed');
   }
 }

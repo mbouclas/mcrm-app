@@ -565,7 +565,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
       };
     }
 
-    const mainBucket = Object.keys(agg).filter(bucket => bucket !== 'slug' && bucket !== 'doc_count')[0];
+    const mainBucket = field.mainBucketName ? field.mainBucketName : Object.keys(agg).filter(bucket => bucket !== 'slug' && bucket !== 'doc_count')[0];
     if (!mainBucket) {
       return {
         key: aggName,
@@ -575,13 +575,18 @@ export class ElasticSearchService implements OnApplicationShutdown {
 
     const results = agg[mainBucket].buckets.map((item: IElasticSearchAggregationBucket, idx: number) => {
       const highlighted_result = (this.applyQueryStringFilterOnAggregations && qsMatcher(item.key, this.applyQueryStringFilterOnAggregations)) ? highlighter(item.key, this.applyQueryStringFilterOnAggregations) : undefined;
+      if (field.alias === 'material') {
+        // console.log(item)
+      }
 
-      return {
+      const res = {
         key: item.key,
         doc_count: item.doc_count,
-        slug: agg.slug.buckets[idx].key,
+        slug: (field.slugKey) ? agg[field.slugKey].buckets[idx].key : agg.slug.buckets[idx].key,
         highlighted_result
-      }
+      };
+
+      return res;
     });
 
     return {

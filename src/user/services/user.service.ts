@@ -4,18 +4,8 @@ import { IGenericObject, IPagination } from '~models/general';
 import { store } from '~root/state';
 import { UserModel } from '~user/models/user.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { extractFiltersFromObject } from '~helpers/extractFiltersFromObject';
-import {
-  extractQueryParamsFilters,
-  setupRelationShipsQuery,
-} from '~helpers/extractQueryParamsFilters';
-import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
-import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-failed.exception';
 import { OnEvent } from '@nestjs/event-emitter';
-import { v4 } from 'uuid';
-import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { postedDataToUpdatesQuery } from '~helpers/postedDataToUpdatesQuery';
 import { ChangeLogService } from '~change-log/change-log.service';
 import { AuthService } from '~root/auth/auth.service';
 import { MailService } from '~root/mail/services/mail.service';
@@ -39,6 +29,7 @@ export class UserModelDto {
   active?: boolean;
   confirmToken?: string;
   forgotPasswordToken?: string;
+  type?: 'user' | 'guest' = 'user';
 }
 
 @McmsDi({
@@ -126,10 +117,15 @@ export class UserService extends BaseNeoService {
   }
 
   async store(record: UserModelDto, userId?: string) {
+    if (!record.type) {record.type = 'user';}
     const r = await super.store(record, userId);
 
-    this.eventEmitter.emit('user.created', r);
+    if (record.type === 'guest') {
+      this.eventEmitter.emit('guest.user.created', r);
+      return r;
+    }
 
+    this.eventEmitter.emit('user.created', r);
     return r;
   }
 
@@ -148,15 +144,20 @@ export class UserService extends BaseNeoService {
         if (business.extraFields) {
           await this.updateModelExtraFields(uuid, business.extraFields as IExtraFieldResponse, IBusinessModel.modelConfig);
         }
-    
+
         if (business.tags) {
           await this.updateModelTags(uuid, business.tags as ITag[], IBusinessModel.modelConfig);
         }
-    
+
         if (business.mainImage) {
           await updateModelMainImage(uuid, business.mainImage, this.modelName);
         }
     */
+
+    if (r.type === 'guest') {
+      this.eventEmitter.emit('guest.user.updated', r);
+      return r;
+    }
 
     if (!record.tempUuid) {
       const currentState = await this.getCurrentState(
@@ -173,6 +174,7 @@ export class UserService extends BaseNeoService {
       );
     }
 
+    this.eventEmitter.emit('user.updated', r);
     return r;
   }
 
@@ -198,5 +200,17 @@ export class UserService extends BaseNeoService {
 
   async generatePasswordHash(password: string) {
     return await this.auth.hasher.hashPassword(password);
+  }
+
+  public isGuest(user: UserModel) {
+    return user.type === 'guest';
+  }
+
+  public isAdmin(user: UserModel) {
+    if (user.type === 'guest' || !user['role'] || !Array.isArray(user['role'])) {
+      return false;
+    }
+
+    return user['role'].filter((role) => role.level > 2).length > 0;
   }
 }

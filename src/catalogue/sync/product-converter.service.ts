@@ -12,9 +12,6 @@ export class ProductConverterService {
   }
   async convert(product: ProductModel) {
     let result: IProductModelEs = {} as IProductModelEs;
-    if (product.sku === 'R7200') {
-      console.log(product)
-    }
 
     result.sku = product.sku;
     result.slug = product.slug;
@@ -23,6 +20,7 @@ export class ProductConverterService {
     result.price = product.price;
     result.thumb = product['thumb'];
     result.description = product.description;
+    result.description_short = product['description_short'];
     result.createdAt = product["createdAt"];
     result.updatedAt = product["updatedAt"];
 
@@ -53,6 +51,10 @@ export class ProductConverterService {
             ret.color = value.color;
           }
 
+          // This is purely to make ES aggregations happen on multiple properties
+          // A simple way to create buckets out of multiple properties colorsValue, materialsValue
+          ret[`${property.slug}Value`] = value.slug;
+          ret[`${property.slug}Name`] = value.name;
           ret.slug = value.slug;
           ret.uuid = value.uuid;
           ret.name = value.name;

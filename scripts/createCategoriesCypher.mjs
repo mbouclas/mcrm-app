@@ -49,6 +49,16 @@ const tree = [
         importName: "WRITING",
       },
       {
+        title: "Laptop Bags",
+        slug: slugify("Laptop Bags", { lower: true }),
+        importName: "LAPTOP BAGS",
+      },
+      {
+        title: 'Lanyards',
+        slug: slugify('Lanyards', { lower: true }),
+        importName: 'LANYARDS'
+      },
+      {
         title: "Technology",
         slug: slugify("Technology", { lower: true }),
         importName: "TECHNOLOGY",
@@ -140,7 +150,7 @@ const tree = [
       {
         title: "Mugs, Bottles & Thermos",
         slug: slugify("Mugs, Bottles & Thermos", { lower: true }),
-        importName: "MUGS",
+        importName: "BOTTLES AND THERMOS",
       },
       {
         title: "Pet Products",
@@ -150,7 +160,7 @@ const tree = [
       {
         title: "Take Away",
         slug: slugify("Take Away", { lower: true }),
-        importName: "TAKEAWAY",
+        importName: "TAKE AWAY",
       },
     ],
   },
@@ -163,6 +173,16 @@ const tree = [
         title: "Seasonal & Beach",
         slug: slugify("Seasonal & Beach", { lower: true }),
         importName: "SUMMER AND BEACH",
+      },
+      {
+        title: "Packaging",
+        slug: slugify("Packaging", { lower: true }),
+        importName: "PACKAGING",
+      },
+      {
+        title: "Eco Friendly",
+        slug: slugify("Eco Friendly", { lower: true }),
+        importName: "ECO FRIENDLY",
       },
       {
         title: "Rain & Cold",
