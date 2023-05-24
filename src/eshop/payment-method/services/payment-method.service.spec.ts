@@ -74,8 +74,7 @@ describe('PaymentMethodService', () => {
     neo4jService.setDriver(driver);
     Neo4jService.driverInstance = driver;
 
-    const modelService: ModelsService =
-      module.get<ModelsService>(ModelsService);
+    const modelService: ModelsService = module.get<ModelsService>(ModelsService);
     await modelService.mergeModels();
   });
 
@@ -88,9 +87,7 @@ describe('PaymentMethodService', () => {
     service = module.get<PaymentMethodService>(PaymentMethodService);
     service.setModel(store.getState().models['PaymentMethod']);
 
-    shippingMethodService = module.get<ShippingMethodService>(
-      ShippingMethodService,
-    );
+    shippingMethodService = module.get<ShippingMethodService>(ShippingMethodService);
     shippingMethodService.setModel(store.getState().models['ShippingMethod']);
   });
 
@@ -103,9 +100,7 @@ describe('PaymentMethodService', () => {
     const createdPaymentMethod = await paymentMethodCrudOperator.create();
 
     expect(createdPaymentMethod.title).toEqual(paymentMethodItem.title);
-    expect(paymentMethodItem.description).toEqual(
-      paymentMethodItem.description,
-    );
+    expect(paymentMethodItem.description).toEqual(paymentMethodItem.description);
     expect(paymentMethodItem.status).toEqual(paymentMethodItem.status);
 
     await paymentMethodCrudOperator.delete();
@@ -126,9 +121,7 @@ describe('PaymentMethodService', () => {
     const foundPaymentMethod = await paymentMethodCrudOperator.findOne();
 
     expect(foundPaymentMethod.title).toEqual(paymentMethodItem.title);
-    expect(foundPaymentMethod.description).toEqual(
-      paymentMethodItem.description,
-    );
+    expect(foundPaymentMethod.description).toEqual(paymentMethodItem.description);
     expect(foundPaymentMethod.status).toEqual(paymentMethodItem.status);
 
     await paymentMethodCrudOperator.delete();
@@ -147,9 +140,7 @@ describe('PaymentMethodService', () => {
     const foundPaymentMethod = await paymentMethodCrudOperator.findOne();
 
     expect(foundPaymentMethod.title).toEqual(newTitle);
-    expect(foundPaymentMethod.description).toEqual(
-      paymentMethodItem.description,
-    );
+    expect(foundPaymentMethod.description).toEqual(paymentMethodItem.description);
     expect(foundPaymentMethod.status).toEqual(paymentMethodItem.status);
 
     await paymentMethodCrudOperator.delete();
@@ -157,24 +148,11 @@ describe('PaymentMethodService', () => {
 
   it('should save order with user and product in db', async () => {
     const paymentMethodCrudOperator = crudOperator(service, paymentMethodItem);
-    const shippingMethodCrudOperator = crudOperator(
-      shippingMethodService,
-      shippingMethodItem,
-    );
+    const shippingMethodCrudOperator = crudOperator(shippingMethodService, shippingMethodItem);
     const paymentMethod = await paymentMethodCrudOperator.create();
     const shippingMethod = await shippingMethodCrudOperator.create();
 
-    const relationship = await service.attachModelToAnotherModel(
-      store.getState().models['PaymentMethod'],
-      {
-        uuid: paymentMethod.uuid,
-      },
-      store.getState().models['ShippingMethod'],
-      {
-        uuid: shippingMethod.uuid,
-      },
-      'shippingMethod',
-    );
+    const relationship = await service.attachToModelById(paymentMethod.uuid, shippingMethod.uuid, 'shippingMethod');
 
     expect(relationship.success).toBe(true);
 

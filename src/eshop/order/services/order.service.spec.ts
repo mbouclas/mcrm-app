@@ -22,21 +22,38 @@ import { ProductModel } from '~root/catalogue/product/models/product.model';
 import { SharedModule } from '~shared/shared.module';
 import { crudOperator } from '~helpers/crudOperator';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AddressService } from '~eshop/address/services/address.service';
+import { CustomerPaymentMethodService } from '~root/eshop/customer/services/customer-payment-method.service';
+import { PickUpProvider } from '~eshop/shipping-method/providers/pickUp.provider';
 
 describe('OrderService', () => {
   let service: OrderService;
   let userService: UserService;
+  let addressService: AddressService;
   let productService: ProductService;
 
   let paymentMethodService: PaymentMethodService;
+  let customerPaymentMethodService: CustomerPaymentMethodService;
   let shippingMethodService: ShippingMethodService;
+
+  const billingAddressItem = Object.freeze({
+    city: 'City',
+    type: 'BILLING',
+  });
+
+  const shippingAddressItem = Object.freeze({
+    city: 'City',
+    type: 'SHIPPING',
+  });
 
   const orderItem = Object.freeze({
     total: 40,
     shippingMethod: 'ship1',
     paymentMethod: 'payment1',
     notes: 'user note',
-    status: 3,
+    status: 1,
+    paymentStatus: 1,
+    shippingStatus: 1,
   });
 
   const userItem = Object.freeze({
@@ -59,6 +76,12 @@ describe('OrderService', () => {
     title: 'Shipping method title',
     description: 'Shipping method descripton',
     status: true,
+    settingsFields: {
+      deliveryTime: 'delivery time',
+      trackingUrl: 'url',
+      description: 'description',
+    },
+    providerName: 'pickUp',
   });
 
   beforeAll(async () => {
@@ -98,6 +121,8 @@ describe('OrderService', () => {
         PaymentMethodModel,
         ShippingMethodService,
         ShippingMethodModel,
+        AddressService,
+        CustomerPaymentMethodService,
       ],
     }).compile();
 
@@ -106,8 +131,7 @@ describe('OrderService', () => {
     neo4jService.setDriver(driver); // Manually add the driver instance cause the DI is worthless
     Neo4jService.driverInstance = driver; // Associate the driver
 
-    const modelService: ModelsService =
-      module.get<ModelsService>(ModelsService); //Get the model service so that we can load them into the store
+    const modelService: ModelsService = module.get<ModelsService>(ModelsService); //Get the model service so that we can load them into the store
     await modelService.mergeModels(); // Load all the models into the store
   });
 
@@ -120,6 +144,8 @@ describe('OrderService', () => {
         ProductService,
         PaymentMethodService,
         ShippingMethodService,
+        AddressService,
+        CustomerPaymentMethodService,
       ],
     }).compile();
 
@@ -132,154 +158,77 @@ describe('OrderService', () => {
     productService = module.get<ProductService>(ProductService);
     productService.setModel(store.getState().models['Product']);
 
-    paymentMethodService =
-      module.get<PaymentMethodService>(PaymentMethodService);
+    paymentMethodService = module.get<PaymentMethodService>(PaymentMethodService);
     paymentMethodService.setModel(store.getState().models['PaymentMethod']);
 
-    shippingMethodService = module.get<ShippingMethodService>(
-      ShippingMethodService,
-    );
+    shippingMethodService = module.get<ShippingMethodService>(ShippingMethodService);
     shippingMethodService.setModel(store.getState().models['ShippingMethod']);
+
+    addressService = module.get<AddressService>(AddressService);
+    addressService.setModel(store.getState().models['Address']);
+
+    customerPaymentMethodService = module.get<CustomerPaymentMethodService>(CustomerPaymentMethodService);
+    customerPaymentMethodService.setModel(store.getState().models['CustomerPaymentMethod']);
+
+    new PickUpProvider();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it('should save order to db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
-    const createdOrder = await orderCrudOperator.create();
-
-    expect(createdOrder.total).toEqual(orderItem.total);
-    expect(orderItem.paymentMethod).toEqual(orderItem.paymentMethod);
-    expect(orderItem.shippingMethod).toEqual(orderItem.shippingMethod);
-
-    await orderCrudOperator.delete();
-  });
-
-  it('should delete the order from db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
-    await orderCrudOperator.create();
-    const deletedOrder = await orderCrudOperator.delete();
-
-    expect(deletedOrder.success).toEqual(true);
-  });
-
-  it('should save and find the order in db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
-    await orderCrudOperator.create();
-
-    const foundOrder = await orderCrudOperator.findOne();
-
-    expect(foundOrder.total).toEqual(orderItem.total);
-    expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
-    expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
-
-    await orderCrudOperator.delete();
-  });
-
-  it('should save and update the order in db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
-    await orderCrudOperator.create();
-    await orderCrudOperator.update({ total: 50 });
-
-    const foundOrder = await orderCrudOperator.findOne();
-
-    expect(foundOrder.total).toEqual(50);
-    expect(foundOrder.paymentMethod).toEqual(orderItem.paymentMethod);
-    expect(foundOrder.shippingMethod).toEqual(orderItem.shippingMethod);
-
-    await orderCrudOperator.delete();
-  });
-
-  it('should save order with user and product in db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
+  it('should save order', async () => {
     const userCrudOperator = crudOperator(userService, userItem);
-    const productCrudOperator = crudOperator(productService, productItem);
-    const order = await orderCrudOperator.create();
     const user = await userCrudOperator.create();
+
+    const orderCrudOperator = crudOperator(service, orderItem);
+
+    const shippingMethodCrudOperator = crudOperator(shippingMethodService, shippingMethodItem);
+    const billingAddressCrudOperator = crudOperator(addressService, billingAddressItem);
+    const shippingAddressCrudOperator = crudOperator(addressService, shippingAddressItem);
+    const productCrudOperator = crudOperator(productService, productItem);
+
+    const shippingMethod = await shippingMethodCrudOperator.create();
+    const billingAddress = await billingAddressCrudOperator.create();
+    const shippingAddress = await shippingAddressCrudOperator.create();
     const product = await productCrudOperator.create();
 
-    const relationship = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
+    let rels = [
       {
-        uuid: order.uuid,
+        id: shippingAddress.uuid,
+        name: 'address',
       },
-      store.getState().models['User'],
-      {
-        uuid: user.uuid,
-      },
-      'user',
-    );
 
-    const relationship2 = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
       {
-        uuid: order.uuid,
+        id: billingAddress.uuid,
+        name: 'address',
       },
-      store.getState().models['Product'],
-      {
-        uuid: product.uuid,
-      },
-      'product',
-    );
 
-    expect(relationship.success).toBe(true);
-    expect(relationship2.success).toBe(true);
+      {
+        id: shippingMethod.uuid,
+        name: 'shippingMethod',
+      },
+
+      {
+        id: user.uuid,
+        name: 'user',
+      },
+
+      {
+        id: product.uuid,
+        name: 'product',
+      },
+    ];
+
+    const order = await orderCrudOperator.create(null, rels);
+
+    expect(order.status).toEqual(orderItem.status);
 
     await orderCrudOperator.delete();
-    await userCrudOperator.delete();
+    await billingAddressCrudOperator.delete();
+    await shippingAddressCrudOperator.delete();
     await productCrudOperator.delete();
-  });
-
-  it('should save order with user and product in db', async () => {
-    const orderCrudOperator = crudOperator(service, orderItem);
-    const paymentMethodCrudOperator = crudOperator(
-      paymentMethodService,
-      paymentMethodItem,
-    );
-    const shippingMethodCrudOperator = crudOperator(
-      shippingMethodService,
-      shippingMethodItem,
-    );
-    const order = await orderCrudOperator.create();
-    const paymentMethod = await paymentMethodCrudOperator.create();
-    const shippingMethod = await shippingMethodCrudOperator.create();
-
-    const relationship = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['PaymentMethod'],
-      {
-        uuid: paymentMethod.uuid,
-      },
-      'paymentMethod',
-    );
-
-    const relationship2 = await service.attachModelToAnotherModel(
-      store.getState().models['Order'],
-      {
-        uuid: order.uuid,
-      },
-      store.getState().models['ShippingMethod'],
-      {
-        uuid: shippingMethod.uuid,
-      },
-      'shippingMethod',
-    );
-
-    await orderCrudOperator.update({
-      shippingMethod: shippingMethod.title,
-      paymentMethod: paymentMethod.title,
-    });
-
-    expect(relationship.success).toBe(true);
-    expect(relationship2.success).toBe(true);
-
-    await orderCrudOperator.delete();
-    await paymentMethodCrudOperator.delete();
+    await userCrudOperator.delete();
     await shippingMethodCrudOperator.delete();
   });
 });

@@ -1,19 +1,8 @@
-import neo4j, {
-  Result,
-  Driver,
-  int,
-  Transaction,
-  isInt,
-  isDateTime,
-} from 'neo4j-driver';
+import neo4j, { Result, Driver, int, Transaction, isInt, isDateTime } from 'neo4j-driver';
 import { Injectable, Inject, OnApplicationShutdown } from '@nestjs/common';
 import { Neo4jConfig } from './neo4j-config.interface';
 import { NEO4J_CONFIG, NEO4J_DRIVER } from './neo4j.constants';
-import {
-  isNode,
-  isRelationship,
-  Transaction as TransactionImpl,
-} from 'neo4j-driver-core';
+import { isNode, isRelationship, Transaction as TransactionImpl } from 'neo4j-driver-core';
 import { parseDate } from '../helpers/neoDateToMoment';
 import { defaultNeo4JConfig, Neo4jModule } from '~root/neo4j/neo4j.module';
 import { IGenericObject } from '~models/general';
@@ -66,11 +55,7 @@ export class Neo4jService implements OnApplicationShutdown {
     });
   }
 
-  read(
-    cypher: string,
-    params?: Record<string, any>,
-    databaseOrTransaction?: string | Transaction,
-  ): Result {
+  read(cypher: string, params?: Record<string, any>, databaseOrTransaction?: string | Transaction): Result {
     if (databaseOrTransaction instanceof TransactionImpl) {
       return (<Transaction>databaseOrTransaction).run(cypher, params);
     }
@@ -94,11 +79,7 @@ export class Neo4jService implements OnApplicationShutdown {
     });
   }
 
-  async writeWithCleanUp(
-    cypher: string,
-    params?: Record<string, any>,
-    databaseOrTransaction?: string | Transaction,
-  ) {
+  async writeWithCleanUp(cypher: string, params?: Record<string, any>, databaseOrTransaction?: string | Transaction) {
     const res = await this.write(cypher, params, databaseOrTransaction);
     if (Array.isArray(res.records) && res.records.length === 0) {
       return [];
@@ -109,11 +90,7 @@ export class Neo4jService implements OnApplicationShutdown {
     });
   }
 
-  write(
-    cypher: string,
-    params?: Record<string, any>,
-    databaseOrTransaction?: string | Transaction,
-  ): Result {
+  write(cypher: string, params?: Record<string, any>, databaseOrTransaction?: string | Transaction): Result {
     if (databaseOrTransaction instanceof TransactionImpl) {
       return (<Transaction>databaseOrTransaction).run(cypher, params);
     }
@@ -184,9 +161,7 @@ export class Neo4jService implements OnApplicationShutdown {
 
     const keys = Object.keys(r);
     if (isNode(r) || isRelationship(r)) {
-      return r.properties
-        ? Neo4jService.parseNeoProperties(r.properties)
-        : Neo4jService.parseNeoProperties(r);
+      return r.properties ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
     } else if (isInt(r)) {
       return r.toNumber();
     }
@@ -200,10 +175,56 @@ export class Neo4jService implements OnApplicationShutdown {
         ? Neo4jService.parseNeoProperties(r[masterKey].properties)
         : Neo4jService.parseNeoProperties(r);
     } else {
-      return r.properties
-        ? Neo4jService.parseNeoProperties(r.properties)
-        : Neo4jService.parseNeoProperties(r);
+      return r.properties ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
     }
+  }
+
+  /**
+   * Will merge all objects into one according to the parent key
+   * @param record
+   * @param parentKey
+   */
+  mergeRelationshipsToParentWithAlias(record: any, model: any, aliasKeyMap: any) {
+    let parentKey = model.modelConfig.as;
+
+    if (!record) {
+      return null;
+    }
+
+    const obj: IGenericObject = fromRecordToModel(record[parentKey], model);
+
+    if (!obj) {
+      return record;
+    }
+    for (let key in record) {
+      if (key === parentKey) {
+        continue;
+      }
+
+      const returnKey = aliasKeyMap[key];
+
+      if (!returnKey) {
+        continue;
+      }
+
+      const relModel = store.getState().models[model.modelConfig.relationships[returnKey].model];
+
+      const isCollection = model.modelConfig.relationships[returnKey].isCollection;
+
+      if (relModel && record[key]) {
+        if (isCollection) {
+          if (!obj[returnKey]) {
+            obj[returnKey] = [];
+          }
+
+          obj[returnKey] = [...obj[returnKey], fromRecordToModel(record[key], relModel)];
+        } else {
+          obj[returnKey] = fromRecordToModel(record[key], relModel);
+        }
+      }
+    }
+
+    return obj;
   }
 
   /**
@@ -241,13 +262,9 @@ export class Neo4jService implements OnApplicationShutdown {
 
       const returnKey = aliasKeyMap[key];
 
-      const relModel =
-        store.getState().models[
-          model.modelConfig.relationships[returnKey].model
-        ];
+      const relModel = store.getState().models[model.modelConfig.relationships[returnKey].model];
 
-      const isCollection =
-        model.modelConfig.relationships[returnKey].isCollection;
+      const isCollection = model.modelConfig.relationships[returnKey].isCollection;
 
       if (relModel) {
         if (record[key]) {

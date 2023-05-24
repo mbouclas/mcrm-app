@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Session,
-  Get,
-  Delete,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Post, Session, Get, Delete, Param, Query } from '@nestjs/common';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
@@ -20,10 +11,7 @@ export class ProductController {
 
   @Get('')
   async find(@Query() queryParams = {}) {
-    return await new ProductService().find(
-      queryParams,
-      Array.isArray(queryParams['with']) ? queryParams['with'] : [],
-    );
+    return await new ProductService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
   @Post('/basic')
@@ -53,29 +41,15 @@ export class ProductController {
   }
 
   @Post(':uuid/attach')
-  async addToProduct(
-    @Param('uuid') uuid: string,
-    @Body() body: IGenericObject,
-  ) {
-    const relationships =
-      store.getState().models['Product'].modelConfig.relationships;
+  async addToProduct(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    const relationships = store.getState().models['Product'].modelConfig.relationships;
 
     const targetRelationship = relationships[body.targetModel];
     if (!targetRelationship) {
       throw new RecordStoreFailedException('Invalid target model');
     }
 
-    const response = await new ProductService().attachModelToAnotherModel(
-      store.getState().models['Product'],
-      {
-        uuid,
-      },
-      store.getState().models[targetRelationship.model],
-      {
-        uuid: body.targetId,
-      },
-      targetRelationship.modelAlias,
-    );
+    const response = await new ProductService().attachToModelById(uuid, body.targetId, targetRelationship.modelAlias);
 
     return response;
   }

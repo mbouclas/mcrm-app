@@ -230,9 +230,17 @@ export class BaseNeoService {
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 
-  async store(record: IGenericObject, userId?: string): Promise<any> {
+  async store(
+    record: IGenericObject,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+  ): Promise<any> {
     const uuid = v4();
-    const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
+    let query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
     try {
       await this.neo.write(query, { uuid });
@@ -265,7 +273,7 @@ export class BaseNeoService {
     let ret;
 
     try {
-      ret = await this.update(newUuid, record, userId);
+      ret = await this.updateForStore({ uuid: newUuid, record, userId, relationships });
     } catch (e) {
       console.log('Query Error 501', e);
     }
@@ -277,7 +285,142 @@ export class BaseNeoService {
     return ret;
   }
 
-  async update(uuid: string, record: IGenericObject, userId?: string): Promise<any> {
+  async updateForStore({
+    uuid,
+    record,
+    userId,
+    relationships,
+  }: {
+    uuid: string;
+    record: IGenericObject;
+    userId: string;
+    relationships: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>;
+  }): Promise<any> {
+    let firstTimeQuery = '';
+    let addressStr = '';
+
+    const fields = this.model.fields;
+    let toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
+
+    if (record.tempUuid) {
+      firstTimeQuery = `,${this.model.modelConfig.as}.tempUuid = null`;
+    }
+
+    let translatableFieldsQuery = '';
+    /*
+        // This needs to be converted to flat fields like field_en
+        // const translatableFieldsQuery = postedDataToTranslatableUpdatesQuery(fields, business, IBusinessModel);
+    
+        // Need to check if this model requires location services. Otherwise extract it to the child class as a sond operation
+    /*    const locationService = new LocationsService();
+        const addressObj = await locationService.createStringFromModel(record);
+    
+        if (Object.keys(addressObj).length > 0) {
+          const addressParts = Object.keys(addressObj).map(k => `${IBusinessModel.modelConfig.as}.${k} = '${addressObj[k].replace(/'/g,`\\'`)}'`);
+          addressStr = addressParts.join(', ');
+          toUpdateQuery += `,${addressStr}`;
+        }
+    
+        */
+
+    let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
+        SET ${toUpdateQuery}
+        ${firstTimeQuery}
+        WITH ${this.model.modelConfig.as}
+        ${translatableFieldsQuery}
+        `;
+
+    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+    const relKeyMap = {};
+
+    if (relationships && relationships.length) {
+      relationships.forEach((destination, index) => {
+        const nodeSelector = `n${index + 1}`;
+        const relSelector = `r${index + 1}`;
+
+        relKeyMap[nodeSelector] = this.model.modelConfig.relationships[destination.name].modelAlias;
+
+        withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
+
+        const relationship = this.model.modelConfig.relationships[destination.name];
+        const createSetRelationship = destination.relationshipProps
+          ? ', '.concat(
+              Object.keys(destination.relationshipProps)
+                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+                .join()
+                .slice(0, -1),
+            )
+          : '';
+
+        query =
+          query +
+          `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${
+            relationship.rel
+          }]${relationship.type === 'normal' ? '->' : '-'}(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH ${withPropagate}
+        `;
+      });
+    }
+    query = query + 'RETURN *;';
+
+    let processedRecord = {};
+
+    for (const key in record) {
+      const value = record[key];
+
+      const field = this.model.fields.find((field) => field.varName === key);
+      if (field && field.type === 'nested') {
+        flattenObj(processedRecord, key, value);
+      } else if (field && field.type === 'json') {
+        processedRecord[key] = JSON.stringify(value);
+      } else {
+        processedRecord[key] = value;
+      }
+    }
+
+    const res = await this.neo.writeWithCleanUp(query, {
+      ...processedRecord,
+      ...{ uuid },
+    });
+
+    if (userId) {
+      const editorQuery = `MATCH (u:User {uuid:'${userId}'})
+            MATCH (${this.model.modelConfig.select} {uuid: '${uuid}'})
+            MERGE (u)-[r:HAS_EDITED]->(${this.model.modelConfig.as})
+                ON CREATE SET r.createdAt = datetime(), r.updatedAt = datetime()
+                ON MATCH SET r.updatedAt = datetime()
+                RETURN *
+            `;
+
+      await this.neo.write(editorQuery, {});
+    }
+
+    if (this.constructor['updatedEventName']) {
+      this.eventEmitter.emit(this.constructor['updatedEventName'], res);
+    }
+
+    let result = this.neo.mergeRelationshipsToParentWithAlias(res[0], this.model, relKeyMap);
+
+    return result;
+  }
+
+  async update(
+    uuid: string,
+    record: IGenericObject,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+  ): Promise<any> {
     let firstTimeQuery = '';
     let addressStr = '';
 
@@ -305,13 +448,44 @@ export class BaseNeoService {
 
         */
 
-    const query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
+    let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
         SET ${toUpdateQuery}
         ${firstTimeQuery}
         WITH ${this.model.modelConfig.as}
         ${translatableFieldsQuery}
-        RETURN *;
         `;
+
+    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+
+    if (relationships && relationships.length) {
+      relationships.forEach((destination, index) => {
+        const nodeSelector = `n${index + 1}`;
+        const relSelector = `r${index + 1}`;
+        withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
+
+        const relationship = this.model.modelConfig.relationships[destination.name];
+        const createSetRelationship = destination.relationshipProps
+          ? ', '.concat(
+              Object.keys(destination.relationshipProps)
+                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+                .join()
+                .slice(0, -1),
+            )
+          : '';
+
+        query =
+          query +
+          `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
+            relationship.type === 'normal' ? '->' : '-'
+          }(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH ${withPropagate}
+        `;
+      });
+    }
+    query = query + 'RETURN *;';
 
     let processedRecord = {};
 
@@ -355,30 +529,33 @@ export class BaseNeoService {
   }
 
   async delete(uuid: string, userId?: string) {
-    let authorized = true;
-    const modelDeleteRule = this.model.modelConfig.deleteRules;
+    if (userId) {
+      let authorized = true;
 
-    if (modelDeleteRule) {
-      const mustDeleteRules = modelDeleteRule.must;
+      const modelDeleteRule = this.model.modelConfig.deleteRules;
 
-      if (mustDeleteRules && mustDeleteRules.length) {
-        const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
+      if (modelDeleteRule) {
+        const mustDeleteRules = modelDeleteRule.must;
 
-        let roles = await this.neo.readWithCleanUp(authorizeQuery);
-        const maxLevel = Math.max(...roles.map((role) => role.r.level));
+        if (mustDeleteRules && mustDeleteRules.length) {
+          const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
 
-        for (let i = 0; i < mustDeleteRules.length; i++) {
-          const rule = mustDeleteRules[i];
+          let roles = await this.neo.readWithCleanUp(authorizeQuery);
+          const maxLevel = Math.max(...roles.map((role) => role.r.level));
 
-          if (rule.type === 'role' && maxLevel < rule.value) {
-            authorized = false;
+          for (let i = 0; i < mustDeleteRules.length; i++) {
+            const rule = mustDeleteRules[i];
+
+            if (rule.type === 'role' && maxLevel < rule.value) {
+              authorized = false;
+            }
           }
         }
       }
-    }
 
-    if (!authorized) {
-      throw new Error('No permission');
+      if (!authorized) {
+        throw new Error('No permission');
+      }
     }
 
     const query = `MATCH (${this.model.modelConfig.select} {uuid: $uuid}) DETACH DELETE ${this.model.modelConfig.as} RETURN *`;
@@ -419,10 +596,144 @@ export class BaseNeoService {
     return { success: true };
   }
 
+  async attachToManyById(
+    sourceId: string,
+    destinations: {
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }[],
+  ) {
+    let query = `MATCH (n { uuid:'${sourceId}'})`;
+    let withPropagate = 'n';
+
+    destinations.forEach((destination, index) => {
+      const nodeSelector = `n${index + 1}`;
+      const relSelector = `r${index + 1}`;
+
+      withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
+
+      const relationship = this.model.modelConfig.relationships[destination.name];
+      const createSetRelationship = destination.relationshipProps
+        ? ', '.concat(
+            Object.keys(destination.relationshipProps)
+              .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+              .join()
+              .slice(0, -1),
+          )
+        : '';
+
+      query =
+        query +
+        `
+        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
+          relationship.type === 'normal' ? '->' : '-'
+        }(${nodeSelector})
+        SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
+        WITH ${withPropagate}
+        `;
+    });
+
+    query = query + ' RETURN *;';
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async attachToModelById(
+    sourceId: string,
+    destinationId: string,
+    relationshipName: string,
+    relationshipProps?: IGenericObject,
+  ) {
+    const relationship = this.model.modelConfig.relationships[relationshipName];
+
+    const createSetRelationship = relationshipProps
+      ? ', '.concat(
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
+      : '';
+
+    const query = `
+    MATCH (n1 { uuid:'${sourceId}'})
+    MATCH (n2 { uuid:'${destinationId}'})
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2)
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async attachToModel(
+    sourceFilter: IGenericObject,
+    destinationFilter: IGenericObject,
+    relationshipName: string,
+    relationshipProps?: IGenericObject,
+  ) {
+    const sourceFilterQuery = extractSingleFilterFromObject(sourceFilter);
+    const destinationFilterQuery = extractSingleFilterFromObject(destinationFilter);
+    const relationship = this.model.modelConfig.relationships[relationshipName];
+
+    const createSetRelationship = relationshipProps
+      ? ', '.concat(
+          Object.keys(relationshipProps)
+            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
+      : '';
+
+    const query = `
+    MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
+    MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2)
+    ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
   async attachModelToAnotherModel(
     sourceModel: typeof BaseModel,
     sourceFilter: IGenericObject,
-    destinationModel: typeof BaseModel,
     destinationFilter: IGenericObject,
     relationshipName: string,
     relationshipProps?: IGenericObject,
@@ -464,13 +775,12 @@ export class BaseNeoService {
   }
 
   async setRelationshipsByIds(
-    sourceModel: typeof BaseModel,
     sourceId: string,
     destinationIds: String,
     relationshipName: string,
     relationshipProps?: IGenericObject,
   ) {
-    const relationship = sourceModel.modelConfig.relationships[relationshipName];
+    const relationship = this.model.modelConfig.relationships[relationshipName];
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
@@ -508,14 +818,11 @@ RETURN *;
         sourceId,
         destinationIds,
       });
-      if (!res?.records[0]) {
-        return { success: false };
-      }
+
+      return res.records.map((record) => record.get('id'));
     } catch (e) {
       throw new RecordUpdateFailedException(e);
     }
-
-    return { success: true };
   }
 
   async detachOneModelFromAnother(

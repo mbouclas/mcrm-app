@@ -126,7 +126,7 @@ export class CartService extends BaseNeoService {
 
     try {
       product = await new ProductService().findOne({ uuid: id }, ['variants']);
-      thumb = (typeof product.thumb === 'string') ? product.thumb : product.thumb.url;
+      thumb = typeof product.thumb === 'string' ? product.thumb : product?.thumb?.url || '';
       sku = product.sku;
       slug = product.slug;
     } catch (e) {
@@ -136,7 +136,7 @@ export class CartService extends BaseNeoService {
     let price = product.price;
     if (variantId) {
       const variant = ProductService.findVariant(product, { uuid: variantId });
-      thumb = (typeof variant.thumb === 'string') ? variant.thumb : variant.thumb.url;
+      thumb = typeof variant.thumb === 'string' ? variant.thumb : variant.thumb.url;
       price = variant.price;
       sku = variant.sku;
       slug = variant.slug;
@@ -151,7 +151,7 @@ export class CartService extends BaseNeoService {
       price,
       metaData,
       title: product.title,
-      thumb
+      thumb,
     };
   }
 

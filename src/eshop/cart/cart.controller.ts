@@ -70,10 +70,10 @@ export class CartController {
   @Delete(':id')
   async delete(@Session() session: SessionData, @Param('id') productId: string) {
     try {
-       session.cart.remove({ productId });
+      session.cart.remove({ productId });
       //  // need to disassociate the cart from the user with detach
-       await session.cart.save();
-       return session.cart.toObject();
+      await session.cart.save();
+      return session.cart.toObject();
     } catch (e) {
       return { success: false, reason: 'ProductNotFound' };
     }
@@ -109,6 +109,7 @@ export class CartController {
       await session.cart.save();
       await session.cart.attachCartToUser({ uuid: userId });
     } catch (e) {
+      console.log(e);
       return { success: false, reason: 'ProductNotFound' };
     }
 

@@ -1,8 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { PaymentMethodService } from '~eshop/payment-method/services/payment-method.service';
-import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
-import { store } from '~root/state';
 
 @Controller('api/payment-method')
 export class PaymentMethodController {
@@ -24,14 +22,16 @@ export class PaymentMethodController {
 
   @Patch(`:uuid`)
   async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    await new PaymentMethodService().setRelationshipsByIds(
-      store.getState().models['PaymentMethod'],
+    const shippingMethodIds = await new PaymentMethodService().setRelationshipsByIds(
       uuid,
       body.shippingMethodIds,
       'shippingMethod',
     );
 
-    return await new PaymentMethodService().update(uuid, body);
+    return {
+      ...(await new PaymentMethodService().update(uuid, body)),
+      shippingMethodIds,
+    };
   }
 
   @Post()
