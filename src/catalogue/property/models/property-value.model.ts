@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, INeo4jModel } from "~models/base.model";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { BaseModel, INeo4jModel } from '~models/base.model';
 
 const modelName = 'PropertyValue';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
-export class PropertyValueModel extends BaseModel
-{
+export class PropertyValueModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
 
@@ -23,8 +22,8 @@ export class PropertyValueModel extends BaseModel
         alias: 'propertyRelationship',
         type: 'inverse',
         isCollection: false,
-        rel: 'HAS_VALUE'
+        rel: 'HAS_VALUE',
       },
-    }
-  }
+    },
+  };
 }

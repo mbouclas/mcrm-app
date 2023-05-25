@@ -1,9 +1,9 @@
-import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
-import { PropertyService } from "~catalogue/property/property.service";
-import { IBaseFilter } from "~models/general";
-import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
-import { createReadStream } from "fs";
-import { PropertyValueModel } from "~catalogue/property/property-value.model";
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { PropertyService } from '~catalogue/property/services/property.service';
+import { IBaseFilter } from '~models/general';
+import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
+import { createReadStream } from 'fs';
+import { PropertyValueModel } from '~catalogue/property/models/property-value.model';
 const csv = require('csv-parser');
 const slug = require('slug');
 
@@ -17,8 +17,7 @@ export interface IPropertyValueFieldMapper {
 
 @Injectable()
 export class PropertiesService implements OnApplicationBootstrap {
-
-  async onApplicationBootstrap()  {
+  async onApplicationBootstrap() {
     // await PropertiesService.importColorsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\color-codes-with-photo-links.csv`)
     // await PropertiesService.importMaterialsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\Product Import.csv`);
   }
@@ -27,11 +26,10 @@ export class PropertiesService implements OnApplicationBootstrap {
     const s = new PropertiesService();
     const fieldMapper = {
       name: 'property.material',
-    }
+    };
 
     const rows = await s.readPropertyValuesCsv(file, fieldMapper);
-    await s.importPropertyValuesFromCsv({slug: 'material'}, rows, 'slug');
-
+    await s.importPropertyValuesFromCsv({ slug: 'material' }, rows, 'slug');
   }
 
   static async importColorsFromFile(file: string) {
@@ -41,32 +39,35 @@ export class PropertiesService implements OnApplicationBootstrap {
       icon: '',
       image: 'image',
       color: 'hex code',
-      code: 'Color code'
+      code: 'Color code',
     };
 
-    const rows = await s.readPropertyValuesCsv(file, fieldMapper)
-    await s.importPropertyValuesFromCsv({slug: 'color'}, rows, 'code');
+    const rows = await s.readPropertyValuesCsv(file, fieldMapper);
+    await s.importPropertyValuesFromCsv({ slug: 'color' }, rows, 'code');
   }
 
   async readPropertyValuesCsv(filename: string, fieldMapper: IPropertyValueFieldMapper): Promise<PropertyValueModel[]> {
     const rows = [];
     return new Promise((resolve, reject) => {
       createReadStream(filename)
-        .pipe(csv({
-          mapHeaders: ({ header, index }) => header.trim()
-        }))
+        .pipe(
+          csv({
+            mapHeaders: ({ header, index }) => header.trim(),
+          }),
+        )
         .on('data', (data) => {
-
           const temp = {};
 
           for (let key in fieldMapper) {
             key = key.trim();
-            if (!data[fieldMapper[key]]) {continue;}
+            if (!data[fieldMapper[key]]) {
+              continue;
+            }
             temp[key] = data[fieldMapper[key]];
           }
 
           if (temp['name']) {
-            temp['slug'] = slug(temp['name'], {lower: true});
+            temp['slug'] = slug(temp['name'], { lower: true });
           }
 
           // Set it to true for further processing
@@ -80,13 +81,12 @@ export class PropertiesService implements OnApplicationBootstrap {
             temp['iconPending'] = true;
           }
 
-
           rows.push(temp);
         })
         .on('error', (e) => reject(e))
         .on('end', () => {
           //eliminate possible nulls
-          resolve(rows.filter(row => row.name));
+          resolve(rows.filter((row) => row.name));
         });
     });
   }
@@ -95,19 +95,20 @@ export class PropertiesService implements OnApplicationBootstrap {
     const service = new PropertyService();
 
     const fields = [];
-    rows.forEach(row => {
-      Object.keys(row).forEach(key => {
-        if (fields.includes(key)) {return;}
+    rows.forEach((row) => {
+      Object.keys(row).forEach((key) => {
+        if (fields.includes(key)) {
+          return;
+        }
         fields.push(key);
-      })
+      });
     });
 
-
-    const rowFieldsQuery = fields.map(field => {
+    const rowFieldsQuery = fields.map((field) => {
       return `pv.${field} = row.${field}`;
     });
 
-    const {key, value} = extractSingleFilterFromObject(filter);
+    const { key, value } = extractSingleFilterFromObject(filter);
     const query = `
     UNWIND $rows as row
     MATCH (property:Property {${key}:'${value}'})
@@ -120,12 +121,9 @@ export class PropertiesService implements OnApplicationBootstrap {
     `;
 
     try {
-      const res = await service.neo.write(query, {rows})
+      const res = await service.neo.write(query, { rows });
+    } catch (e) {
+      console.log('Error importing property values', e);
     }
-    catch (e) {
-      console.log('Error importing property values', e)
-    }
-
   }
-
 }

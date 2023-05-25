@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from "@nestjs/axios";
-import { ElasticSearchService } from "~es/elastic-search.service";
-import { OnEvent } from "@nestjs/event-emitter";
-import { IProductModelEs } from "~catalogue/export/sync-elastic-search.service";
-import { IPagination } from "~models/general";
-import { ProductService } from "~catalogue/product/services/product.service";
-import { ProductConverterService } from "~catalogue/sync/product-converter.service";
-import { SyncModule } from "~catalogue/sync/sync.module";
-import { ProductModel } from "~catalogue/product/models/product.model";
-import { PropertyService } from "~catalogue/property/property.service";
+import { HttpService } from '@nestjs/axios';
+import { ElasticSearchService } from '~es/elastic-search.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { IProductModelEs } from '~catalogue/export/sync-elastic-search.service';
+import { IPagination } from '~models/general';
+import { ProductService } from '~catalogue/product/services/product.service';
+import { ProductConverterService } from '~catalogue/sync/product-converter.service';
+import { SyncModule } from '~catalogue/sync/sync.module';
+import { ProductModel } from '~catalogue/product/models/product.model';
+import { PropertyService } from '~catalogue/property/services/property.service';
 
 @Injectable()
 export class SyncEsService {
@@ -19,11 +19,7 @@ export class SyncEsService {
   private readonly logger = new Logger(SyncEsService.name);
   protected rels = ['propertyValues', 'properties', 'category', 'manufacturer', 'variants', 'images', 'tags'];
 
-  constructor(
-    private readonly httpService: HttpService,
-    private es: ElasticSearchService,
-  ) {
-  }
+  constructor(private readonly httpService: HttpService, private es: ElasticSearchService) {}
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
@@ -36,27 +32,23 @@ export class SyncEsService {
     try {
       await this.one(id, true);
       this.logger.log(`Sync one complete : ${id}`);
-    }
-    catch (e) {
+    } catch (e) {
       this.logger.error(`Sync one Failed : ${id}`, e.message);
     }
   }
 
   @OnEvent(SyncEsService.onSyncAllEvent)
-  async onSyncAll(options: {limit: number, saveOnEs: boolean}) {
+  async onSyncAll(options: { limit: number; saveOnEs: boolean }) {
     try {
       await this.all(options.limit, options.saveOnEs);
       this.logger.log(`Sync all complete`);
-    }
-    catch (e) {
+    } catch (e) {
       this.logger.error(`Sync all Failed`, e.message);
     }
   }
 
   @OnEvent(SyncEsService.onSyncMultipleEvent)
-  async onSyncMultiple(id: number[]|string[]) {
-
-  }
+  async onSyncMultiple(id: number[] | string[]) {}
 
   async syncOne(data: IProductModelEs) {
     await this.syncWithEs([data]);
@@ -66,32 +58,30 @@ export class SyncEsService {
 
   async one(uuid: string, syncWithEs = false) {
     const service = new ProductService();
-    const allProperties = await (new PropertyService()).find({limit: 1000});
-    const product = await service.findOne({uuid}, this.rels);
-    const item = await (new ProductConverterService(allProperties)).convert(product);
+    const allProperties = await new PropertyService().find({ limit: 1000 });
+    const product = await service.findOne({ uuid }, this.rels);
+    const item = await new ProductConverterService(allProperties).convert(product);
     //get similar/related products
     //const similar = await (new SimilarItemsService(this.es)).search(item.id, {})
-
 
     if (syncWithEs) {
       await this.syncOne(item);
     }
 
-    return  item;
+    return item;
   }
 
   async all(limit = 40, syncWithEs = false): Promise<IProductModelEs[]> {
     let data = [];
     const service = new ProductService();
-    const allProperties = await (new PropertyService()).find({limit: 1000});
+    const allProperties = await new PropertyService().find({ limit: 1000 });
 
     const converter = new ProductConverterService(allProperties);
 
-    const firstQuery = await service.find({limit}, this.rels);
+    const firstQuery = await service.find({ limit }, this.rels);
     for (let idx = 0; idx < firstQuery.data.length; idx++) {
-      data.push(await converter.convert(firstQuery.data[idx] as ProductModel))
+      data.push(await converter.convert(firstQuery.data[idx] as ProductModel));
     }
-
 
     if (syncWithEs) {
       await this.syncWithEs(data);
@@ -100,12 +90,12 @@ export class SyncEsService {
     // now that we have the pagination info, we can loop through the pages
     // Start from 1 cause we've already processed the 1st page
     for (let idx = 1; firstQuery.pages > idx; idx++) {
-      const page = idx+1;
+      const page = idx + 1;
       console.log(`processing page ${page}`);
-      const res = await service.find({limit, page}, this.rels);
+      const res = await service.find({ limit, page }, this.rels);
       console.log(`done with page ${page} - ${res.pages}, we now have ${data.length} items`);
       for (let idx = 0; idx < res.data.length; idx++) {
-        res.data[idx] = await converter.convert(res.data[idx] as ProductModel) as unknown as any;
+        res.data[idx] = (await converter.convert(res.data[idx] as ProductModel)) as unknown as any;
       }
 
       if (syncWithEs) {
@@ -117,10 +107,8 @@ export class SyncEsService {
     return data;
   }
 
-
-
   async syncWithEs(data: IProductModelEs[]) {
-    if (!await this.es.indexExists(this.esIndexName)) {
+    if (!(await this.es.indexExists(this.esIndexName))) {
       console.log('Creating index');
       /*            try {
                       return await this.es.client.indices.create({
@@ -131,10 +119,12 @@ export class SyncEsService {
                   catch (e) {
                       console.log(`Cannot create index ${index}`, e);
                   }*/
-
     }
 
-    const operations = data.flatMap(doc => [{ index: { _index: this.esIndexName, _id: doc.id || doc['uuid'] } }, doc]);
+    const operations = data.flatMap((doc) => [
+      { index: { _index: this.esIndexName, _id: doc.id || doc['uuid'] } },
+      doc,
+    ]);
 
     const bulkResponse = await this.es.client.bulk({ refresh: true, operations });
 
@@ -142,7 +132,7 @@ export class SyncEsService {
       ElasticSearchService.outputBulkResponseErrors(bulkResponse.errors, operations, bulkResponse.items);
     }
 
-    console.log(`Synced ${data.length} records with ES`)
+    console.log(`Synced ${data.length} records with ES`);
     return true;
   }
 }

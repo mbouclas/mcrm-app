@@ -1,13 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
-import { PropertyService } from '~catalogue/property/property.service';
+import { PropertyService } from '~catalogue/property/services/property.service';
 
 const modelName = 'Product';
 @McmsDi({
@@ -26,7 +22,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public sku;
   public uuid: string;
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = ['title', 'category'];
 
@@ -125,17 +121,13 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         isSortableCount: true,
         sortableCountDefaultAlias: 'property',
         defaultProperty: 'title',
-        postProcessing: async (
-          record: Record<any, any>,
-          model: ProductModel,
-        ) => {
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
           if (record.property) {
-            record.property =
-              await new PropertyService().propertiesWithValuesByModel(
-                modelName,
-                record.uuid,
-                record.property.map((p) => p.uuid),
-              );
+            record.property = await new PropertyService().propertiesWithValuesByModel(
+              modelName,
+              record.uuid,
+              record.property.map((p) => p.uuid),
+            );
           }
 
           return record;
@@ -228,7 +220,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
+      },
     },
     {
       varName: 'active',
@@ -244,8 +236,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'title',
@@ -265,8 +256,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'slug',
@@ -283,8 +273,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'description',
@@ -303,8 +292,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'price',
@@ -339,8 +327,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: 'ADMIN',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'quantity',
@@ -357,8 +344,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'thumb',
@@ -387,8 +373,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'updatedAt',
@@ -404,8 +389,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
             value: '2',
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'fromImport',
@@ -418,11 +402,10 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         must: [
           {
             type: 'role',
-            value: 2
+            value: 2,
           },
         ],
-      }
-
+      },
     },
     {
       varName: 'deliverability',
@@ -595,19 +578,17 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isInSimpleQuery: true,
     },
     {
+      varName: 'categoryFilter',
+      label: 'Category',
+      placeholder: 'Category',
+      type: 'tree-selector',
 
-      "varName": "categoryFilter",
-      "label": "Category",
-      "placeholder": "Category",
-      "type": "tree-selector",
-
-      "relName": "businessType",
-      "isInSimpleQuery": false,
-      "model": "BusinessType",
-      "filterField": "uuid",
-      "order": 2,
-    }
-
+      relName: 'businessType',
+      isInSimpleQuery: false,
+      model: 'BusinessType',
+      filterField: 'uuid',
+      order: 2,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {

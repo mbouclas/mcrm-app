@@ -1,13 +1,13 @@
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { Injectable } from "@nestjs/common";
-import { BaseModel, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { PropertyService } from "~catalogue/property/property.service";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { Injectable } from '@nestjs/common';
+import { BaseModel, INeo4jModel } from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { PropertyService } from '~catalogue/property/services/property.service';
 
 const modelName = 'ProductVariant';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
 export class ProductVariantModel extends BaseModel {
@@ -45,17 +45,13 @@ export class ProductVariantModel extends BaseModel {
         isSortableCount: true,
         sortableCountDefaultAlias: 'property',
         defaultProperty: 'title',
-        postProcessing: async (
-          record: Record<any, any>,
-          model: ProductVariantModel,
-        ) => {
+        postProcessing: async (record: Record<any, any>, model: ProductVariantModel) => {
           if (record.property) {
-            record.property =
-              await new PropertyService().propertiesWithValuesByModel(
-                modelName,
-                record.uuid,
-                record.property.map((p) => p.uuid),
-              );
+            record.property = await new PropertyService().propertiesWithValuesByModel(
+              modelName,
+              record.uuid,
+              record.property.map((p) => p.uuid),
+            );
           }
 
           return record;
@@ -72,7 +68,7 @@ export class ProductVariantModel extends BaseModel {
         sortableCountDefaultAlias: 'propertyValue',
         defaultProperty: 'name',
       },
-    }
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -82,7 +78,7 @@ export class ProductVariantModel extends BaseModel {
       placeholder: 'Active',
       type: 'boolean',
       translatable: true,
-      group: 'main'
+      group: 'main',
     },
     {
       varName: 'name',
@@ -92,7 +88,7 @@ export class ProductVariantModel extends BaseModel {
       translatable: true,
       required: true,
       setDefaultTranslationInModel: true,
-      group: 'main'
+      group: 'main',
     },
     {
       varName: 'description',
@@ -100,7 +96,7 @@ export class ProductVariantModel extends BaseModel {
       placeholder: 'Description',
       type: 'text',
       translatable: true,
-      group: 'main'
+      group: 'main',
     },
     {
       varName: 'price',
@@ -108,7 +104,7 @@ export class ProductVariantModel extends BaseModel {
       placeholder: 'Price',
       type: 'number',
       translatable: true,
-      group: 'main'
+      group: 'main',
     },
     {
       varName: 'thumb',
@@ -137,9 +133,7 @@ export class ProductVariantModel extends BaseModel {
             value: '2',
           },
         ],
-      }
-
+      },
     },
-
   ];
 }

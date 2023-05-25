@@ -6,7 +6,7 @@ import { IsNotEmpty } from 'class-validator';
 import { ITag, TagService } from '~tag/services/tag.service';
 import { ProductCategoryModel } from '~catalogue/product/models/product-category.model';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
-import { PropertyService } from '~catalogue/property/property.service';
+import { PropertyService } from '~catalogue/property/services/property.service';
 import { BaseModel } from '~models/base.model';
 import { groupBy } from 'lodash';
 import { combine } from '~helpers/array-permutations';
@@ -156,7 +156,7 @@ export class ProductService extends BaseNeoService {
     const values = await propertyService.getValues(propertyValues, true);
     const grouped = groupBy(values, 'property.slug');
     const all = [];
-    for (let key in grouped) {
+    for (const key in grouped) {
       all.push(grouped[key].map((g) => g.name));
     }
 

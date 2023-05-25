@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { BaseModel, INeo4jModel } from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 
 const modelName = 'Property';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
-export class PropertyModel extends BaseModel
-{
+export class PropertyModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
 
@@ -30,7 +29,7 @@ export class PropertyModel extends BaseModel
         defaultProperty: 'name',
       },
     },
-  }
+  };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
@@ -51,7 +50,7 @@ export class PropertyModel extends BaseModel
       type: 'text',
       group: 'hidden',
       isSlug: true,
-      slugFrom: 'title'
+      slugFrom: 'title',
     },
     {
       varName: 'searchIndexSettings',
@@ -60,8 +59,6 @@ export class PropertyModel extends BaseModel
       type: 'textarea',
       isSortable: false,
       group: 'main',
-    }
+    },
   ];
-
-
 }
