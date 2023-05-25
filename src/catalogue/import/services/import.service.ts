@@ -1,24 +1,24 @@
-import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
-import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
-import { Job } from "bullmq";
-import { CsvProcessorService } from "~catalogue/import/services/csv-processor.service";
-import { groupBy, sortBy } from "lodash";
-import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
-import { PropertyModel } from "~catalogue/property/property.model";
-import { ProductCategoryService } from "~catalogue/product/services/product-category.service";
-import { PropertyService } from "~catalogue/property/property.service";
-import { ProductService } from "~catalogue/product/services/product.service";
-import { store } from "~root/state";
-import { CacheService } from "~shared/services/cache.service";
-import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
-import { PropertyValueModel } from "~catalogue/property/property-value.model";
-import { ImageService } from "~image/image.service";
-import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
-import { OnEvent } from "@nestjs/event-emitter";
-import { SharedModule } from "~shared/shared.module";
-import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { ImportQueueService } from '~catalogue/import/services/import-queue.service';
+import { Job } from 'bullmq';
+import { CsvProcessorService } from '~catalogue/import/services/csv-processor.service';
+import { groupBy, sortBy } from 'lodash';
+import { ProductCategoryModel } from '~catalogue/product/models/product-category.model';
+import { PropertyModel } from '~catalogue/property/models//property.model';
+import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
+import { PropertyService } from '~catalogue/property/services/property.service';
+import { ProductService } from '~catalogue/product/services/product.service';
+import { store } from '~root/state';
+import { CacheService } from '~shared/services/cache.service';
+import { IImportProcessorFieldMap } from '~catalogue/import/services/base-processor';
+import { PropertyValueModel } from '~catalogue/property/models/property-value.model';
+import { ImageService } from '~image/image.service';
+import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { SharedModule } from '~shared/shared.module';
+import { ImportProductPhotosService } from '~catalogue/import/services/import-product-photos.service';
 
-const slugify = require("slug");
+const slugify = require('slug');
 
 export interface ITransformerResult<T> {
   data: T;
@@ -54,8 +54,6 @@ export interface IProcessorResult {
   validRows: number;
 }
 
-
-
 export interface ICatalogueImportTemplate {
   id: string;
   type: string;
@@ -63,7 +61,6 @@ export interface ICatalogueImportTemplate {
   default: boolean;
   fieldMap: IImportProcessorFieldMap[];
 }
-
 
 @Injectable()
 export class ImportService implements OnApplicationBootstrap {
@@ -77,8 +74,8 @@ export class ImportService implements OnApplicationBootstrap {
   protected categories: ProductCategoryModel[] = [];
   protected properties: PropertyModel[] = [];
   protected propertyValues: PropertyValueModel[] = [];
-  protected static readonly importResultCacheKey = "import-job-";
-  private static defaultFieldMap: IImportProcessorFieldMap[] = [];// Will be loaded from the client-config with config as a fallback
+  protected static readonly importResultCacheKey = 'import-job-';
+  private static defaultFieldMap: IImportProcessorFieldMap[] = []; // Will be loaded from the client-config with config as a fallback
 
   static setFieldMap(fields: IImportProcessorFieldMap[]) {
     this.defaultFieldMap = fields;
@@ -93,45 +90,42 @@ export class ImportService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.queueName);
     ImportQueueService.addWorker(this.processImageFromImport, ImportQueueService.imageProcessingQueueName);
-    ImportQueueService.imageProcessingEvents.on("completed", async (res) => {
-
+    ImportQueueService.imageProcessingEvents.on('completed', async (res) => {
       // res.returnvalue is and instance of IImportSchema
       console.log(`Image processing for job ${res.jobId} is complete`);
     });
 
-    ImportQueueService.imageProcessingEvents.on("failed", res => {
+    ImportQueueService.imageProcessingEvents.on('failed', (res) => {
       console.log(`Image Processing ${res.jobId} Failed`, res);
     });
 
-    ImportQueueService.imageProcessingEvents.on("drained", res => {
+    ImportQueueService.imageProcessingEvents.on('drained', (res) => {
       console.log(`No more Image Processing jobs remaining`);
     });
 
     const dummyFile = {
-      "fieldname": "file",
-      "originalname": "CLOTHING masterfile 2022.csv",
-      "encoding": "7bit",
-      "mimetype": "text/csv",
-      "destination": "I:\\Work\\mcms-node\\upload",
-      "filename": "Product Import.csv",
-      "path": "I:\\Work\\mcms-node\\mcrm\\upload\\Products-final.csv",
-      "size": 17760597
+      fieldname: 'file',
+      originalname: 'CLOTHING masterfile 2022.csv',
+      encoding: '7bit',
+      mimetype: 'text/csv',
+      destination: 'I:\\Work\\mcms-node\\upload',
+      filename: 'Product Import.csv',
+      path: 'I:\\Work\\mcms-node\\mcrm\\upload\\Products-final.csv',
+      size: 17760597,
     };
 
     // setTimeout(async () => await ImportQueueService.queue.add(ImportService.jobEventName, dummyFile), 1200);
-
   }
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const config = store.getState().configs["catalogue"]["import"];
-    const defaultTemplate = config['templates'].find(t => t.default) as ICatalogueImportTemplate;
+    const config = store.getState().configs['catalogue']['import'];
+    const defaultTemplate = config['templates'].find((t) => t.default) as ICatalogueImportTemplate;
     const defaultFieldMap = defaultTemplate.fieldMap;
 
     if (defaultTemplate.fieldMap) {
       ImportService.defaultFieldMap = defaultFieldMap;
     }
-
   }
 
   /**
@@ -152,13 +146,12 @@ export class ImportService implements OnApplicationBootstrap {
    */
   async processImageFromImport(job: Job) {
     const product = job.data as IImportSchema;
-    if (process.env.ENV !== "production" && !job.data.processForReal) {
+    if (process.env.ENV !== 'production' && !job.data.processForReal) {
       console.log(`processing Image from Import job ${job.id}`);
       return {};
     }
 
     if (!product.image) {
-
       console.info(`No image found on product ${product.sku} and job ${job.id}`);
       return;
     }
@@ -167,14 +160,14 @@ export class ImportService implements OnApplicationBootstrap {
     let res;
 
     try {
-      res = await service.handle(product.image, "remote");
+      res = await service.handle(product.image, 'remote');
     } catch (e) {
-      console.log("Handler error ", e);
+      console.log('Handler error ', e);
     }
 
-    const p = await (new ProductService()).findOne({ sku: product.sku });
+    const p = await new ProductService().findOne({ sku: product.sku });
 
-    await service.linkToObject({ uuid: res.id }, "Product", p["uuid"]);
+    await service.linkToObject({ uuid: res.id }, 'Product', p['uuid']);
 
     if (Array.isArray(product.variants)) {
       for (let idx = 0; product.variants.length > idx; idx++) {
@@ -182,16 +175,15 @@ export class ImportService implements OnApplicationBootstrap {
           continue;
         }
 
-        const variant = await (new ProductVariantService()).findOne({ variantId: product.variants[idx].variantId });
+        const variant = await new ProductVariantService().findOne({ variantId: product.variants[idx].variantId });
 
         if (!variant) {
           continue;
         }
-        const img = await service.handle(product.variants[idx].image, "remote");
+        const img = await service.handle(product.variants[idx].image, 'remote');
 
-
-        await service.linkToObject({ uuid: img.id }, "ProductVariant", variant["uuid"]);
-        console.log(`Variant ${variant["variantId"]} linked to image ${img.id}`);
+        await service.linkToObject({ uuid: img.id }, 'ProductVariant', variant['uuid']);
+        console.log(`Variant ${variant['variantId']} linked to image ${img.id}`);
       }
     }
 
@@ -225,7 +217,6 @@ export class ImportService implements OnApplicationBootstrap {
 
   async analyzeFile(file: Express.Multer.File, limit?: number, fieldMap?: IImportProcessorFieldMap[]) {
     let res: IProcessorResult;
-
 
     try {
       const processor = ImportService.determineProcessorBasedOnMimeType(file.mimetype);
@@ -273,10 +264,10 @@ export class ImportService implements OnApplicationBootstrap {
     }
     let products: IImportSchema[] = [];
 
-console.log('-=-----------', Object.entries(productsRaw).length, ' Products found ------------------')
+    console.log('-=-----------', Object.entries(productsRaw).length, ' Products found ------------------');
     let idx = 0;
     try {
-      products = Object.keys(productsRaw).map(key => {
+      products = Object.keys(productsRaw).map((key) => {
         // At this point, row is an array of products, variants
         const row = productsRaw[key];
         // Avoid Circular assignments
@@ -293,7 +284,7 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
 
         // Assign properties to each entry. Slugify to match the DB
 
-        product.assignedProperties = product.properties.map(prop => prop.key.trim().toLowerCase());
+        product.assignedProperties = product.properties.map((prop) => prop.key.trim().toLowerCase());
 
         delete product.properties;
         // Avoid Circular assignments
@@ -304,27 +295,31 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
           const variantId = product.variantId ? product.variantId : `${r.sku}.${index}`;
 
           // console.log(r)
-          product.allProperties.push(Object.assign([], r.properties.map(prop => ({
-            key: prop.key.trim().toLowerCase(),
-            value: prop.value
-          }))));
+          product.allProperties.push(
+            Object.assign(
+              [],
+              r.properties.map((prop) => ({
+                key: prop.key.trim().toLowerCase(),
+                value: prop.value,
+              })),
+            ),
+          );
 
           const properties = [];
 
-          r.properties.forEach(p => {
+          r.properties.forEach((p) => {
             let iterationName = p.value;
             //If the prop has a different name to the default
-            const foundField = ImportService.defaultFieldMap.find(f => f.name === p.key);
+            const foundField = ImportService.defaultFieldMap.find((f) => f.name === p.key);
 
             // assign the name based on a custom property value
             //For example, we need the color to look like Black, but we have the color code as key
             //So we make the switch and the variant name will get correct value
             if (foundField) {
-              const foundValue = s.propertyValues.find(l => l[foundField.matchSourceValue] === p.value);
+              const foundValue = s.propertyValues.find((l) => l[foundField.matchSourceValue] === p.value);
 
               iterationName = foundValue && foundValue[foundField.matchTargetValue];
             }
-
 
             name.push(iterationName);
             const temp = {};
@@ -333,21 +328,25 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
             properties.push(temp);
           });
 
-
           delete r.categories;
           delete r.properties;
-          const variantName = name.join(" ::: ");
+          const variantName = name.join(' ::: ');
 
-          product.variants.push(Object.assign({
-            ...{
-              name: variantName,
-              variantSlug: slugify(variantName, { lower: true }),
-              variantId,
-              price: r.price || 0,
-              image: r.image || null,
-              properties
-            }
-          }, r));
+          product.variants.push(
+            Object.assign(
+              {
+                ...{
+                  name: variantName,
+                  variantSlug: slugify(variantName, { lower: true }),
+                  variantId,
+                  price: r.price || 0,
+                  image: r.image || null,
+                  properties,
+                },
+              },
+              r,
+            ),
+          );
         });
 
         /*      if (product.sku === 'R7200') {
@@ -355,21 +354,18 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
               }*/
 
         product.propertyValues = [];
-        product.allProperties.forEach(prop => {
+        product.allProperties.forEach((prop) => {
           // each prop is a key-value[]
-          prop.forEach(p => product.propertyValues.push(p));
+          prop.forEach((p) => product.propertyValues.push(p));
         });
 
         idx++;
 
-
         return product;
       });
-    }
-    catch (e) {
+    } catch (e) {
       console.log('Error processing products', e);
     }
-
 
     console.log('**************** All processing done ******************');
     // Default image, category, tags etc for the product is the ones of product variant 1
@@ -410,7 +406,6 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
     // return
     await is.pullAllProperties();
 
-
     for (let idx = 0; products.length > idx; idx++) {
       products[idx].active = true;
       products[idx].fromImport = true;
@@ -420,27 +415,29 @@ console.log('-=-----------', Object.entries(productsRaw).length, ' Products foun
       }
     }
 
-
-    const fieldQuery = store.getState().models.Product.fields
-      // .filter(field => products[idx][field.varName])
-      .map(field => {
+    const fieldQuery = store
+      .getState()
+      .models.Product.fields // .filter(field => products[idx][field.varName])
+      .map((field) => {
         return `CALL apoc.do.when(row.${field.varName} is not null, "MATCH (n) SET n.${field.varName} = row.${field.varName} return n",'', {row:row, n:n}) yield value as value${field.varName}`;
       });
 
-    ImportService.defaultFieldMap.forEach(field => {
-      const found = store.getState().models.Product.fields.find(f => f.varName === field.name);
+    ImportService.defaultFieldMap.forEach((field) => {
+      const found = store.getState().models.Product.fields.find((f) => f.varName === field.name);
       if (found) {
         return;
       }
-      if (field.name.includes("property.")) {
+      if (field.name.includes('property.')) {
         return;
       }
 
-      fieldQuery.push(`CALL apoc.do.when(row.${field.name} is not null, "MATCH (n) SET n.${field.name} = row.${field.name} return n",'', {row:row, n:n}) yield value as value${field.name}`);
+      fieldQuery.push(
+        `CALL apoc.do.when(row.${field.name} is not null, "MATCH (n) SET n.${field.name} = row.${field.name} return n",'', {row:row, n:n}) yield value as value${field.name}`,
+      );
     });
 
-console.log(`*************** Starting Main query ***************`)
-// Using CALL apoc.do.when to eliminate empty field values. If the import runs on existing products, it will delete the values
+    console.log(`*************** Starting Main query ***************`);
+    // Using CALL apoc.do.when to eliminate empty field values. If the import runs on existing products, it will delete the values
     const mainQuery = `
     UNWIND $rows as row
     MERGE (n:Product {sku: row.sku})
@@ -448,19 +445,19 @@ console.log(`*************** Starting Main query ***************`)
           ON MATCH SET   n.updatedAt = datetime()
    
     WITH row, n
-   ${fieldQuery.join(" \n WITH row,n \n")}       
+   ${fieldQuery.join(' \n WITH row,n \n')}       
  
           RETURN *;
       `;
     // console.log(mainQuery)
     // console.log('---------', products.length)
     // console.log(query);
-// console.log(products[0].variants)
+    // console.log(products[0].variants)
     // console.log(products[0]['propertyValues']);
     // console.log(JSON.stringify(products[0]))
     try {
       await s.neo.write(mainQuery, {
-        rows: products
+        rows: products,
       });
       console.log('Importing product to DB: All done');
       // console.log(res)
@@ -483,11 +480,10 @@ console.log(`*************** Starting Main query ***************`)
 
     try {
       await s.neo.write(categoriesQuery, {
-        rows: products
+        rows: products,
       });
-      console.log("Importing product categories to DB: All done");
-    }
-    catch (e) {
+      console.log('Importing product categories to DB: All done');
+    } catch (e) {
       console.log(`Could not import product categories to DB: ${e}`);
     }
 
@@ -503,11 +499,11 @@ console.log(`*************** Starting Main query ***************`)
           console.log("Could not delete variants");
         }*/
 
-
-    const variantFieldQuery = ['sku','name', 'slug', 'price', 'image'].map(f => {
-      return `CALL apoc.do.when(row.${f} is not null, "MATCH (n) SET pv.${f} = row.${f} return n",'', {row:row, n:n, pv:pv}) yield value as value${f}`
-    }).join(`\n WITH row,n, pv \n `)
-
+    const variantFieldQuery = ['sku', 'name', 'slug', 'price', 'image']
+      .map((f) => {
+        return `CALL apoc.do.when(row.${f} is not null, "MATCH (n) SET pv.${f} = row.${f} return n",'', {row:row, n:n, pv:pv}) yield value as value${f}`;
+      })
+      .join(`\n WITH row,n, pv \n `);
 
     // User APOC to set fields
     try {
@@ -540,25 +536,24 @@ console.log(`*************** Starting Main query ***************`)
       console.log('Error in Variants', e);
     }
 
-
-
     try {
       // need to reshape the data to update all the variants in one go as well as attach the properties
       let variants = [];
-      products.forEach(p => {
-        variants = variants.concat(p.variants.map(pv => {
-          const variant: any = {
-            variantId: pv.variantId,
-            sku: pv.sku,
-            propertyKeys: [],
-            properties: pv.properties
-          };
-          // attach a property like color: red to the variant
-          pv.properties.forEach(prop => {
-            const key = Object.keys(prop)[0];
-            variant[key] = prop[key];
-            variant.propertyKeys.push(key);
-          });
+      products.forEach((p) => {
+        variants = variants.concat(
+          p.variants.map((pv) => {
+            const variant: any = {
+              variantId: pv.variantId,
+              sku: pv.sku,
+              propertyKeys: [],
+              properties: pv.properties,
+            };
+            // attach a property like color: red to the variant
+            pv.properties.forEach((prop) => {
+              const key = Object.keys(prop)[0];
+              variant[key] = prop[key];
+              variant.propertyKeys.push(key);
+            });
 
             return variant;
           }),
@@ -569,9 +564,9 @@ console.log(`*************** Starting Main query ***************`)
         return `pv.${prop['slug']} = row.${prop['slug']}`;
       });
 
-      variants.forEach(v => {
+      variants.forEach((v) => {
         v['props'] = {};
-        v['properties'].forEach(p => {
+        v['properties'].forEach((p) => {
           const key = Object.keys(p)[0];
           const val = p[key];
           v['props'][key] = val;
@@ -579,7 +574,7 @@ console.log(`*************** Starting Main query ***************`)
       });
 
       const variantsPropertyValuesQuery = is.properties.map((prop, idx) => {
-        const found = ImportService.defaultFieldMap.find((f) => f.name === prop["slug"] && f.type === "property");
+        const found = ImportService.defaultFieldMap.find((f) => f.name === prop['slug'] && f.type === 'property');
         if (!found) {
           return;
         }
@@ -592,8 +587,8 @@ console.log(`*************** Starting Main query ***************`)
         `;
       });
 
-
-      await s.neo.write(`
+      await s.neo.write(
+        `
       UNWIND $rows as row
       with row
       MATCH (pv:ProductVariant {variantId: row.variantId})
@@ -652,7 +647,7 @@ console.log(`*************** Starting Main query ***************`)
     const propertyMapQueryArr = ImportService.defaultFieldMap
       .filter((f) => f.type === 'property')
       .map((f, index) => {
-        const matchingField = (f.matchSourceValue) ? f.matchSourceValue : "slug";
+        const matchingField = f.matchSourceValue ? f.matchSourceValue : 'slug';
         return `
               UNWIND $rows as row
           MATCH (n:Product {sku: row.sku})
@@ -673,7 +668,7 @@ console.log(`*************** Starting Main query ***************`)
         await s.neo.write(propertyMapQueryArr[idx], { rows: products });
         console.log(`Updating property values ${idx} done`);
       } catch (e) {
-        console.log("Error updating property values", e);
+        console.log('Error updating property values', e);
       }
     }
   }
@@ -685,22 +680,20 @@ console.log(`*************** Starting Main query ***************`)
   async importImages(products: IImportSchema[]) {
     const variants = [];
     const config = store.getState().configs['images']['import']['templates'];
-    const template = config.find(t => t.default);
+    const template = config.find((t) => t.default);
     const fields = template.fieldMap as IImportProcessorFieldMap[];
 
-    const variantIdKey = fields.find(f => f.type === 'variantId').name;
-    const imageKey = fields.find(f => f.type === 'image').name;
+    const variantIdKey = fields.find((f) => f.type === 'variantId').name;
+    const imageKey = fields.find((f) => f.type === 'image').name;
 
     for (let idx = 0; products.length > idx; idx++) {
-     products[idx]['variants'].forEach(variant => {
-
-
-       const obj = {};
+      products[idx]['variants'].forEach((variant) => {
+        const obj = {};
         obj[variantIdKey] = variant.variantId;
         obj[imageKey] = variant.image;
         obj['sku'] = products[idx].sku;
-       variants.push(obj)
-     })
+        variants.push(obj);
+      });
     }
     const images = sortBy(variants, 'variantId');
 
