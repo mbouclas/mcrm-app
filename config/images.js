@@ -9,4 +9,33 @@ module.exports = {
   copies: [
 
   ],
+  import: {
+    templates: [
+      {
+        id: 'default',
+        name: 'default',
+        default: true,
+        fieldMap: [
+          {
+            importFieldName: 'variantID',
+            name: 'variantId',
+            type: 'variantId',
+            required: false,
+          },
+          {
+            importFieldName: 'productID',
+            name: 'productId',
+            type: 'productId',
+            required: false,
+          },
+          {
+            importFieldName: 'image',
+            name: 'image',
+            type: 'image',
+            required: true,
+          },
+        ]
+      }
+    ]
+  }
 }

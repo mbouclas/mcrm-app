@@ -19,7 +19,7 @@ export interface IPropertyValueFieldMapper {
 export class PropertiesService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     // await PropertiesService.importColorsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\color-codes-with-photo-links.csv`)
-    // await PropertiesService.importMaterialsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\Product Import.csv`);
+    // await PropertiesService.importMaterialsFromFile(`I:\\Work\\mcms-node\\mcrm\\upload\\Products-Final.csv`);
   }
 
   static async importMaterialsFromFile(file: string) {

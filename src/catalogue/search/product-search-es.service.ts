@@ -24,6 +24,19 @@ export class ProductSearchEsService {
 
   protected aggregationFields: IElasticSearchFilterMap[] = [
     {
+      name: 'properties',
+      alias: 'material',
+      multilingual: false,
+      type: "nested",
+      key: 'slug',
+      buckets: ['materialName.keyword', 'materialValue.keyword'],
+      isKeyword: true,
+      size: 50,
+      fixSlugs: true,
+      slugKey: 'materialValue',
+      mainBucketName: 'materialName'
+    },
+    {
       name: 'categories',
       multilingual: false,
       type: "nested",
@@ -40,9 +53,10 @@ export class ProductSearchEsService {
       key: 'slug',
       buckets: ['code.keyword', 'slug'],
       isKeyword: true,
-      size: 30,
+      size: 100,
       fixSlugs: true,
     },
+
     {
       name: 'properties',
       alias: 'size',
@@ -120,7 +134,7 @@ export class ProductSearchEsService {
       .setAutoCompleteFields(this.autoCompleteFields)
       .setAggregationFields(this.aggregationFields)
       .setSearchWithAggregations(withAggregations)
-      .setAggregationSizeForAll(aggregationSize)
+      // .setAggregationSizeForAll(aggregationSize)
       .addSort(this.formatSort(args.queryParameters.sort), this.formatSortWay(args.queryParameters.way))
       .setDebugMode(this.debugMode);
 
@@ -132,7 +146,13 @@ export class ProductSearchEsService {
 
     // Look up for the query parameters in the allowed parameter list
     for (let key in args.queryParameters) {
-      const found = this.es.aggregationFields.find(field => field.name === key);
+      const found = this.es.aggregationFields.find(field => {
+        if (field.alias) {
+          return field.alias === key;
+        }
+
+        return field.name === key;
+      });
 
       if (!found) {continue;}
 
@@ -148,7 +168,12 @@ export class ProductSearchEsService {
       else {
         args.queryParameters[key].forEach(value => {
           const val = (found.fieldType === 'boolean') ? (value === 'false' ? false : true) : value;
-          found.type === "simple" ? q.addTermFilter(key, val) : q.addNestedFilter(`${key}.slug`, val);
+          let nestedValueQuery = `${key}.slug`;
+          if (found.alias) {
+            // we use the .keyword cause these fields are dynamic and not in the index
+            nestedValueQuery = found.slugKey ? `${found.name}.${found.slugKey}.keyword` : `${found.name}.slug`;
+          }
+          found.type === "simple" ? q.addTermFilter(key, val) : q.addNestedFilter(nestedValueQuery, val);
         });
       }
     }

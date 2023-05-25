@@ -8,10 +8,7 @@ const slugify = require('slug');
 export class ProductConverterService {
   constructor(protected properties: IPagination<PropertyModel>) {}
   async convert(product: ProductModel) {
-    const result: IProductModelEs = {} as IProductModelEs;
-    if (product.sku === 'R7200') {
-      console.log(product);
-    }
+    let result: IProductModelEs = {} as IProductModelEs;
 
     result.sku = product.sku;
     result.slug = product.slug;
@@ -20,8 +17,9 @@ export class ProductConverterService {
     result.price = product.price;
     result.thumb = product['thumb'];
     result.description = product.description;
-    result.createdAt = product['createdAt'];
-    result.updatedAt = product['updatedAt'];
+    result.description_short = product['description_short'];
+    result.createdAt = product["createdAt"];
+    result.updatedAt = product["updatedAt"];
 
     if (Array.isArray(product['property'])) {
       result.properties = [];
@@ -50,6 +48,10 @@ export class ProductConverterService {
             ret.color = value.color;
           }
 
+          // This is purely to make ES aggregations happen on multiple properties
+          // A simple way to create buckets out of multiple properties colorsValue, materialsValue
+          ret[`${property.slug}Value`] = value.slug;
+          ret[`${property.slug}Name`] = value.name;
           ret.slug = value.slug;
           ret.uuid = value.uuid;
           ret.name = value.name;

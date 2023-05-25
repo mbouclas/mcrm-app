@@ -57,7 +57,7 @@ async function bootstrap() {
       saveUninitialized: false,
       secret: 'keyboard cat',
       cookie: {
-        secure: 'auto',
+        secure: false,
         path: '/',
         maxAge: null, //Needs to be in milliseconds
         httpOnly: false,

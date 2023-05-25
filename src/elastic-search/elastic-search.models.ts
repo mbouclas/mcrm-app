@@ -5,6 +5,7 @@ export interface IBaseModelEs {
   title: string;
   slug: string;
   description: string;
+  description_short?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -106,4 +107,6 @@ export interface IElasticSearchFilterMap {
   fieldType?: string;
   isFilter?: boolean;
   fixSlugs?: boolean;
+  slugKey?: string;
+  mainBucketName?: string;
 }

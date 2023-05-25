@@ -1,6 +1,7 @@
 import { compare, genSalt, hash } from "bcryptjs";
 import { IOauthToken } from "~models/auth";
 import OAuth2Server from "oauth2-server";
+import { UserModel } from "~user/models/user.model";
 
 export type HashPassword = (
   password: string,
@@ -53,6 +54,14 @@ export class AuthService {
     this.hasher = new BcryptHasher(10);
   }
 
+}
+
+export function returnNewGuestUser(user: UserModel) {
+  return {
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  };
 }
 
 export function cleanUpUserPayloadForRegularUsers(value: OAuth2Server.Token) {

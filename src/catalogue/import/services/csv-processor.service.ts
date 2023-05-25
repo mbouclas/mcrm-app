@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { BaseProcessorService } from "~catalogue/import/services/base-processor";
 import { createReadStream, existsSync } from "fs";
-import { IImportSchema, IProcessorResult, ITransformerResult } from "~catalogue/import/services/import.service";
+import {
+  IImportSchema,
+  ImportService,
+  IProcessorResult,
+  ITransformerResult
+} from "~catalogue/import/services/import.service";
+import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
 const slug = require('slug');
 const csv = require('csv-parser');
 
@@ -9,6 +15,7 @@ const csv = require('csv-parser');
 export class CsvProcessorService extends BaseProcessorService {
   results = [];
   invalidRows = [];
+  public static allCategories: ProductCategoryModel[] = [];
 
 
   async run(file: Express.Multer.File): Promise<IProcessorResult> {
@@ -17,8 +24,11 @@ export class CsvProcessorService extends BaseProcessorService {
     }
 
     await super.run(file);
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       let idx = 0;
+      const importService = new ImportService();
+      await importService.pullAllCategories();
+      CsvProcessorService.allCategories = importService.getCategories();
 
       createReadStream(file.path)
         .pipe(csv())
@@ -70,7 +80,7 @@ export class CsvProcessorService extends BaseProcessorService {
           return;
         }
 
-        if (['property', 'category', 'number', 'float'].indexOf(field.type) === -1) {
+        if (['property', 'category', 'number', 'float', 'image'].indexOf(field.type) === -1) {
           data[field.name] = rowData[key];
         }
 
@@ -82,10 +92,33 @@ export class CsvProcessorService extends BaseProcessorService {
           data[field.name] = parseFloat(rowData[key]);
         }
 
+        if (field.type === 'price') {
+          // Some products may have a special flag that asks the customer to contact for info "priceOnRequestFlag"
+          // ignoring the price field will make sure that this product won't show on the price range results
+          data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null : parseFloat(rowData[key]);
+        }
+
+        if (field.type === 'image') {
+          data['image'] = rowData[key];
+        }
+
         if (field.type === 'category') {
           //split first, slugify later
           const parts = rowData[key].split(',');
-          data['categories'] = parts.map(p => slug(p.trim(), {lower: true}));
+          data['categories'] = parts.map(p => {
+
+            const found = CsvProcessorService.allCategories
+              .filter(c => c['importName'])
+              .find(c => c['importName'] === p.trim());
+
+            if (!found) {
+              console.log(`Category ${p} not found`);
+              isInvalid = true;
+              invalidFields.push({key, value: p});
+            }
+
+            return found['uuid'];
+          });
         }
 
         if (field.type === 'property') {

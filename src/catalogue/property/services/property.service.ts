@@ -90,7 +90,9 @@ export class PropertyService extends BaseNeoService {
   }
 
   async getAllPropertyValues() {
-    return await this.neo.readWithCleanUp(`
+    const res = await this.neo.readWithCleanUp(`
     MATCH (value:PropertyValue) return value`);
+
+    return res.map(record => record.value);
   }
 }

@@ -5,6 +5,7 @@ import { IPagination } from "~models/general";
 import { BaseModel } from "~models/base.model";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
 import { store } from "~root/state";
+import { UserService } from "~user/services/user.service";
 
 
 
@@ -13,6 +14,13 @@ export interface IStoreInitialQuery {
   shippingMethods: IPagination<BaseModel>;
   config: any;
 }
+
+export interface ICheckUserEmailResult {
+  email: string;
+  type?: 'guest'|'user';
+  exists: boolean;
+}
+
 
 @Controller('store')
 export class StoreController {
