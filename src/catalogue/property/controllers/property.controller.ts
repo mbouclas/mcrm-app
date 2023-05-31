@@ -7,11 +7,13 @@ import { RecordStoreFailedException } from '~shared/exceptions/record-store-fail
 
 @Controller('api/property')
 export class PropertyController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
-    return await new PropertyService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
+    const rels = queryParams['with'] ? queryParams['with'] : [];
+
+    return await new PropertyService().find(queryParams, rels);
   }
 
   @Post('/basic')
