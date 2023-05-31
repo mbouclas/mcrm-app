@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, INeo4jModel } from '~models/base.model';
+import { PropertyValueModel } from './property-value.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 
 const modelName = 'Property';
@@ -25,8 +26,13 @@ export class PropertyModel extends BaseModel {
         type: 'normal',
         isCollection: true,
         isSortableCount: true,
+        tabs: ['General'],
         sortableCountDefaultAlias: 'propertyValue',
         defaultProperty: 'name',
+        fields: PropertyValueModel.fields.map((field) => ({
+          ...field,
+          updateRules: {},
+        })),
       },
     },
   };
@@ -43,6 +49,16 @@ export class PropertyModel extends BaseModel {
         isAutoCompleteField: true,
       },
     },
+
+    {
+      varName: 'active',
+      label: 'Active',
+      placeholder: 'Active',
+      type: 'boolean',
+      translatable: true,
+      group: 'main',
+    },
+
     {
       varName: 'slug',
       label: 'Slug',
