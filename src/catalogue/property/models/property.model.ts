@@ -49,6 +49,16 @@ export class PropertyModel extends BaseModel {
         isAutoCompleteField: true,
       },
     },
+
+    {
+      varName: 'active',
+      label: 'Active',
+      placeholder: 'Active',
+      type: 'boolean',
+      translatable: true,
+      group: 'main',
+    },
+
     {
       varName: 'slug',
       label: 'Slug',

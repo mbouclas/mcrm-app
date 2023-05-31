@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
-
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { BaseModel, INeo4jModel } from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
 const modelName = 'ProductCategory';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
-export class ProductCategoryModel extends BaseModel
-{
+export class ProductCategoryModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
   public children: ProductCategoryModel[] = [];
@@ -30,7 +28,7 @@ export class ProductCategoryModel extends BaseModel
         type: 'inverse',
         isCollection: true,
       },
-    }
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -43,7 +41,7 @@ export class ProductCategoryModel extends BaseModel
       required: true,
       setDefaultTranslationInModel: true,
       isSlug: true,
-      group: 'main'
+      group: 'main',
     },
     {
       varName: 'description',
@@ -51,8 +49,7 @@ export class ProductCategoryModel extends BaseModel
       placeholder: 'Description',
       type: 'text',
       translatable: true,
-      group: 'main'
+      group: 'main',
     },
-
   ];
 }
