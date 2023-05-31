@@ -37,6 +37,7 @@ import { UploadModule } from './upload/upload.module';
 import { ImageModule } from "~image/image.module";
 import { loadConfigs } from '~helpers/load-config';
 import { SyncModule } from './sync/sync.module';
+import { ClientModule } from './client/client.module';
 const Lang = require('mcms-node-localization');
 export let Translate;
 export let Test = { token: null };
@@ -72,6 +73,7 @@ export let Test = { token: null };
     UploadModule,
     ImageModule,
     SyncModule,
+    ClientModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],

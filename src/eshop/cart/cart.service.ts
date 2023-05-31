@@ -157,7 +157,6 @@ export class CartService extends BaseNeoService {
 
   async save(cart: Cart) {
     // need the userId to associate to the user
-
     let existingCart;
     try {
       existingCart = await this.findOne({ id: cart.id });
@@ -199,12 +198,12 @@ export class CartService extends BaseNeoService {
   }
 
   async clearItems(cartId: string) {
-    const query = `MATCH (n:Cart {uuid: $cartId})
-    WHERE EXISTS(n.items)
-    SET n.items = [];
+    const query = `MATCH (n:Cart {id: $cartId})
+    WHERE n.items is not null
+    SET n.items = [], n.total = 0, n.subTotal = 0, n.numberOfItems = 0;
     `;
 
-    const res = await this.neo.write(query, { cartId });
+    await this.neo.write(query, { cartId });
 
     return this;
   }

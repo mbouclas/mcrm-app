@@ -75,11 +75,11 @@ export class ProductSearchEsService {
       size: this.defaultAggregationSize,
       field: 'price',
       ranges: [
-        { to: 60000.0 },
-        { from: 60000.0, to: 100000.0 },
-        { from: 100000.0, to: 500000.0 },
-        { from: 500000.0, to: 1000000.0 },
-        { from: 1000000.0 }
+        { to: 5.0 },
+        { from: 5.0, to: 10.0 },
+        { from: 10.0, to: 20.0 },
+        { from: 20.0, to: 50.0 },
+        { from: 50.0 }
       ],
       boost: 2,
     },

@@ -314,17 +314,17 @@ export class BaseNeoService {
     /*
         // This needs to be converted to flat fields like field_en
         // const translatableFieldsQuery = postedDataToTranslatableUpdatesQuery(fields, business, IBusinessModel);
-    
+
         // Need to check if this model requires location services. Otherwise extract it to the child class as a sond operation
     /*    const locationService = new LocationsService();
         const addressObj = await locationService.createStringFromModel(record);
-    
+
         if (Object.keys(addressObj).length > 0) {
           const addressParts = Object.keys(addressObj).map(k => `${IBusinessModel.modelConfig.as}.${k} = '${addressObj[k].replace(/'/g,`\\'`)}'`);
           addressStr = addressParts.join(', ');
           toUpdateQuery += `,${addressStr}`;
         }
-    
+
         */
 
     let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})

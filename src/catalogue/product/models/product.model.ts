@@ -54,6 +54,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         rel: 'HAS_CATEGORY',
+        // addRelationshipData: true,
       },
       categoryFilter: {
         rel: 'HAS_CATEGORY',
@@ -122,6 +123,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         sortableCountDefaultAlias: 'property',
         defaultProperty: 'title',
         postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          // console.log('----', record)
           if (record.property) {
             record.property = await new PropertyService().propertiesWithValuesByModel(
               modelName,
