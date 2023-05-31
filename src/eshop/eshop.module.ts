@@ -8,6 +8,9 @@ import { CartModule } from './cart/cart.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { ShippingMethodModule } from './shipping-method/shipping-method.module';
 import { StoreController } from './controllers/store.controller';
+import { QuoteProvider } from "~eshop/payment-method/providers/quote.provider";
+import { CashProvider } from "~eshop/payment-method/providers/cash.provider";
+import { StripeProvider } from "~eshop/payment-method/providers/stripe.provider";
 
 @Module({
   imports: [
@@ -20,7 +23,11 @@ import { StoreController } from './controllers/store.controller';
     ShippingMethodModule,
     AddressModule,
   ],
-  providers: [],
+  providers: [
+    QuoteProvider,
+    CashProvider,
+    StripeProvider,
+  ],
   controllers: [StoreController],
 })
 export class EshopModule {}

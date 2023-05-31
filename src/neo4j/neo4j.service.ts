@@ -70,6 +70,7 @@ export class Neo4jService implements OnApplicationShutdown {
     databaseOrTransaction?: string | Transaction,
   ): Promise<any> {
     const res = await this.read(cypher, params, databaseOrTransaction);
+
     if (Array.isArray(res.records) && res.records.length === 0) {
       return [];
     }
@@ -121,6 +122,10 @@ export class Neo4jService implements OnApplicationShutdown {
         obj[key] = Neo4jService.parseNeoProperties(item.properties);
       }
 
+      if (!Array.isArray(item) && isRelationship(item)) {
+        obj[key] = Neo4jService.parseNeoProperties(item.properties);
+      }
+
       if (isInt(item)) {
         obj[key] = item.toNumber();
       }
@@ -139,6 +144,7 @@ export class Neo4jService implements OnApplicationShutdown {
     for (let idx = 0; rec.keys.length > idx; idx++) {
       const key = rec.keys[idx];
       const r = rec.get(key);
+
       obj[key] = this.parseNodeResult(r, key);
     }
 
@@ -160,7 +166,11 @@ export class Neo4jService implements OnApplicationShutdown {
     }
 
     const keys = Object.keys(r);
+
     if (isNode(r) || isRelationship(r)) {
+      if (isRelationship(r)) {
+        // console.log('===',r.properties)
+      }
       return r.properties ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
     } else if (isInt(r)) {
       return r.toNumber();

@@ -30,6 +30,7 @@ export class Cart implements OnModuleInit, ICart {
   static itemUpdatedEventName = 'cart.item.updated';
   static itemRemovedEventName = 'cart.item.removed';
   static itemMetaDataUpdatedEventName = 'cart.item.metaDataUpdated';
+  static cartItemsUpdatedEventName = 'cart.items.updated';
   static cartSavedEventName = 'cart.saved';
   static cartClearedEventName = 'cart.cleared';
   static cartReadyEventName = 'cart.ready';
@@ -88,6 +89,7 @@ export class Cart implements OnModuleInit, ICart {
         found = it;
       }
     });
+
 
     if (!found) {
       this.items.push({ ...item, uuid: v4() });
@@ -155,7 +157,8 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public async clearWithDb() {
-    await this.cartService.clearItems(this.id);
+    this.clear();
+    await this.save();
 
     this.clear();
     return this;
@@ -379,7 +382,13 @@ export class Cart implements OnModuleInit, ICart {
 
   private loadExistingCart(cart) {
     Object.keys(cart).forEach((key) => {
-      this[key] = this.jsonFields.indexOf(key) !== -1 ? JSON.parse(cart[key]) : cart[key];
+      if (this.jsonFields.indexOf(key) === -1) {
+        this[key] = cart[key];
+        return;
+      }
+
+
+      this[key] = (typeof cart[key] === 'string') ? JSON.parse(cart[key]) : cart[key];
     });
   }
 
@@ -432,4 +441,18 @@ export class Cart implements OnModuleInit, ICart {
     });
     return this;
   }
+
+  /**
+   * Override the cart contents
+   * @param items
+   */
+  updateItems(items: ICartItem[]) {
+    this.items = items;
+    this.updateTotals();
+    this.eventEmitter.emit(Cart.cartItemsUpdatedEventName, {
+      cart: this.toObject(),
+    });
+    return this;
+  }
+
 }

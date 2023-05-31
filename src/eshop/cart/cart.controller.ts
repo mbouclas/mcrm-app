@@ -1,6 +1,6 @@
-import { Controller, Get, Put, Post, Session, Body, Delete, Param } from '@nestjs/common';
+import { Controller, Get, Put, Post, Session, Body, Delete, Param, Patch } from "@nestjs/common";
 import { SessionData } from 'express-session';
-import { CartService } from '~eshop/cart/cart.service';
+import { CartService, ICart, ICartItem } from "~eshop/cart/cart.service";
 import { IGenericObject } from '~models/general';
 
 export class AddToCartDto {
@@ -54,10 +54,19 @@ export class CartController {
     return session.cart.toObject();
   }
 
+  @Patch('update')
+  async updateCart(@Session() session: SessionData, @Body() items: ICartItem[]) {
+    session.cart.updateItems(items);
+
+    await session.cart.save();
+    return session.cart.toObject();
+  }
+
   @Post('clear')
   async clear(@Session() session: SessionData) {
     try {
       session.cart.clear();
+      await session.cart.clearWithDb();
 
       await session.cart.save();
 

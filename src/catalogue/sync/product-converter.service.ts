@@ -20,6 +20,13 @@ export class ProductConverterService {
     result.description_short = product['description_short'];
     result.createdAt = product["createdAt"];
     result.updatedAt = product["updatedAt"];
+    result['weight'] = product['weight'];
+    result['height'] = product['height'];
+    result['size'] = product['size'];
+    result['pieces'] = product['pieces'];
+    result['length'] = product['length'];
+    result['diameter'] = product['diameter'];
+    result['width'] = product['width'];
 
     if (Array.isArray(product['property'])) {
       result.properties = [];

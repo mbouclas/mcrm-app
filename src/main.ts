@@ -16,13 +16,33 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { defaultNeo4JConfig } from '~root/neo4j/neo4j.module';
-import { Driver } from 'neo4j-driver';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
+import * as process from "process";
 const RedisStore = require('connect-redis')(session);
 const viewsDir = resolve(join(__dirname, '../../', 'views'));
 const publicDir = resolve(join(__dirname, '../../', 'public'));
+const uploadDir = resolve(join(__dirname, '../../', 'upload'));
 declare const module: any;
+const companion = require('@uppy/companion');
+const { app: companionApp } = companion.app({
+  s3: {
+    // This is the crucial part; set an endpoint template for the service you want to use.
+    endpoint: 'https://{region}.digitaloceanspaces.com',
+    getKey: (req, filename) => `${crypto.randomUUID()}-${filename}`,
 
+    key: process.env.COMPANION_AWS_KEY,
+    secret: process.env.COMPANION_AWS_SECRET,
+    bucket: process.env.COMPANION_AWS_BUCKET,
+    region: process.env.COMPANION_AWS_REGION,
+  },
+  server: {
+    host: process.env.UPPY_SERVER,
+    path: '/companion',
+  },
+  filePath: uploadDir,
+  secret: 'blah blah',
+  debug: true,
+});
 export let ViewEngine = new Liquid({
   cache: process.env.NODE_ENV === 'production',
   root: viewsDir,
@@ -43,7 +63,7 @@ async function bootstrap() {
       credentials: true,
       origin: true,
       exposedHeaders: ['x-sess-id', 'set-cookie'],
-      methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+      methods: ['GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     },
   });
 
@@ -91,8 +111,10 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(flash());
+  app.use('/companion', companionApp)
 
-  await app.listen(process.env.PORT || 3000);
+  const server = await app.listen(process.env.PORT || 3000);
+  companion.socket(server);
   console.log(`App is running on port ${process.env.PORT}`);
 }
 
