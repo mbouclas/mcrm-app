@@ -26,15 +26,15 @@ export class PropertyValueService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {}
+  async onAppLoaded() { }
 
   async findOne(filter: IGenericObject, rels = []): Promise<PropertyValueModel> {
     const item = (await super.findOne(filter, rels)) as unknown as PropertyValueModel;
     return item;
   }
 
-  async store(record: PropertyValueDto, userId?: string) {
-    const r = await super.store(record, userId);
+  async store(record: PropertyValueDto, userId?: string, rels = []) {
+    const r = await super.store(record, userId, rels);
     return r;
   }
 

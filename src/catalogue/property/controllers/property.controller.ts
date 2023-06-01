@@ -38,21 +38,24 @@ export class PropertyController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
-    const propertyValues = body.propertyValues;
+    const propertyValues = body.propertyValue;
 
     let rels = [];
     await Promise.all(
       propertyValues.map(async (propertyValue) => {
+        console.log('roperty value ', propertyValue);
         const propertyValueCreated = await new PropertyValueService().store(propertyValue);
         rels = [
           ...rels,
           {
             id: propertyValueCreated?.uuid,
-            name: 'proprtyValue',
+            name: 'propertyValue',
           },
         ];
       }),
     );
+
+    console.log(body, rels);
 
     await new PropertyService().store(body, null, rels);
 

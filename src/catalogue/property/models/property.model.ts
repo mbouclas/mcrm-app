@@ -18,7 +18,7 @@ export class PropertyModel extends BaseModel {
     select: 'property:Property',
     as: 'property',
     relationships: {
-      propertyValues: {
+      propertyValue: {
         rel: 'HAS_VALUE',
         alias: 'propertyValueRelationship',
         model: 'PropertyValue',
