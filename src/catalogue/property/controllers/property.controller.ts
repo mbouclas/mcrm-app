@@ -4,10 +4,11 @@ import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { store } from '~root/state';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
+import { PropertyValueService } from '../services/propertyValue.service';
 
 @Controller('api/property')
 export class PropertyController {
-  constructor() { }
+  constructor() {}
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -37,7 +38,23 @@ export class PropertyController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
-    const property = await new PropertyService().store(body);
+    const propertyValues = body.propertyValues;
+
+    let rels = [];
+    await Promise.all(
+      propertyValues.map(async (propertyValue) => {
+        const propertyValueCreated = await new PropertyValueService().store(propertyValue);
+        rels = [
+          ...rels,
+          {
+            id: propertyValueCreated?.uuid,
+            name: 'proprtyValue',
+          },
+        ];
+      }),
+    );
+
+    await new PropertyService().store(body, null, rels);
 
     return { success: true };
   }
