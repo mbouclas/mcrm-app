@@ -94,6 +94,7 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
       .forRoutes(
         { path: 'cart*', method: RequestMethod.ALL },
         { path: 'api/order*', method: RequestMethod.ALL },
+        { path: 'store*', method: RequestMethod.ALL },
       );
   }
 

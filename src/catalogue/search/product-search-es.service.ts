@@ -43,7 +43,7 @@ export class ProductSearchEsService {
       key: 'slug',
       buckets: ['title.keyword', 'slug'],
       isKeyword: true,
-      size: 30,
+      size: 60,
     },
     {
       name: 'properties',
@@ -75,7 +75,8 @@ export class ProductSearchEsService {
       size: this.defaultAggregationSize,
       field: 'price',
       ranges: [
-        { to: 5.0 },
+        { to: 1.0 },
+        { from: 1.0, to: 5.0 },
         { from: 5.0, to: 10.0 },
         { from: 10.0, to: 20.0 },
         { from: 20.0, to: 50.0 },

@@ -16,7 +16,7 @@ export class SearchController {
     const page = req.query.page || 1 as any;
 
     return await this.searchService
-      .setDebugMode(false)
+      .setDebugMode(true)
       .filter({limit, page, queryParameters, q: qs}, true);
   }
 
