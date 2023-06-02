@@ -15,8 +15,8 @@ export class PropertyValueModel extends BaseModel {
   public static modelName = modelName;
 
   public static modelConfig: INeo4jModel = {
-    select: 'product:Product',
-    as: 'product',
+    select: 'propertyValue:PropertyValue',
+    as: 'propertyValue',
     relationships: {
       property: {
         model: 'Property',

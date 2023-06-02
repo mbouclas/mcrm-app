@@ -83,7 +83,7 @@ export class BaseNeoService {
     findFunction: Function,
   ) {
     const relationshipsToQuery: string[] = [];
-    for (let key in relationships) {
+    for (const key in relationships) {
       relationshipsToQuery.push(key);
     }
 
@@ -110,8 +110,8 @@ export class BaseNeoService {
 
   async findOne(filter: IGenericObject, rels: string[] = []): Promise<BaseModel> {
     const filterQuery = extractFiltersFromObject(filter, this.model.modelConfig.as, this.model.fields);
-    let { filters, relationships } = extractQueryParamsFilters({ ...filter, ...{ with: rels } }, this.model);
-    let { returnVars, matches } = setupRelationShipsQuery(this.model, filter, relationships, filters);
+    const { filters, relationships } = extractQueryParamsFilters({ ...filter, ...{ with: rels } }, this.model);
+    const { returnVars, matches } = setupRelationShipsQuery(this.model, filter, relationships, filters);
 
     const query = `MATCH (${this.model.modelConfig.select}) where ${filterQuery}
     WITH *
@@ -120,7 +120,7 @@ export class BaseNeoService {
     `;
 
     this.logger(query);
-    let records = await this.neo.readWithCleanUp(query, {});
+    const records = await this.neo.readWithCleanUp(query, {});
 
     let result = this.neo.mergeRelationshipsToParent(records[0], this.model);
 
@@ -138,14 +138,14 @@ export class BaseNeoService {
     const modelConfig = model.modelConfig;
     const modelAlias = modelConfig.as;
 
-    let { filters, way, limit, page, relationships, where } = extractQueryParamsFilters(
+    const { filters, way, limit, page, relationships, where } = extractQueryParamsFilters(
       { ...params, ...{ with: rels } },
       model,
       model.itemSelector,
     );
 
     const whereQuery = where.length > 0 ? ` WHERE ${where.join(' AND ')}` : '';
-    let { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(
+    const { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(
       model,
       params,
       relationships,
@@ -240,7 +240,7 @@ export class BaseNeoService {
     }>,
   ): Promise<any> {
     const uuid = v4();
-    let query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
+    const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
     try {
       await this.neo.write(query, { uuid });
@@ -301,16 +301,16 @@ export class BaseNeoService {
     }>;
   }): Promise<any> {
     let firstTimeQuery = '';
-    let addressStr = '';
+    const addressStr = '';
 
     const fields = this.model.fields;
-    let toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
+    const toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
 
     if (record.tempUuid) {
       firstTimeQuery = `,${this.model.modelConfig.as}.tempUuid = null`;
     }
 
-    let translatableFieldsQuery = '';
+    const translatableFieldsQuery = '';
     /*
         // This needs to be converted to flat fields like field_en
         // const translatableFieldsQuery = postedDataToTranslatableUpdatesQuery(fields, business, IBusinessModel);
@@ -342,6 +342,8 @@ export class BaseNeoService {
         const nodeSelector = `n${index + 1}`;
         const relSelector = `r${index + 1}`;
 
+        console.log(this.model.modelConfig.relationships, destination.name);
+
         relKeyMap[nodeSelector] = this.model.modelConfig.relationships[destination.name].modelAlias;
 
         withPropagate = withPropagate + `, ${nodeSelector}, ${relSelector}`;
@@ -370,7 +372,7 @@ export class BaseNeoService {
     }
     query = query + 'RETURN *;';
 
-    let processedRecord = {};
+    const processedRecord = {};
 
     for (const key in record) {
       const value = record[key];
@@ -406,7 +408,7 @@ export class BaseNeoService {
       this.eventEmitter.emit(this.constructor['updatedEventName'], res);
     }
 
-    let result = this.neo.mergeRelationshipsToParentWithAlias(res[0], this.model, relKeyMap);
+    const result = this.neo.mergeRelationshipsToParentWithAlias(res[0], this.model, relKeyMap);
 
     return result;
   }
@@ -422,16 +424,16 @@ export class BaseNeoService {
     }>,
   ): Promise<any> {
     let firstTimeQuery = '';
-    let addressStr = '';
+    const addressStr = '';
 
     const fields = this.model.fields;
-    let toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
+    const toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
 
     if (record.tempUuid) {
       firstTimeQuery = `,${this.model.modelConfig.as}.tempUuid = null`;
     }
 
-    let translatableFieldsQuery = '';
+    const translatableFieldsQuery = '';
     /*
         // This needs to be converted to flat fields like field_en
         // const translatableFieldsQuery = postedDataToTranslatableUpdatesQuery(fields, business, IBusinessModel);
@@ -487,7 +489,7 @@ export class BaseNeoService {
     }
     query = query + 'RETURN *;';
 
-    let processedRecord = {};
+    const processedRecord = {};
 
     for (const key in record) {
       const value = record[key];
@@ -523,7 +525,7 @@ export class BaseNeoService {
       this.eventEmitter.emit(this.constructor['updatedEventName'], res);
     }
 
-    let result = this.neo.mergeRelationshipsToParent(res[0], this.model);
+    const result = this.neo.mergeRelationshipsToParent(res[0], this.model);
 
     return result;
   }
@@ -540,7 +542,7 @@ export class BaseNeoService {
         if (mustDeleteRules && mustDeleteRules.length) {
           const authorizeQuery = `MATCH (u: User {uuid: '${userId}' })-[:HAS_ROLE]->(r: Role) RETURN r`;
 
-          let roles = await this.neo.readWithCleanUp(authorizeQuery);
+          const roles = await this.neo.readWithCleanUp(authorizeQuery);
           const maxLevel = Math.max(...roles.map((role) => role.r.level));
 
           for (let i = 0; i < mustDeleteRules.length; i++) {
@@ -776,7 +778,7 @@ export class BaseNeoService {
 
   async setRelationshipsByIds(
     sourceId: string,
-    destinationIds: String,
+    destinationIds: string,
     relationshipName: string,
     relationshipProps?: IGenericObject,
   ) {
