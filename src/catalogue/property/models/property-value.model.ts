@@ -39,15 +39,6 @@ export class PropertyValueModel extends BaseModel {
       group: 'main',
     },
     {
-      varName: 'type',
-      label: 'Type',
-      placeholder: 'Type',
-      type: 'text',
-      isSortable: true,
-      group: 'main',
-    },
-
-    {
       varName: 'icon',
       label: 'Icon',
       placeholder: 'Icon',
