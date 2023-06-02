@@ -8,6 +8,8 @@ import { IGenericObject } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
 import { UserService } from '~root/user/services/user.service';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
+import { boolean, object, string } from "yup";
+import { extractValidationErrors } from "~helpers/validation";
 
 export class AddressModelDto {
   userId?: string;
@@ -61,5 +63,47 @@ export class AddressService extends BaseNeoService {
     const r = await super.update(uuid, record, userId);
 
     return r;
+  }
+
+  static validateAddress(address: AddressModelDto) {
+    const schema = object({
+      firstName: string().required(),
+      lastName: string().required(),
+      street: string().required(),
+      city: string().required(),
+      company: string().required(),
+      country: string().required(),
+      region: string().required(),
+      postCode: string().required(),
+      phone: string().required(),
+    });
+
+    try {
+      schema.validateSync(address, { abortEarly: false });
+    }
+    catch (e) {
+      return {success: false, errors: extractValidationErrors(e)};
+    }
+
+    return {success: true};
+  }
+
+  static validateContactInformation(info) {
+    const schema = object({
+      email: string().email("Email doesn't look right").required('Please provide your email'),
+      phone: string().required(),
+      firstName: string().required(),
+      lastName: string().required(),
+      terms: boolean().oneOf([true]),
+    });
+
+    try {
+      schema.validateSync(info, { abortEarly: false });
+    }
+    catch (e) {
+      return {success: false, errors: extractValidationErrors(e)};
+    }
+
+    return {success: true};
   }
 }

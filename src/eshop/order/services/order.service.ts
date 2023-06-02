@@ -9,6 +9,11 @@ import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { v4 } from 'uuid';
+import { ICheckoutStore, IPaymentMethod, IShippingMethod } from "~eshop/models/checkout";
+import { AddressService } from "~eshop/address/services/address.service";
+import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
+import { PaymentMethodService } from "~eshop/payment-method/services/payment-method.service";
+import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
 
 export class OrderModelDto {
   orderId?: string;
@@ -111,10 +116,13 @@ export class OrderService extends BaseNeoService {
     this.model = store.getState().models.Order;
 
     this.changeLog = new ChangeLogService();
+
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {}
+  async onAppLoaded() {
+    OrderService.statuses = store.getState().configs['store']['orderStatuses'];
+  }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
     const item = (await super.findOne(filter, rels)) as unknown as OrderModel;
@@ -187,5 +195,55 @@ export class OrderService extends BaseNeoService {
     const r = await super.update(uuid, record, userId);
 
     return r;
+  }
+
+  async processStoreOrder(order: ICheckoutStore) {
+    // validate shipping information
+    const shippingAddressValidation = AddressService.validateAddress(order.shippingInformation);
+    if (!shippingAddressValidation.success) {
+      throw new InvalidOrderException('INVALID_SHIPPING_ADDRESS','700.1', shippingAddressValidation.errors as any);
+    }
+    // validate billing information
+    const billingAddressValidation = AddressService.validateAddress(order.billingInformation);
+    if (!billingAddressValidation.success) {
+      throw new InvalidOrderException('INVALID_BILLING_ADDRESS','700.2', billingAddressValidation.errors as any);
+    }
+    // validate contact information
+    const contactInformationValidation = AddressService.validateContactInformation(order.contactInformation);
+    if (!contactInformationValidation.success) {
+      throw new InvalidOrderException('INVALID_CONTACT_INFORMATION','700.3', contactInformationValidation.errors as any);
+    }
+    // validate payment method
+    await this.validateStorePaymentMethod(order.paymentMethod);
+    // validate shipping method
+    await this.validateStoreShippingMethod(order.shippingMethod);
+
+    return true;
+  }
+
+
+  async validateStorePaymentMethod(paymentMethod: IPaymentMethod) {
+    if (!paymentMethod){
+      throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4');
+    }
+    const found = await (new PaymentMethodService()).findOne({uuid: paymentMethod.uuid});
+    if (!found){
+      throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4' );
+    }
+
+    return true;
+  }
+
+  async validateStoreShippingMethod(shippingMethod: IShippingMethod) {
+    if (!shippingMethod){
+      throw new InvalidOrderException('INVALID_SHIPPING_METHOD', '700.5');
+    }
+
+    const found = await (new ShippingMethodService()).findOne({uuid: shippingMethod.uuid});
+    if (!found){
+      throw new InvalidOrderException('INVALID_SHIPPING_METHOD', '700.5');
+    }
+
+    return true;
   }
 }
