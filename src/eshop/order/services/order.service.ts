@@ -214,11 +214,14 @@ export class OrderService extends BaseNeoService {
       throw new InvalidOrderException('INVALID_CONTACT_INFORMATION','700.3', contactInformationValidation.errors as any);
     }
     // validate payment method
-    await this.validateStorePaymentMethod(order.paymentMethod);
+    const paymentMethod = await this.validateStorePaymentMethod(order.paymentMethod);
     // validate shipping method
-    await this.validateStoreShippingMethod(order.shippingMethod);
+    const shippingMethod = await this.validateStoreShippingMethod(order.shippingMethod);
 
-    return true;
+    return {
+      paymentMethod,
+      shippingMethod
+    }
   }
 
 
@@ -226,12 +229,13 @@ export class OrderService extends BaseNeoService {
     if (!paymentMethod){
       throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4');
     }
+
     const found = await (new PaymentMethodService()).findOne({uuid: paymentMethod.uuid});
     if (!found){
       throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4' );
     }
 
-    return true;
+    return found;
   }
 
   async validateStoreShippingMethod(shippingMethod: IShippingMethod) {
@@ -244,6 +248,6 @@ export class OrderService extends BaseNeoService {
       throw new InvalidOrderException('INVALID_SHIPPING_METHOD', '700.5');
     }
 
-    return true;
+    return found;
   }
 }

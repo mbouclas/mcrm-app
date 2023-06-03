@@ -5,17 +5,17 @@ import { MulterModule } from "@nestjs/platform-express";
 import { join, resolve } from "path";
 import { UploaderQueueService } from './uploader-queue.service';
 import { diskStorage } from "multer";
-
+const uploadDir = resolve(require('path').resolve('./'), './upload');
 @Module({
   controllers: [FileUploaderController],
   providers: [UploaderService, UploaderQueueService],
   imports: [
     MulterModule.registerAsync({
       useFactory: () => ({
-        dest: resolve(require('path').resolve('./'), './upload'),
+        dest: uploadDir,
         storage: diskStorage({
           destination: (req, file, cb) => {
-            cb(null, resolve(require('path').resolve('./'), './upload'));
+            cb(null, uploadDir);
           },
           filename: (req, file, cb) => {
             cb(null, file.originalname)
@@ -25,4 +25,6 @@ import { diskStorage } from "multer";
     }),
   ]
 })
-export class UploadModule {}
+export class UploadModule {
+  static uploadDir = `${uploadDir}/`;
+}

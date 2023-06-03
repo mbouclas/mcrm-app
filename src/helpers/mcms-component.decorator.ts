@@ -2,9 +2,9 @@ import { findIndex } from "lodash";
 import {Container} from "typedi";
 import { IGenericObject } from "../models/general";
 import { BaseModel } from "../models/base.model";
+import { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
 
-
-export interface IMcmsDiRegistryItem {
+export interface IMcmsDiRegistryItem<T = any> {
     id: string;
     type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model';
     reference?: any;
@@ -15,7 +15,7 @@ export interface IMcmsDiRegistryItem {
 export class McmsDiContainer {
     static registry: IMcmsDiRegistryItem[] = [];
 
-    static get(filter: IGenericObject) {
+    static get<T = any>(filter: IGenericObject): null|IMcmsDiRegistryItem<T> {
         const idx = findIndex(this.registry, filter);
         if (idx === -1) {
             return null;

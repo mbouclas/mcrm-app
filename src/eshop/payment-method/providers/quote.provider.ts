@@ -1,42 +1,82 @@
-import { IPaymentMethodProvider, IPaymentMethodProviderConfig } from "~eshop/payment-method/models/providers.types";
 import { McmsDi } from "~helpers/mcms-component.decorator";
+import {
+  BasePaymentMethodProvider,
+
+} from "~eshop/payment-method/providers/base-payment-method.provider";
+import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
+import { IGenericObject } from "~models/general";
+import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service";
+import { UploadModule } from "~root/upload/upload.module";
+const crypto = require('crypto')
+
+export interface IQuoteFileAttachment {
+  id: string;
+  filename: string;
+  originalName: string;
+  description: string;
+  url?: string;
+  metaData?: IGenericObject;
+}
 
 @McmsDi({
   id: 'QuoteProvider',
   type: 'class',
 })
-export class QuoteProvider implements IPaymentMethodProvider {
-  attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<boolean> {
-    return Promise.resolve(false);
+export class QuoteProvider extends BasePaymentMethodProvider {
+  protected bucketName = 'quotes';
+
+  async handle() {
+    this.bucketName = crypto.createHash('md5').update(this.settings.user.email).digest("hex");
+    // store attachments if any
+    try {
+      await this.handleAttachments(this.settings.cart.items.filter(item => item.metaData && item.metaData.uploadedFiles && Array.isArray(item.metaData.uploadedFiles))
+        .map(item => item.metaData.uploadedFiles).flat());
+    } catch (e) {
+      throw new InvalidOrderException(e.message, '800.1', e as any);
+    }
   }
 
-  createCustomer(email: string): Promise<string> {
-    return Promise.resolve("");
+  async handleAttachments(attachments: IQuoteFileAttachment[]) {
+    for (const attachment of attachments) {
+      try {
+        const res = await this.handleAttachment(attachment);
+        console.log(res)
+
+      }
+      catch (e) {
+
+      }
+    }
   }
 
-  deleteCustomer(customerId: string): Promise<boolean> {
-    return Promise.resolve(false);
-  }
 
-  detachPaymentMethod(paymentMethodId: string): Promise<boolean> {
-    return Promise.resolve(false);
-  }
+  async handleAttachment(attachment: IQuoteFileAttachment) {
+    const oss = new ObjectStorageService();
+    // move the files somewhere else, S3, etc.
+    try {
+      await oss.bucketExistsOrCreate(this.bucketName);
+    }
+    catch (e) {
+      console.log(e)
+      return false;
+    }
 
-  getCardInfo(paymentMethodId: string): Promise<object> {
-    return Promise.resolve(undefined);
-  }
+    try {
+      await oss.createObject(this.bucketName, `${UploadModule.uploadDir}${attachment.filename}`, {type: 'attachment'});
+    }
+    catch (e) {
+      console.log(e)
+      return false;
+    }
 
-  getFields(): any {
-  }
+    try {
+      attachment.url = await oss.getObjectUrl(this.bucketName, attachment.filename);
+    }
+    catch (e) {
+      console.log(e)
+    }
 
-  getSettings(): any {
+    attachment.metaData = {};
+    return attachment;
   }
-
-  sendTransaction(customerId: string, price: number, paymentMethodId: string): Promise<string> {
-    return Promise.resolve("");
-  }
-
-  setConfig(config: IPaymentMethodProviderConfig): any {
-  }
-
 }

@@ -38,6 +38,7 @@ import { ImageModule } from "~image/image.module";
 import { loadConfigs } from '~helpers/load-config';
 import { SyncModule } from './sync/sync.module';
 import { ClientModule } from './client/client.module';
+import { ObjectStorageModule } from './object-storage/object-storage.module';
 const Lang = require('mcms-node-localization');
 export let Translate;
 export let Test = { token: null };
@@ -74,6 +75,7 @@ export let Test = { token: null };
     ImageModule,
     SyncModule,
     ClientModule,
+    ObjectStorageModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],

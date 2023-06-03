@@ -1,18 +1,19 @@
 import { Body, Controller, Get, Post, Session, UseInterceptors } from "@nestjs/common";
 import { StoreInitialQueryInterceptor } from "~eshop/interceptors/store-initial-query.interceptor";
 import { PaymentMethodService } from "~eshop/payment-method/services/payment-method.service";
-import { IGenericObject, IPagination } from "~models/general";
+import {  IPagination } from "~models/general";
 import { BaseModel } from "~models/base.model";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
 import { store } from "~root/state";
-import { UserService } from "~user/services/user.service";
 import { SessionData } from "express-session";
-import { SessionRetrieverInterceptor } from "~root/auth/interceptors/session-retriever.interceptor";
 import { OrderService } from "~eshop/order/services/order.service";
-import { AddressService } from "~eshop/address/services/address.service";
 import { ICheckoutStore } from "~eshop/models/checkout";
-import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
-
+import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductModel } from "~catalogue/product/models/product.model";
+import { IPaymentMethodProvider } from "~eshop/payment-method/models/providers.types";
+import { McmsDiContainer } from "~helpers/mcms-component.decorator";
+import { capitalize } from "lodash";
+import type { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
 
 
 export interface IStoreInitialQuery {
@@ -49,67 +50,80 @@ export class StoreController {
     if (!session.cart) {
       return {success: false, message: 'Cart is empty', error: 'CART_EMPTY'};
     }
+
+    if (session.cart.items.length === 0) {
+      return {success: false, message: 'Cart is empty', error: 'CART_EMPTY'};
+    }
+
     let userId,
-    processedOrder;
+      user = {email: 'mbouclas@gmail.com'},
+    validatedOrder;
 
 /*    if (!session.user || !session.user['uuid']) {
       return {success: false, message: 'User not found', error: 'USER_NOT_FOUND'};
     }*/
     try {
-      processedOrder = await (new OrderService()).processStoreOrder(body);
+      validatedOrder = await (new OrderService()).processStoreOrder(body);
     }
     catch (e) {
-
       return {success: false, message: 'Error processing order', error: e.getMessage(), errors: e.getErrors(), code: e.getCode()};
     }
 
-    return {success: true, message: 'Order processed', order: processedOrder};
-    // userId = session.user.id;
+    const cart = session.cart;
+    const products = await new ProductService().find({
+      uuids: cart.items.map((item) => item.productId),
+    });
 
-    /*let shippingAddress,
-      billingAddress,
+    let fullPrice = products.data.reduce(
+      (accumulator, productItem: ProductModel) => (productItem.price ? accumulator + productItem.price : accumulator),
+      0,
+    );
+
+    const {paymentMethod, shippingMethod} = validatedOrder;
+
+    const paymentProviderContainer = McmsDiContainer.get<BasePaymentMethodProvider>({
+      id: `${capitalize(paymentMethod.providerName)}Provider`,
+    });
+
+    const paymentMethodProvider: BasePaymentMethodProvider = new paymentProviderContainer.reference({
       paymentMethod,
-      shippingMethod;
-
-    const orderService = new OrderService();
-
-    const addressService = new AddressService();
-
-    try {
-     shippingAddress = await addressService.findOne({
-        uuid: body.shippingAddressId,
-      });
-    } catch (e) {
-      return {success: false, message: 'Shipping address not found', error: 'SHIPPING_ADDRESS_NOT_FOUND'};
-    }
+      cart,
+      order: body,
+      user
+    }) as BasePaymentMethodProvider;
 
     try {
-      billingAddress = addressService.findOne({
-        uuid: body.billingAddressId,
-      })
+      await paymentMethodProvider.handle();
     }
     catch (e) {
-      return {success: false, message: 'Billing address not found', error: 'BILLING_ADDRESS_NOT_FOUND'};
+      console.log(e)
+      return {success: false, message: 'Error processing payment', error: e.getMessage(), errors: e.getErrors(), code: e.getCode()};
     }
 
-    try {
-      paymentMethod = await new PaymentMethodService().findOne({
-        uuid: body.paymentMethodId,
-      });
-    }
-    catch (e) {
-      return {success: false, message: 'Payment method not found', error: 'PAYMENT_METHOD_NOT_FOUND'};
-    }
 
-    try {
-      shippingMethod = await new ShippingMethodService().findOne({
-       uuid: body.shippingMethodId,
-      });
-    }
-    catch (e) {
-      return {success: false, message: 'Shipping method not found', error: 'SHIPPING_METHOD_NOT_FOUND'};
-    }
+    const shippingProviderContainer = McmsDiContainer.get({
+      id: `${capitalize(shippingMethod.providerName)}Provider`,
+    });
 
-    return {body};*/
+
+/*    orderService.store(
+      {
+        status: 1,
+        paymentMethod: paymentMethod.title,
+        shippingMethod: shippingMethod.title,
+        salesChannel: body.salesChannel,
+        billingAddressId: billingAddress.uuid,
+        shippingAddressId: shippingAddress.uuid,
+        paymentStatus: 1,
+        shippingStatus: 1,
+        paymentInfo,
+        shippingInfo,
+        userId,
+      },
+      '',
+      rels,
+    ),*/
+
+    return {success: true, message: 'Order processed',  cart: cart.count(), fullPrice};
   }
 }

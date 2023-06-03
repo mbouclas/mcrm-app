@@ -11,6 +11,8 @@ import { StoreController } from './controllers/store.controller';
 import { QuoteProvider } from "~eshop/payment-method/providers/quote.provider";
 import { CashProvider } from "~eshop/payment-method/providers/cash.provider";
 import { StripeProvider } from "~eshop/payment-method/providers/stripe.provider";
+import { CourierProvider } from "~eshop/shipping-method/providers/courier.provider";
+import { PickUpProvider } from "~eshop/shipping-method/providers/pickUp.provider";
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { StripeProvider } from "~eshop/payment-method/providers/stripe.provider"
     QuoteProvider,
     CashProvider,
     StripeProvider,
+    CourierProvider,
+    PickUpProvider,
   ],
   controllers: [StoreController],
 })
