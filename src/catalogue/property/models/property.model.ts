@@ -51,6 +51,24 @@ export class PropertyModel extends BaseModel {
     },
 
     {
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+
+    {
+      varName: 'type',
+      label: 'Type',
+      placeholder: 'Type',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+
+    {
       varName: 'active',
       label: 'Active',
       placeholder: 'Active',
