@@ -342,7 +342,6 @@ export class BaseNeoService {
         const nodeSelector = `n${index + 1}`;
         const relSelector = `r${index + 1}`;
 
-        console.log(this.model.modelConfig.relationships, destination.name);
 
         relKeyMap[nodeSelector] = this.model.modelConfig.relationships[destination.name].modelAlias;
 
@@ -351,19 +350,18 @@ export class BaseNeoService {
         const relationship = this.model.modelConfig.relationships[destination.name];
         const createSetRelationship = destination.relationshipProps
           ? ', '.concat(
-              Object.keys(destination.relationshipProps)
-                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
-                .join()
-                .slice(0, -1),
-            )
+            Object.keys(destination.relationshipProps)
+              .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+              .join()
+              .slice(0, -1),
+          )
           : '';
 
         query =
           query +
           `
         MATCH (${nodeSelector} { uuid:'${destination.id}'})
-        CREATE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${
-            relationship.rel
+        CREATE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel
           }]${relationship.type === 'normal' ? '->' : '-'}(${nodeSelector})
         SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
         WITH ${withPropagate}
@@ -468,20 +466,19 @@ export class BaseNeoService {
         const relationship = this.model.modelConfig.relationships[destination.name];
         const createSetRelationship = destination.relationshipProps
           ? ', '.concat(
-              Object.keys(destination.relationshipProps)
-                .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
-                .join()
-                .slice(0, -1),
-            )
+            Object.keys(destination.relationshipProps)
+              .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+              .join()
+              .slice(0, -1),
+          )
           : '';
 
         query =
           query +
           `
         MATCH (${nodeSelector} { uuid:'${destination.id}'})
-        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
-            relationship.type === 'normal' ? '->' : '-'
-          }(${nodeSelector})
+        MERGE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel
+          }]${relationship.type === 'normal' ? '->' : '-'}(${nodeSelector})
         SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
         WITH ${withPropagate}
         `;
@@ -618,19 +615,18 @@ export class BaseNeoService {
       const relationship = this.model.modelConfig.relationships[destination.name];
       const createSetRelationship = destination.relationshipProps
         ? ', '.concat(
-            Object.keys(destination.relationshipProps)
-              .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
-              .join()
-              .slice(0, -1),
-          )
+          Object.keys(destination.relationshipProps)
+            .map((relProp) => ` ${relSelector}.${relProp} = ${destination.relationshipProps[relProp]},`)
+            .join()
+            .slice(0, -1),
+        )
         : '';
 
       query =
         query +
         `
         MATCH (${nodeSelector} { uuid:'${destination.id}'})
-        CREATE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
-          relationship.type === 'normal' ? '->' : '-'
+        MERGE (n)${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'
         }(${nodeSelector})
         SET ${relSelector}.updatedAt = datetime(), ${relSelector}.createdAt = datetime() ${createSetRelationship}
         WITH ${withPropagate}
@@ -661,19 +657,18 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-          Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-            .join()
-            .slice(0, -1),
-        )
+        Object.keys(relationshipProps)
+          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+          .join()
+          .slice(0, -1),
+      )
       : '';
 
     const query = `
     MATCH (n1 { uuid:'${sourceId}'})
     MATCH (n2 { uuid:'${destinationId}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
-      relationship.type === 'normal' ? '->' : '-'
-    }(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'
+      }(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
@@ -703,19 +698,18 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-          Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-            .join()
-            .slice(0, -1),
-        )
+        Object.keys(relationshipProps)
+          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+          .join()
+          .slice(0, -1),
+      )
       : '';
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
-      relationship.type === 'normal' ? '->' : '-'
-    }(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'
+      }(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
@@ -746,19 +740,18 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-          Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-            .join()
-            .slice(0, -1),
-        )
+        Object.keys(relationshipProps)
+          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+          .join()
+          .slice(0, -1),
+      )
       : '';
 
     const query = `
     MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
     MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
-    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
-      relationship.type === 'normal' ? '->' : '-'
-    }(n2)
+    MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'
+      }(n2)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
@@ -786,17 +779,16 @@ export class BaseNeoService {
 
     const createSetRelationship = relationshipProps
       ? ', '.concat(
-          Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
-            .join()
-            .slice(0, -1),
-        )
+        Object.keys(relationshipProps)
+          .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+          .join()
+          .slice(0, -1),
+      )
       : '';
 
     const relationshipStructure = (relSelector) => `
-    ${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${
-      relationship.type === 'normal' ? '->' : '-'
-    }
+    ${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${relationship.rel}]${relationship.type === 'normal' ? '->' : '-'
+      }
         `;
 
     const query = `

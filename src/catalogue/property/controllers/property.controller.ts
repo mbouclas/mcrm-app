@@ -43,7 +43,6 @@ export class PropertyController {
     let rels = [];
     await Promise.all(
       propertyValues.map(async (propertyValue) => {
-        console.log('roperty value ', propertyValue);
         const propertyValueCreated = await new PropertyValueService().store(propertyValue);
         rels = [
           ...rels,
@@ -62,23 +61,47 @@ export class PropertyController {
 
   @Patch(':uuid')
   async patch(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    const propertyValues = body.propertyValue;
+    const newPropertyValues = body.propertyValue;
+
+    const propertyValue = await new PropertyService().getPropertyWithValues({ uuid });
+
+    const existingUUIDs = propertyValue.values.map((value) => (value as any).uuid);
+
+    const uuidsToDelete = existingUUIDs.filter((uuid) => !newPropertyValues.some((newVal) => newVal.uuid === uuid));
+
+    await Promise.all(uuidsToDelete.map((uuid) => new PropertyValueService().delete(uuid)));
 
     let rels = [];
     await Promise.all(
-      propertyValues.map(async (propertyValue) => {
-        const propertyValueCreated = await new PropertyValueService().update(propertyValue.uuid, propertyValue);
+      newPropertyValues.map(async (newPropertyValue) => {
+        const exists = propertyValue.values.some(
+          (existingPropertyValue) => existingPropertyValue.uuid === newPropertyValue.uuid,
+        );
+        let valueUuid: string;
+
+        if (exists) {
+          await new PropertyValueService().update(newPropertyValue.uuid, newPropertyValue);
+          valueUuid = newPropertyValue.uuid;
+        }
+
+        if (!exists) {
+          const newPropertyValueCreated = await new PropertyValueService().store(newPropertyValue);
+          valueUuid = newPropertyValueCreated.uuid;
+        }
+
         rels = [
           ...rels,
           {
-            id: propertyValueCreated?.uuid,
+            id: valueUuid,
             name: 'propertyValue',
           },
         ];
       }),
     );
 
-    await new PropertyService().update(uuid, body, null, rels);
+    const service = new PropertyService();
+    await service.update(uuid, body, null);
+    await service.attachToManyById(uuid, rels);
 
     return { success: true };
   }
