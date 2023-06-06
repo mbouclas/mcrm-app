@@ -7,6 +7,8 @@ import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exc
 import { IGenericObject } from "~models/general";
 import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service";
 import { UploadModule } from "~root/upload/upload.module";
+import { OnEvent } from "@nestjs/event-emitter";
+import { PaymentMethodModule } from "~eshop/payment-method/payment-method.module";
 const crypto = require('crypto')
 
 export interface IQuoteFileAttachment {
@@ -24,16 +26,34 @@ export interface IQuoteFileAttachment {
 })
 export class QuoteProvider extends BasePaymentMethodProvider {
   protected bucketName = 'quotes';
+  protected static handleAttachmentEventName = 'quote.attachment';
+
+  @OnEvent(QuoteProvider.handleAttachmentEventName)
+  async onHandleAttachments({ attachments, settings }) {
+    const service = new QuoteProvider(settings);
+    try {
+      await service.handleAttachments(attachments);
+    } catch (e) {
+      console.log(`Error attaching quote attachments to order: ${e.message}`);
+      throw new InvalidOrderException(e.message, '800.1', e as any);
+    }
+  }
 
   async handle() {
     this.bucketName = crypto.createHash('md5').update(this.settings.user.email).digest("hex");
-    // store attachments if any
+    const attachments = this.settings.cart.items.filter(item => item.metaData && item.metaData.uploadedFiles && Array.isArray(item.metaData.uploadedFiles))
+      .map(item => item.metaData.uploadedFiles).flat();
+
     try {
-      await this.handleAttachments(this.settings.cart.items.filter(item => item.metaData && item.metaData.uploadedFiles && Array.isArray(item.metaData.uploadedFiles))
-        .map(item => item.metaData.uploadedFiles).flat());
-    } catch (e) {
-      throw new InvalidOrderException(e.message, '800.1', e as any);
+      await this.attachToOrder();
     }
+    catch (e) {
+      throw new InvalidOrderException(e.message, '900.2', e as any);
+    }
+
+    // push attachments to the event bus cause they may take a minute to upload
+    PaymentMethodModule.eventEmitter.emit(QuoteProvider.handleAttachmentEventName, { attachments, settings: this.settings });
+    return this;
   }
 
   async handleAttachments(attachments: IQuoteFileAttachment[]) {
@@ -44,7 +64,7 @@ export class QuoteProvider extends BasePaymentMethodProvider {
 
       }
       catch (e) {
-
+        console.log(`Error handling attachment: ${e.message}`);
       }
     }
   }
@@ -57,7 +77,7 @@ export class QuoteProvider extends BasePaymentMethodProvider {
       await oss.bucketExistsOrCreate(this.bucketName);
     }
     catch (e) {
-      console.log(e)
+      console.log(`Error creating bucket: ${e.message}`);
       return false;
     }
 
@@ -65,7 +85,7 @@ export class QuoteProvider extends BasePaymentMethodProvider {
       await oss.createObject(this.bucketName, `${UploadModule.uploadDir}${attachment.filename}`, {type: 'attachment'});
     }
     catch (e) {
-      console.log(e)
+      console.log(`Error creating object: ${e.message}`);
       return false;
     }
 
@@ -73,7 +93,7 @@ export class QuoteProvider extends BasePaymentMethodProvider {
       attachment.url = await oss.getObjectUrl(this.bucketName, attachment.filename);
     }
     catch (e) {
-      console.log(e)
+      console.log(`Error getting object url: ${e.message}`);
     }
 
     attachment.metaData = {};

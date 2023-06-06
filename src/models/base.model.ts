@@ -79,6 +79,10 @@ export class BaseModel {
     return this.hasOwnProperty(field);
   }
 
+  setFieldProperty(field: string, property: string, value: any) {
+    this[field][property] = value;
+  }
+
   public static isFieldSortable(
     field: string,
     fields: IDynamicFieldConfigBlueprint[],

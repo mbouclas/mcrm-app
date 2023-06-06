@@ -23,6 +23,8 @@ const viewsDir = resolve(join(__dirname, '../../', 'views'));
 const publicDir = resolve(join(__dirname, '../../', 'public'));
 const uploadDir = resolve(join(__dirname, '../../', 'upload'));
 declare const module: any;
+const tokenExpiry = process.env.OAUTH_TOKEN_EXPIRY ? parseInt(process.env.OAUTH_TOKEN_EXPIRY) : 60 * 60 * 23;
+export const redisSessionStore = new RedisStore({ client: createRedisClient(), ttl: tokenExpiry });
 const companion = require('@uppy/companion');
 const { app: companionApp } = companion.app({
   s3: {
@@ -42,6 +44,7 @@ const { app: companionApp } = companion.app({
   filePath: uploadDir,
   secret: 'blah blah',
   debug: true,
+  uploadUrls: true,
 });
 export let ViewEngine = new Liquid({
   cache: process.env.NODE_ENV === 'production',
@@ -67,13 +70,14 @@ async function bootstrap() {
     },
   });
 
-  const tokenExpiry = process.env.OAUTH_TOKEN_EXPIRY ? parseInt(process.env.OAUTH_TOKEN_EXPIRY) : 60 * 60 * 23;
+
 
   app.use(helmet({ contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false }));
   app.use(compression());
+
   app.use(
     session({
-      store: new RedisStore({ client: createRedisClient(), ttl: tokenExpiry }),
+      store: redisSessionStore,
       saveUninitialized: false,
       secret: 'keyboard cat',
       cookie: {
@@ -94,6 +98,7 @@ async function bootstrap() {
       'Access-Control-Allow-Headers',
       'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Set-Cookie',
     );
+
     res.header('x-sess-id', req.session.id);
     next();
   });

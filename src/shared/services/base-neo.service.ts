@@ -24,6 +24,14 @@ import { range } from 'lodash';
 
 const debug = require('debug')('mcms:neo:query');
 
+export interface IBaseNeoServiceRelationships {
+  id: string;
+  name: string;
+  searchKey?: string;
+  relationshipProps?: IGenericObject;
+}
+
+
 const flattenObj = (record, baseKey, nested) => {
   for (const key in nested) {
     const capitalKey = capitalizeFirstLetter(key);
@@ -233,11 +241,7 @@ export class BaseNeoService {
   async store(
     record: IGenericObject,
     userId?: string,
-    relationships?: Array<{
-      id: string;
-      name: string;
-      relationshipProps?: IGenericObject;
-    }>,
+    relationships?: IBaseNeoServiceRelationships[],
   ): Promise<any> {
     const uuid = v4();
     const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
@@ -294,11 +298,7 @@ export class BaseNeoService {
     uuid: string;
     record: IGenericObject;
     userId: string;
-    relationships: Array<{
-      id: string;
-      name: string;
-      relationshipProps?: IGenericObject;
-    }>;
+    relationships: IBaseNeoServiceRelationships[];
   }): Promise<any> {
     let firstTimeQuery = '';
     const addressStr = '';
@@ -337,12 +337,12 @@ export class BaseNeoService {
     let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
     const relKeyMap = {};
 
-    if (relationships && relationships.length) {
+    if (relationships && Array.isArray(relationships) && relationships.length > 0) {
       relationships.forEach((destination, index) => {
         const nodeSelector = `n${index + 1}`;
         const relSelector = `r${index + 1}`;
 
-        console.log(this.model.modelConfig.relationships, destination.name);
+        // console.log('-------------',this.model.modelConfig.relationships[destination.name]);
 
         relKeyMap[nodeSelector] = this.model.modelConfig.relationships[destination.name].modelAlias;
 
@@ -357,11 +357,11 @@ export class BaseNeoService {
                 .slice(0, -1),
             )
           : '';
-
+        const searchKey = destination.searchKey ? destination.searchKey : 'uuid';
         query =
           query +
           `
-        MATCH (${nodeSelector} { uuid:'${destination.id}'})
+        MATCH (${nodeSelector} { ${searchKey}:'${destination.id}'})
         CREATE (${this.model.modelConfig.as})${relationship.type === 'normal' ? '-' : '<-'}[${relSelector}:${
             relationship.rel
           }]${relationship.type === 'normal' ? '->' : '-'}(${nodeSelector})
@@ -662,7 +662,7 @@ export class BaseNeoService {
     const createSetRelationship = relationshipProps
       ? ', '.concat(
           Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .map((relProp) => ` r.${relProp} = "${relationshipProps[relProp]}",`)
             .join()
             .slice(0, -1),
         )
@@ -747,7 +747,7 @@ export class BaseNeoService {
     const createSetRelationship = relationshipProps
       ? ', '.concat(
           Object.keys(relationshipProps)
-            .map((relProp) => ` r.${relProp} = ${relationshipProps[relProp]},`)
+            .map((relProp) => ` r.${relProp} = "${relationshipProps[relProp]}",`)
             .join()
             .slice(0, -1),
         )

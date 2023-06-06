@@ -22,5 +22,8 @@ module.exports = {
       id: 5,
       label: 'cancelled',
     },
-  ]
+  ],
+  users: {
+    registerGuests: false,
+  }
 }

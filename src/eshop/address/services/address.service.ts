@@ -10,6 +10,10 @@ import { UserService } from '~root/user/services/user.service';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { boolean, object, string } from "yup";
 import { extractValidationErrors } from "~helpers/validation";
+import { IAddress } from "~eshop/models/checkout";
+import { InvalidAddressException } from "~eshop/address/exceptions/invalid-address.exception";
+import { BaseModel } from "~models/base.model";
+import { UserModel } from "~user/models/user.model";
 
 export class AddressModelDto {
   userId?: string;
@@ -27,7 +31,7 @@ export class AddressModelDto {
 export class AddressService extends BaseNeoService {
   protected changeLog: ChangeLogService;
   protected eventEmitter: EventEmitter2;
-  static availableTypes = ['SHIPPING', 'BILLING'];
+  static availableTypes = ['SHIPPING', 'BILLING', 'OTHER'];
 
   constructor() {
     super();
@@ -50,7 +54,7 @@ export class AddressService extends BaseNeoService {
     }
     const r = await super.store(record, userId);
 
-    await new UserService().attachToModelById(userId, r.uuid, 'address');
+    await new UserService().attachToModelById(userId, r.uuid, 'address',  {type: record.type});
 
     return r;
   }
@@ -66,6 +70,10 @@ export class AddressService extends BaseNeoService {
   }
 
   static validateAddress(address: AddressModelDto) {
+    if (address.uuid) {
+      return {success: true};
+    }
+
     const schema = object({
       firstName: string().required(),
       lastName: string().required(),
@@ -105,5 +113,76 @@ export class AddressService extends BaseNeoService {
     }
 
     return {success: true};
+  }
+
+  async attachAddressToUser(address: IAddress, userId: string, type: 'SHIPPING'|'BILLING'|'OTHER' = 'SHIPPING') {
+    const validator = AddressService.validateAddress(address);
+    if (!validator.success) {
+      throw new InvalidAddressException('INVALID_ADDRESS', '600.1', validator.errors);
+    }
+
+    address.type = type;
+
+    const user = await new UserService().findOne({uuid: userId}, ['address']);
+
+
+    if (!Array.isArray(user.address) || user.address.length === 0) {
+      // add a new address
+      try {
+        return await this.store(address, user.uuid);
+      }
+      catch (e) {
+        console.log(e)
+        throw new RecordStoreFailedException('Failed to store address', '600.2', e);
+      }
+    }
+
+    const query = `
+    MATCH (n:Address) WHERE n.uuid IN $uuids
+    OPTIONAL MATCH (n)<-[r:HAS_ADDRESS]-(u:User) WHERE u.uuid = $userId
+    return n as address, r as rel, u as user;
+    `;
+
+    const res = await this.neo.readWithCleanUp(query, {uuids: user.address.map(a => a['uuid']), userId});
+    const existingAddresses = res.map(r => ({...r.address, type: r.rel.type}));
+
+    // There's no good way to figure out if this address is indeed new or not, so we'll try to match some fields and go for it
+    const found = existingAddresses.find(a => {
+      return a.street === address.street && a.city === address.city && a.country === address.country && a.postCode === address.postCode;
+    });
+
+    if (found && found.type !== type) {
+      // update the address just in case some extra info came through
+      await this.update(found['uuid'], address);
+      // add a new relationship for this type
+
+      const res = await this.neo.writeWithCleanUp(`
+      MATCH (n:Address) WHERE n.uuid = $addressUuid
+      MATCH (u:User) WHERE u.uuid = $userId
+      MERGE (u)-[r:HAS_ADDRESS {type: $type}]->(n)
+      ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ,  r.type = $type
+      ON MATCH SET r.updatedAt = datetime()
+      return n as address
+      `, {
+        addressUuid: found['uuid'],
+        userId,
+        type
+      });
+      return res[0]['address'];
+    }
+
+    if (found && found.type === type) {
+      // update the address just in case some extra info came through
+      return await this.update(found['uuid'], address);
+    }
+
+    // add a new address
+    try {
+      return await this.store(address, user.uuid);
+    }
+    catch (e) {
+      console.log(e)
+      throw new RecordStoreFailedException('Failed to store address', '600.2', e);
+    }
   }
 }

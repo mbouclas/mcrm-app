@@ -10,10 +10,11 @@ import { OrderService } from "~eshop/order/services/order.service";
 import { ICheckoutStore } from "~eshop/models/checkout";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { ProductModel } from "~catalogue/product/models/product.model";
-import { IPaymentMethodProvider } from "~eshop/payment-method/models/providers.types";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { capitalize } from "lodash";
 import type { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
+import { BaseShippingMethodProvider } from "~eshop/shipping-method/providers/base-shipping-method.provider";
+import { AddressService } from "~eshop/address/services/address.service";
 
 
 export interface IStoreInitialQuery {
@@ -26,6 +27,8 @@ export interface ICheckUserEmailResult {
   email: string;
   type?: 'guest'|'user';
   exists: boolean;
+  error?: string;
+  reason?: string;
 }
 
 
@@ -55,13 +58,15 @@ export class StoreController {
       return {success: false, message: 'Cart is empty', error: 'CART_EMPTY'};
     }
 
-    let userId,
-      user = {email: 'mbouclas@gmail.com'},
+    if (!session.user || !session.user['uuid']) {
+      return {success: false, message: 'User not set', error: 'USER_NOT_SET'};
+    }
+
+
+    let userId = session.user.uuid,
+      user = session.user,
     validatedOrder;
 
-/*    if (!session.user || !session.user['uuid']) {
-      return {success: false, message: 'User not found', error: 'USER_NOT_FOUND'};
-    }*/
     try {
       validatedOrder = await (new OrderService()).processStoreOrder(body);
     }
@@ -70,14 +75,37 @@ export class StoreController {
     }
 
     const cart = session.cart;
-    const products = await new ProductService().find({
-      uuids: cart.items.map((item) => item.productId),
-    });
 
-    let fullPrice = products.data.reduce(
-      (accumulator, productItem: ProductModel) => (productItem.price ? accumulator + productItem.price : accumulator),
-      0,
-    );
+    // validate cartItems against products
+    cart.items = await OrderService.validateCartItems(cart.items);
+
+    const orderService=  new OrderService();
+
+    let order,
+      orderModel = {
+        userId,
+        total: OrderService.calculateTotalPrice(cart.items),
+        shippingMethod: body.shippingMethod.uuid,
+        paymentMethod: body.paymentMethod.uuid,
+        notes: body.notes,
+      };
+    // Write the order first
+    try {
+      order = await orderService.store(orderModel, userId);
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    // Attach the products
+    try {
+      await orderService.attachProductsToOrder(order.uuid, cart.items);
+    }
+    catch (e) {
+      console.log('Error attaching products', e.getMessage(), e.getErrors());
+    }
+    // Attach the payment method
+    // Attach the shipping method
 
     const {paymentMethod, shippingMethod} = validatedOrder;
 
@@ -86,10 +114,10 @@ export class StoreController {
     });
 
     const paymentMethodProvider: BasePaymentMethodProvider = new paymentProviderContainer.reference({
-      paymentMethod,
+      method: paymentMethod,
       cart,
-      order: body,
-      user
+      order,
+      user,
     }) as BasePaymentMethodProvider;
 
     try {
@@ -97,7 +125,7 @@ export class StoreController {
     }
     catch (e) {
       console.log(e)
-      return {success: false, message: 'Error processing payment', error: e.getMessage(), errors: e.getErrors(), code: e.getCode()};
+      return {success: false, message: 'Error processing payment method', error: e.getMessage(), errors: e.getErrors(), code: e.getCode()};
     }
 
 
@@ -105,25 +133,42 @@ export class StoreController {
       id: `${capitalize(shippingMethod.providerName)}Provider`,
     });
 
+    const shippingMethodProvider: BaseShippingMethodProvider = new shippingProviderContainer.reference({
+      method: shippingMethod,
+      cart,
+      order,
+      user,
+    });
 
-/*    orderService.store(
-      {
-        status: 1,
-        paymentMethod: paymentMethod.title,
-        shippingMethod: shippingMethod.title,
-        salesChannel: body.salesChannel,
-        billingAddressId: billingAddress.uuid,
-        shippingAddressId: shippingAddress.uuid,
-        paymentStatus: 1,
-        shippingStatus: 1,
-        paymentInfo,
-        shippingInfo,
-        userId,
-      },
-      '',
-      rels,
-    ),*/
+    try {
+        await shippingMethodProvider.handle();
+    }
+    catch (e) {
+      console.log(e)
+      return {success: false, message: 'Error processing shipping', error: e.getMessage(), errors: e.getErrors(), code: e.getCode()};
+    }
 
-    return {success: true, message: 'Order processed',  cart: cart.count(), fullPrice};
+    // Attach the addresses to the order
+    try {
+      const addressAttachmentResult = await orderService.attachAddressesToOrder(order.uuid, [{...body.billingInformation, ...{type: 'BILLING'}}, {...body.shippingInformation, ...{type: 'SHIPPING'}}]);
+      if (addressAttachmentResult.unsavedAddresses.length > 0) {
+        // Save the addresses
+        const addressService = new OrderService(),
+        fixedAddresses = []
+        for (let idx = 0; addressAttachmentResult.unsavedAddresses.length > idx; idx++) {
+          fixedAddresses.push(await (new AddressService()).attachAddressToUser(addressAttachmentResult.unsavedAddresses[idx], session.user.uuid, addressAttachmentResult.unsavedAddresses[idx].type));
+        }
+        // go again
+        await orderService.attachAddressesToOrder(order.uuid, fixedAddresses);
+      }
+    }
+    catch (e) {
+      console.log('Error attaching products', e.message, e.getErrors());
+      return {success: false, message: 'Error attaching addresses', error: e.message};
+    }
+
+
+
+    return {success: true, message: 'Order processed',  order: order.uuid};
   }
 }

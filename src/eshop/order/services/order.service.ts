@@ -9,11 +9,14 @@ import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { v4 } from 'uuid';
-import { ICheckoutStore, IPaymentMethod, IShippingMethod } from "~eshop/models/checkout";
+import { IAddress, ICheckoutStore, IPaymentMethod, IShippingMethod } from "~eshop/models/checkout";
 import { AddressService } from "~eshop/address/services/address.service";
 import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
 import { PaymentMethodService } from "~eshop/payment-method/services/payment-method.service";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
+import { ICartItem } from "~eshop/cart/cart.service";
+import { ProductModel } from "~catalogue/product/models/product.model";
+import { ProductService } from "~catalogue/product/services/product.service";
 
 export class OrderModelDto {
   orderId?: string;
@@ -159,36 +162,38 @@ export class OrderService extends BaseNeoService {
       relationshipProps?: IGenericObject;
     }>,
   ) {
-    const existsStatus = OrderService.statuses.some((statusItem) => statusItem.id === record.status);
-
-    if (!existsStatus) {
-      throw new RecordStoreFailedException('Invalid status');
+    if (!record.status) {
+      record.status = OrderService.statuses[0].id;
     }
 
-    const existsPaymentStatus = OrderService.paymentStatuses.some(
-      (statusItem) => statusItem.id === record.paymentStatus,
-    );
-
-    if (!existsPaymentStatus) {
-      throw new RecordStoreFailedException('Invalid payment status');
+    if (!record.paymentStatus) {
+      record.paymentStatus = OrderService.paymentStatuses[0].id;
     }
 
-    const existsShippingStatus = OrderService.shippingStatuses.some(
-      (statusItem) => statusItem.id === record.shippingStatus,
-    );
-
-    if (!existsShippingStatus) {
-      throw new RecordStoreFailedException('Invalid shipping status');
+    if (!record.shippingStatus) {
+      record.shippingStatus = OrderService.shippingStatuses[0].id;
     }
 
-    const orderId = v4();
-    record.orderId = orderId;
+    if (!record.salesChannel) {
+      record.salesChannel = 'web';
+    }
+
+    if (!record.orderId) {
+      record.orderId = v4();
+    }
+
     record.VAT = OrderService.VAT;
 
-    const r = await super.store(record, userId, relationships);
-    this.eventEmitter.emit('order.completed', r);
+    try {
+      const r = await super.store(record, userId, relationships);
+      this.eventEmitter.emit('order.completed', r);
 
-    return r;
+      return r;
+    }
+    catch (e) {
+      throw new InvalidOrderException('ORDER_STORE_ERROR', '900.0', e.getErrors());
+    }
+
   }
 
   async update(uuid: string, record: OrderModelDto, userId?: string) {
@@ -249,5 +254,101 @@ export class OrderService extends BaseNeoService {
     }
 
     return found;
+  }
+
+  static calculateTotalPrice(items: ICartItem[]) {
+    let total = 0;
+    items.forEach((item) => {
+      total += item.price * item.quantity;
+    });
+
+    return total;
+  }
+
+  async attachProductsToOrder(uuid, items: ICartItem[]) {
+    let query = `MATCH (o:Order {uuid: '${uuid}'}) `;
+    query += items.map((item, index) => {
+      let q = ''
+      if (item.variantId) {
+        q += `MATCH (v${index}:ProductVariant {uuid: '${item.variantId}'}) `;
+        q += `MERGE (o)-[r${index}:HAS_ITEM]->(v${index}) 
+        ON CREATE SET r${index}.quantity = ${item.quantity}, r${index}.createdAt = timestamp()
+        ON MATCH SET r${index}.quantity = ${item.quantity}, r${index}.updatedAt = timestamp()
+        `;
+        return q;
+      }
+
+      q += `MATCH (p${index}:Product {uuid: '${item.productId}'}) `;
+      q += `MERGE (o)-[r${index}:HAS_ITEM]->(p${index})
+      ON CREATE SET r${index}.quantity = ${item.quantity}, r${index}.createdAt = timestamp()
+      ON MATCH SET r${index}.quantity = ${item.quantity}, r${index}.updatedAt = timestamp()
+      `;
+
+      return q;
+    }).join('\n WITH * \n');
+
+    query += `RETURN *`;
+
+    try {
+      await this.neo.write(query);
+    }
+    catch (e) {
+      throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e.getErrors());
+    }
+
+    return true;
+  }
+
+  /**
+   * Attach addresses to order
+   * @param orderId
+   * @param addresses
+   */
+  async attachAddressesToOrder(orderId: string, addresses: IAddress[]): Promise<{unsavedAddresses: IAddress[], correctAddresses: IAddress[]}> {
+    const unsavedAddresses = addresses.filter(a => !a.uuid);
+
+    const correctAddresses = addresses.filter(a => a.uuid);
+
+    try {
+      await this.neo.write(`
+        MATCH (o:Order {uuid: '${orderId}'})
+        UNWIND $addresses AS address
+        MATCH (a:Address {uuid: address.uuid})
+        MERGE (o)-[r:HAS_ADDRESS {type: address.type}]->(a)
+        ON CREATE SET r.createdAt = timestamp(), r.type = address.type
+        ON MATCH SET r.updatedAt = timestamp(), r.type = address.type
+        return *
+      `, {addresses: correctAddresses});
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    return {unsavedAddresses, correctAddresses};
+  }
+
+  static async validateCartItems(items: ICartItem[]) {
+    const products = await new ProductService().find({
+      active: true, uuids: items.map((item) => item.productId),
+    });
+    // fix any "broken" prices
+    const toRemove = [];
+    // remove any products that are not available
+    items.forEach((item, idx) => {
+      const found = products.data.find(p => p['uuid'] === item.productId) as ProductModel;
+      if (!found) {
+        toRemove.push(idx);
+      }
+
+      // Check stock, if not enough, remove item
+
+      item.price = found.price;
+    });
+
+    toRemove.forEach((idx) => {
+      items.splice(idx, 1);
+    });
+
+    return items;
   }
 }

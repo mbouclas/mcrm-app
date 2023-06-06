@@ -7,6 +7,7 @@ import { McmsDi } from '../../helpers/mcms-component.decorator';
 import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { IAddress } from "~eshop/models/checkout";
 
 const modelName = 'User';
 @McmsDi({
@@ -27,6 +28,8 @@ export class UserModel extends BaseModel {
   public tempPassword?: string;
   public uuid?: string;
   public type?: 'user' | 'guest';
+  public address?: IAddress[] = [];
+
   public static modelConfig: INeo4jModel = {
     select: 'user:User',
     as: 'user',
@@ -88,6 +91,28 @@ export class UserModel extends BaseModel {
       placeholder: 'Surname',
       isSortable: true,
       required: true,
+      isDisplayedColumn: true,
+      exported: true,
+      type: 'text',
+      group: 'main',
+    },
+    {
+      varName: 'type',
+      label: 'Type',
+      placeholder: 'User Type',
+      isSortable: true,
+      required: false,
+      isDisplayedColumn: true,
+      exported: true,
+      type: 'text',
+      group: 'main',
+    },
+    {
+      varName: 'phone',
+      label: 'Phone',
+      placeholder: 'Phone',
+      isSortable: true,
+      required: false,
       isDisplayedColumn: true,
       exported: true,
       type: 'text',

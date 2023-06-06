@@ -40,7 +40,7 @@ export class OrderController {
     const userId = session.user && session.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new OrderService().findAll({ userId }, rels);
+    return await new OrderService().findAll({  }, rels);
   }
 
   @Get(':uuid')
@@ -106,6 +106,7 @@ export class OrderController {
       throw new RecordNotFoundException('No items in cart');
     }
 
+    // The userId must be posted. This is a method for the admin, not the system users
     const userId = session.user && session.user['uuid'];
 
     const orderService = new OrderService();

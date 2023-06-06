@@ -3,13 +3,14 @@ import { Injectable } from '@nestjs/common';
 import { IGenericObject, IPagination } from '~models/general';
 import { store } from '~root/state';
 import { UserModel } from '~user/models/user.model';
-import { BaseNeoService } from '~shared/services/base-neo.service';
+import { BaseNeoService, IBaseNeoServiceRelationships } from "~shared/services/base-neo.service";
 import { OnEvent } from '@nestjs/event-emitter';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { ChangeLogService } from '~change-log/change-log.service';
 import { AuthService } from '~root/auth/auth.service';
 import { MailService } from '~root/mail/services/mail.service';
 import { GateService } from '~root/auth/gate.service';
+import { CouldNotSaveGuestUserException } from "~user/exceptions/could-not-save-guest-user.exception";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -116,9 +117,9 @@ export class UserService extends BaseNeoService {
     return r;
   }
 
-  async store(record: UserModelDto, userId?: string) {
+  async store(record: UserModelDto, userId?: string, relationships:IBaseNeoServiceRelationships[] = []) {
     if (!record.type) {record.type = 'user';}
-    const r = await super.store(record, userId);
+    const r = await super.store(record, userId, relationships);
 
     if (record.type === 'guest') {
       this.eventEmitter.emit('guest.user.created', r);
@@ -213,4 +214,19 @@ export class UserService extends BaseNeoService {
 
     return user['role'].filter((role) => role.level > 2).length > 0;
   }
+
+  async registerGuestUser(email: string, userInfo?: IGenericObject) {
+    try {
+
+      return await this.store({ email, ...userInfo, type: 'guest' }, null, [{
+        id: 'guest',
+        name: 'role',
+        searchKey: 'name',
+      }]);
+    }
+    catch (e) {
+      throw new CouldNotSaveGuestUserException(e.message, '100.6');
+    }
+  }
+
 }

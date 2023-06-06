@@ -49,7 +49,10 @@ export interface IAddress {
   phone: string;
   street: string;
   region: string;
+  postCode: string;
   default: boolean;
+  type?: 'SHIPPING' | 'BILLING' | 'OTHER';
+  uuid?: string;
 }
 
 export interface ICheckoutStore {
@@ -60,4 +63,5 @@ export interface ICheckoutStore {
   paymentMethod: IPaymentMethod;
   orderMetaData?: IOrderMetaData;
   useBillingInformation: boolean;
+  notes?: string;
 }

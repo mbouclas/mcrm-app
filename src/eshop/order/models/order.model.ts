@@ -47,6 +47,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         rel: 'HAS_PRODUCT',
       },
+      variant: {
+        model: 'ProductVariant',
+        modelAlias: 'variant',
+        alias: 'productVariantRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_PRODUCT_VARIANT',
+      },
       user: {
         model: 'User',
         modelAlias: 'user',

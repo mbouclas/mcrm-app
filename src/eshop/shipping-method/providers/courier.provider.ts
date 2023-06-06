@@ -1,46 +1,19 @@
 import { McmsDi } from "~helpers/mcms-component.decorator";
-import { IShippingMethodProvider, IShippingMethodProviderConfig } from "~eshop/shipping-method/models/providers.types";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IPickUpProviderConfig } from "~eshop/shipping-method/providers/pickUp.provider";
 
+import {
+  BaseShippingMethodProvider,
+  IBaseShippingMethodProviderSettings
+} from "~eshop/shipping-method/providers/base-shipping-method.provider";
+export interface ICourierProviderConfig extends IBaseShippingMethodProviderSettings {
+
+}
 @McmsDi({
   id: 'CourierProvider',
   type: 'class',
 })
-export class CourierProvider implements IShippingMethodProvider {
-  protected config: IPickUpProviderConfig;
-  protected settingsFields: IDynamicFieldConfigBlueprint[] = [
-    {
-      varName: 'description',
-      label: 'Description',
-      type: 'string',
-    },
-    {
-      varName: 'deliveryTime',
-      label: 'DeliveryTime',
-      type: 'string',
-    },
-    {
-      varName: 'trackingUrl',
-      label: 'TrackingUrl',
-      type: 'string',
-    },
-  ];
-  public setConfig(config: IPickUpProviderConfig) {
-    this.config = config;
-    return this;
-  }
+export class CourierProvider extends BaseShippingMethodProvider{
+  protected config: ICourierProviderConfig;
 
-  public getFields() {
-    return this.settingsFields;
-  }
 
-  public getSettings() {}
-
-  public async sendTransaction() {
-    return JSON.stringify({
-      status: 'SUCCESS',
-    });
-  }
 
 }
