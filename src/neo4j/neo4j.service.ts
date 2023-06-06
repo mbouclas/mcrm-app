@@ -105,8 +105,8 @@ export class Neo4jService implements OnApplicationShutdown {
   }
 
   static parseNeoProperties(obj) {
-    for (let key in obj) {
-      let item = obj[key];
+    for (const key in obj) {
+      const item = obj[key];
 
       if (Array.isArray(item)) {
         obj[key] = item.map((i) => {
@@ -195,7 +195,7 @@ export class Neo4jService implements OnApplicationShutdown {
    * @param parentKey
    */
   mergeRelationshipsToParentWithAlias(record: any, model: any, aliasKeyMap: any) {
-    let parentKey = model.modelConfig.as;
+    const parentKey = model.modelConfig.as;
 
     if (!record) {
       return null;
@@ -206,7 +206,7 @@ export class Neo4jService implements OnApplicationShutdown {
     if (!obj) {
       return record;
     }
-    for (let key in record) {
+    for (const key in record) {
       if (key === parentKey) {
         continue;
       }
@@ -254,7 +254,7 @@ export class Neo4jService implements OnApplicationShutdown {
       };
     }, {});
 
-    let parentKey = model.modelConfig.as;
+    const parentKey = model.modelConfig.as;
 
     if (!record) {
       return null;
@@ -265,7 +265,7 @@ export class Neo4jService implements OnApplicationShutdown {
     if (!obj) {
       return record;
     }
-    for (let key in record) {
+    for (const key in record) {
       if (key === parentKey) {
         continue;
       }

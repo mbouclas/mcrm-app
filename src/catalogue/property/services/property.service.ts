@@ -13,7 +13,7 @@ export class PropertyService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {}
+  async onAppLoaded() { }
 
   /**
    * Get all properties with their values assigned to this model
@@ -54,7 +54,9 @@ export class PropertyService extends BaseNeoService {
 
   public async getPropertyWithValues(filterBy: IBaseFilter, values?: string[]) {
     const filter = extractSingleFilterFromObject(filterBy);
-    const query = `MATCH (property:Property {${filter.key}:'${filter.value}'})-[r:HAS_VALUE]->(value:PropertyValue)
+    const query = `
+    MATCH (property:Property {${filter.key}:'${filter.value}'})
+    OPTIONAL MATCH (property)-[r:HAS_VALUE]->(value:PropertyValue)
     return property, collect(DISTINCT value) as values;
     `;
 
@@ -84,15 +86,15 @@ export class PropertyService extends BaseNeoService {
     return !withProperty
       ? res.map((record) => record.value)
       : res.map((record) => {
-          const temp = record.value;
-          return { ...temp, ...{ property: record.property } };
-        });
+        const temp = record.value;
+        return { ...temp, ...{ property: record.property } };
+      });
   }
 
   async getAllPropertyValues() {
     const res = await this.neo.readWithCleanUp(`
     MATCH (value:PropertyValue) return value`);
 
-    return res.map(record => record.value);
+    return res.map((record) => record.value);
   }
 }
