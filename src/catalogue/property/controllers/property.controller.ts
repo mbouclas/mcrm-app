@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Session, Get, Delete, Param, Query } from '@nestjs/common';
+import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
 import { PropertyService } from '~catalogue/property/services/property.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
@@ -8,7 +8,7 @@ import { PropertyValueService } from '../services/propertyValue.service';
 
 @Controller('api/property')
 export class PropertyController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -55,9 +55,30 @@ export class PropertyController {
       }),
     );
 
-    console.log(body, rels);
-
     await new PropertyService().store(body, null, rels);
+
+    return { success: true };
+  }
+
+  @Patch(':uuid')
+  async patch(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    const propertyValues = body.propertyValue;
+
+    let rels = [];
+    await Promise.all(
+      propertyValues.map(async (propertyValue) => {
+        const propertyValueCreated = await new PropertyValueService().update(propertyValue.uuid, propertyValue);
+        rels = [
+          ...rels,
+          {
+            id: propertyValueCreated?.uuid,
+            name: 'propertyValue',
+          },
+        ];
+      }),
+    );
+
+    await new PropertyService().update(uuid, body, null, rels);
 
     return { success: true };
   }
