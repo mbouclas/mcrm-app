@@ -15,6 +15,7 @@ export class CartMiddleware implements NestMiddleware {
   async use(req: any, res: any, next: () => void) {
     const cart = new Cart();
     let userId;
+
     let sessionId = req.session.id;
     let session;
     req.userSession = req.session;
@@ -46,23 +47,40 @@ export class CartMiddleware implements NestMiddleware {
     }
 
     //If no existing cart is found, a new one will be created and passed down to the controller
+
     await cart.initialize(sessionId, userId);
 
     req.session.cart = cart;
     req['userSession'].cart = cart;
 
-    redisSessionStore.destroy(req.session.id, (err) => {
-
-      res.header('x-sess-id', sessionId);
-      next();
-    });
+/*    redisSessionStore.destroy(req.session.id, (err) => {
 
 
+    });*/
+    await (new UserSession(req)).set(session)
+
+    res.header('x-sess-id', sessionId);
+    next();
   }
 }
 
 export class UserSession {
   constructor(protected req: Request) {
+  }
+
+  async set(session: SessionData) {
+    if (!session) {
+      return ;
+    }
+    return new Promise((resolve, reject) => {
+      redisSessionStore.set(this.req['userSessionId'], session, (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        resolve(true);
+      });
+    });
   }
 
   async get(): Promise<any> {
@@ -92,6 +110,10 @@ export class UserSession {
           return reject(err);
         }
 
+        if (!session) {
+          resolve({});
+        }
+
         session[key] = sessionData;
 
         redisSessionStore.set(this.req['userSessionId'], session, (err) => {
@@ -102,6 +124,18 @@ export class UserSession {
           resolve(session);
         });
 
+      });
+    });
+  }
+
+  async destroy() {
+    return new Promise((resolve, reject) => {
+      redisSessionStore.destroy(this.req['userSessionId'], (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        resolve(true);
       });
     });
   }

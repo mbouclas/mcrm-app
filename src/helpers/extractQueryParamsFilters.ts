@@ -276,5 +276,9 @@ export async function modelPostProcessing(record: Record<any, any>, model: typeo
 }
 
 export async function modelsPostProcessing(records: Record<any, any>[], model: typeof BaseModel) {
-  return await Promise.all(records.map(async rec => await modelPostProcessing(rec, model)));
+  for (let idx =0; idx < records.length; idx++) {
+    records[idx] = await modelPostProcessing(records[idx], model);
+  }
+  return records;
+  // return await Promise.all(records.map(async rec => await modelPostProcessing(rec, model)));
 }

@@ -582,7 +582,7 @@ export class BaseNeoService {
     return { success: true };
   }
 
-  relationshipQuery(relationshipProps, relSelector?: string) {
+  relationshipQuery(relationshipProps, relSelector: string = 'r') {
     const createSetRelationship = relationshipProps
       ? ', '.concat(
           Object.keys(relationshipProps)
@@ -821,5 +821,9 @@ MATCH(n1: ${sourceModelName} { ${sourceFilterQuery.key}: '${sourceFilterQuery.va
     } catch (e) {
       throw new RecordUpdateFailedException(e);
     }
+  }
+
+  public notify(eventName: string, payload: any) {
+    this.eventEmitter.emit(eventName, payload);
   }
 }

@@ -65,5 +65,21 @@ export class CartModel extends BaseModel implements OnModuleInit {
       isSortable: true,
       group: 'main',
     },
+    {
+      varName: 'items',
+      label: 'Items',
+      placeholder: 'Items',
+      type: 'json',
+      isSortable: false,
+      group: 'hidden',
+    },
+    {
+      varName: 'metaData',
+      label: 'Meta Data',
+      placeholder: 'Meta Data',
+      type: 'json',
+      isSortable: false,
+      group: 'hidden',
+    },
   ];
 }

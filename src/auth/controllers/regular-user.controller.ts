@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Inject, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Inject, Param, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
 import { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import OAuth2Server, { Request as Oauth2Request, Response as Oauth2Response } from "oauth2-server";
 import { InvalidCredentials, UserExists } from "~root/auth/exceptions";
@@ -16,6 +16,9 @@ import { SessionData } from "express-session";
 import { IAddress } from "~eshop/models/checkout";
 import { AddressService } from "~eshop/address/services/address.service";
 import { UserSession } from "~eshop/middleware/cart.middleware";
+import { SharedModule } from "~shared/shared.module";
+import { CartService } from "~eshop/cart/cart.service";
+import { CacheService } from "~shared/services/cache.service";
 
 
 export class RegisterGuestDto {
@@ -44,7 +47,12 @@ export class AddressSyncDto {
 
 @Controller("user")
 export class RegularUserController {
-  constructor(@Inject(OAUTH2) private server: OAuth2Server) {
+
+  constructor(
+    @Inject(OAUTH2) private server: OAuth2Server,
+
+  ) {
+
   }
 
   @Post("/login")
@@ -53,7 +61,8 @@ export class RegularUserController {
     @Req() req: ExpressRequest,
     @Res() res: ExpressResponse,
   ) {
-    const session: SessionData = req['userSession'];
+    const Session = new UserSession(req),
+      session: SessionData = await Session.get();
     const request = new Oauth2Request(req);
     const response = new Oauth2Response(res);
 
@@ -61,6 +70,7 @@ export class RegularUserController {
       const result = await this.server.token(request, response);
       // Make sure this matches the old one
       req.session.user = result;
+      await Session.update('user', result);
       res.header("x-sess-id", req.session.id);
 
       const userService = new UserService();
@@ -73,9 +83,27 @@ export class RegularUserController {
     }
   }
 
-  @Delete("/logout/:token")
-  async logout(@Req() req: ExpressRequest, @Res() res: ExpressResponse) {
+  @Delete("/logout/")
+  async logout(@Req() req: ExpressRequest) {
+    const token = req.header('Authorization');
+    if (!token) {
+      return { success: false, message: "Failed to logout user", reason: "100.11" };
+    }
 
+    const Session = new UserSession(req),
+      session: SessionData = await Session.get();
+
+    await Session.update('user', {});
+    req.session.user = {};
+
+    try {
+      await (new AuthService()).logout(token);
+    }
+    catch (e) {
+      return { success: false, message: "Failed to logout user", reason: e.message };
+    }
+
+    return {success: true};
   }
 
   @Post("details")
@@ -153,6 +181,8 @@ export class RegularUserController {
         await Session.update('user',user);
       }
 
+      // SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId: user.uuid, cart: session.cart});
+
       return {
         email: data.email,
         type: user.type || "user",
@@ -186,6 +216,7 @@ export class RegularUserController {
 
     await Session.update('user',user);
 
+    // SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId: user.uuid, cart: session.cart});
     return {
       email: data.email,
       exists: false

@@ -6,7 +6,7 @@ import { BaseModel } from "~models/base.model";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
 import { store } from "~root/state";
 import { SessionData } from "express-session";
-import { OrderService } from "~eshop/order/services/order.service";
+import { OrderEventNames, OrderService } from "~eshop/order/services/order.service";
 import { ICheckoutStore } from "~eshop/models/checkout";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { ProductModel } from "~catalogue/product/models/product.model";
@@ -15,6 +15,9 @@ import { capitalize } from "lodash";
 import type { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
 import { BaseShippingMethodProvider } from "~eshop/shipping-method/providers/base-shipping-method.provider";
 import { AddressService } from "~eshop/address/services/address.service";
+import { SharedModule } from "~shared/shared.module";
+import { CartService } from "~eshop/cart/cart.service";
+import { OrderModel } from "~eshop/order/models/order.model";
 
 
 export interface IStoreInitialQuery {
@@ -88,6 +91,7 @@ export class StoreController {
         shippingMethod: body.shippingMethod.uuid,
         paymentMethod: body.paymentMethod.uuid,
         notes: body.notes,
+        metaData: body.orderMetaData,
       };
     // Write the order first
     try {
@@ -164,10 +168,19 @@ export class StoreController {
     }
     catch (e) {
       console.log('Error attaching products', e.message, e.getErrors());
-      return {success: false, message: 'Error attaching addresses', error: e.message};
+      return {success: false, message: 'ERROR_ATTACHING_ADDRESS', error: e.message};
     }
 
+    // Attach the cart to the order
+    try {
+      await (new CartService()).attachModelToCart(OrderModel, {uuid: order.uuid}, cart.id);
+    }
+    catch (e) {
+      console.log('Error attaching cart', e.message, e);
+      return {success: false, message: 'ERROR_ATTACHING_CART', error: e.message};
+    }
 
+    (new OrderService).notify(OrderEventNames.orderAttachedToNodes, order);
 
     return {success: true, message: 'Order processed',  order: order.uuid};
   }
