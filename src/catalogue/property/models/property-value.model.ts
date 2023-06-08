@@ -61,7 +61,7 @@ export class PropertyValueModel extends BaseModel {
       type: 'text',
       group: 'hidden',
       isSlug: true,
-      slugFrom: 'title',
+      slugFrom: 'name',
     },
   ];
 }
