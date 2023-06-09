@@ -207,8 +207,9 @@ export class Cart implements OnModuleInit, ICart {
 
       this.loadExistingCart(cart);
       this.eventEmitter.emit(Cart.cartReadyEventName, {
-        cart: this.toObject(),
+        cart: this.toObject(), userId
       });
+      SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId, cart: this});
       return this;
     } catch (e) {
       // No cart found... Move on
@@ -226,7 +227,9 @@ export class Cart implements OnModuleInit, ICart {
       this.initializeDefaults(id);
     }
 
-    this.eventEmitter.emit(Cart.cartReadyEventName, { cart: this.toObject() });
+    this.eventEmitter.emit(Cart.cartReadyEventName, { cart: this.toObject(), userId });
+
+    SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId, cart: this});
     return this;
 
     /*  if (!userId) {

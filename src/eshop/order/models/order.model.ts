@@ -6,6 +6,9 @@ import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PaymentMethodModel } from '../../payment-method/models/payment-method.model';
 import { ShippingMethodModel } from '../../shipping-method/models/shipping-method.model';
 import { AddressModel } from '~root/eshop/address/models/address.model';
+import { CartModel } from "~eshop/models/Cart.model";
+import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 
 const modelName = 'Order';
 @McmsDi({
@@ -45,7 +48,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         alias: 'productRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_PRODUCT',
+        rel: 'HAS_ITEM',
+        exactAliasQuery: true,
       },
       variant: {
         model: 'ProductVariant',
@@ -53,15 +57,49 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         alias: 'productVariantRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_PRODUCT_VARIANT',
+        rel: 'HAS_ITEM',
+        exactAliasQuery: true,
       },
+
       user: {
         model: 'User',
         modelAlias: 'user',
         alias: 'userRelationship',
         type: 'inverse',
         isCollection: false,
-        rel: 'HAS_USER',
+        rel: 'HAS_CREATED',
+      },
+
+      cart: {
+        model: 'Cart',
+        modelAlias: 'cart',
+        alias: 'cartRelationship',
+        type: 'normal',
+        isCollection: false,
+        rel: 'HAS_CART',
+        exactAliasQuery: true,
+        postProcessing: async (record: Record<any, any>, model: OrderModel) => {
+          if (!record || !record.cart) {
+            return record;
+          }
+
+          if (!Array.isArray(record.cart.items)) {
+            return record;
+          }
+
+          const products = await (new ProductService()).find({uuids: record.cart.items.map((item) => item.productId)});
+          record.cart.items.forEach((item) => {
+            item.product = products.data.find((product) => product['uuid'] === item.productId);
+          });
+
+
+          const variants = await (new ProductVariantService()).find({uuids: record.cart.items.map((item) => item.variantId)});
+          record.cart.items.forEach((item) => {
+            item.variant = variants.data.find((product) => product['uuid'] === item.variantId);
+          });
+
+          return record;
+        },
       },
 
       paymentMethod: {
@@ -202,6 +240,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           },
         ],
       },
+    },
+    {
+      varName: 'metaData',
+      label: 'Meta Data',
+      placeholder: 'Meta Data',
+      type: 'json',
+      isSortable: false,
+      group: 'hidden',
     },
     {
       varName: 'status',

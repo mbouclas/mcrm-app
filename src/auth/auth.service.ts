@@ -2,6 +2,7 @@ import { compare, genSalt, hash } from "bcryptjs";
 import { IOauthToken } from "~models/auth";
 import OAuth2Server from "oauth2-server";
 import { UserModel } from "~user/models/user.model";
+import { CacheService } from "~shared/services/cache.service";
 
 export type HashPassword = (
   password: string,
@@ -49,11 +50,21 @@ export class BcryptHasher implements PasswordHasher<string> {
 export class AuthService {
   public hasher: BcryptHasher;
   private resetKeyPrefix = 'reset-';
+  private cache: CacheService;
 
   constructor() {
     this.hasher = new BcryptHasher(10);
+    this.cache = new CacheService();
   }
 
+  async logout(token: string) {
+    try {
+      await this.cache.del(`token-${token}`);
+    }
+    catch (e) {
+      console.log(`Error deleting token ${token} from cache: ${e.message}`);
+    }
+  }
 }
 
 export function returnNewGuestUser(user: UserModel) {

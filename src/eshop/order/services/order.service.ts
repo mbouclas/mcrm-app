@@ -38,10 +38,27 @@ export class OrderModelDto {
   VAT?: number;
 }
 
+export enum OrderEventNames {
+  orderCreated = 'order.created',
+  orderUpdated = 'order.updated',
+  orderDeleted = 'order.deleted',
+  orderStatusChanged = 'order.status.changed',
+  orderPaymentStatusChanged = 'order.payment.status.changed',
+  orderShippingStatusChanged = 'order.shipping.status.changed',
+  orderCompleted = 'order.completed',
+  orderCancelled = 'order.cancelled',
+  orderShipped = 'order.shipped',
+  orderPaid = 'order.paid',
+  orderRefunded = 'order.refunded',
+  orderPartiallyRefunded = 'order.partially.refunded',
+  orderAttachedToNodes = 'order.attached.to.nodes',
+}
+
 @Injectable()
 export class OrderService extends BaseNeoService {
   protected changeLog: ChangeLogService;
-  protected eventEmitter: EventEmitter2;
+
+  public static onOrderCompletedEventName = 'order.completed';
 
   static statuses = [
     {
@@ -112,19 +129,19 @@ export class OrderService extends BaseNeoService {
     },
   ];
 
-  static VAT = 20;
+  static VAT = 0;
 
   constructor() {
     super();
     this.model = store.getState().models.Order;
 
     this.changeLog = new ChangeLogService();
-
   }
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
     OrderService.statuses = store.getState().configs['store']['orderStatuses'];
+    OrderService.VAT = store.getState().configs['store']['VAT'];
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
@@ -186,7 +203,7 @@ export class OrderService extends BaseNeoService {
 
     try {
       const r = await super.store(record, userId, relationships);
-      this.eventEmitter.emit('order.completed', r);
+      this.eventEmitter.emit(OrderEventNames.orderCreated, r);
 
       return r;
     }
@@ -351,4 +368,6 @@ export class OrderService extends BaseNeoService {
 
     return items;
   }
+
+
 }

@@ -1,4 +1,5 @@
 module.exports = {
+  VAT: 19,
   quickCheckout: true,
   guestCheckout: false,
   orderStatuses: [

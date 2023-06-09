@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '~shared/services/cache.service';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { IBaseFilter, IGenericObject } from '~models/general';
+import { IBaseFilter, IBaseModel, IGenericObject } from "~models/general";
 import { ICoupon } from '~eshop/cart/coupon.service';
 import { ICondition } from '~eshop/cart/condition.service';
 import { UserService } from '~user/services/user.service';
 import { UserNotFoundException } from '~user/exceptions/user-not-found.exception';
-import { Cart } from '~eshop/cart/Cart';
 import { UserModel } from '~user/models/user.model';
 import { OnEvent } from '@nestjs/event-emitter';
 import { store } from '~root/state';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
+import { Cart } from "~eshop/cart/Cart";
+import { CouldNotAttachUserToCartException } from "~eshop/cart/exceptions/could-not-attach-user-to-cart.exception";
+import { BaseModel } from "~models/base.model";
+import { CouldNotAttachModelToCartException } from "~eshop/cart/exceptions/could-not-attach-model-to-cart.exception";
 
 export interface ICartItem {
   uuid?: string;
@@ -48,7 +51,8 @@ export interface ICart {
 @Injectable()
 export class CartService extends BaseNeoService {
   protected redis: CacheService;
-
+  protected static cartReadyEventName = 'cart.ready';
+  public static userReadyToAttachEventName = 'cart.user.ready.to.attach';
   constructor() {
     super();
     this.model = store.getState().models.Cart;
@@ -58,6 +62,7 @@ export class CartService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     this.model = store.getState().models.Cart;
+
     /*        const s = new CartService();
             const cart = new Cart();
             const product = await (new ProductService()).findOne({ slug: "betty" });
@@ -88,13 +93,54 @@ export class CartService extends BaseNeoService {
             setTimeout(() => console.log(cart.toObject()), 600)*/
   }
 
+  @OnEvent(CartService.userReadyToAttachEventName)
+  async onUserReadyToAttach({ userId, cart }: { userId: string; cart: Cart }) {
+    console.log('-------------',cart.id, userId);
+    try {
+      await this.attachModelToCart(UserModel, { uuid: userId }, cart.id);
+    }
+    catch (e) {
+      console.log(e)
+    }
+  }
+
+  @OnEvent(CartService.cartReadyEventName)
+  async onCartReady({ cart, userId }: { cart: Cart, userId?: string }) {
+    if (!userId) {
+      return;
+    }
+
+    // console.log("Cart ready", cart.items, userId);
+    // await this.save(cart);
+  }
+
+
+  async attachModelToCart(model: typeof BaseModel, filter: IBaseFilter, cartId: string) {
+    const {key, value } = extractSingleFilterFromObject(filter);
+    const query = `
+      MATCH (c:Cart {id: "${cartId}"})
+      MATCH (m:${model.modelName} {${key}: "${value}"})
+      MERGE (m)-[r:HAS_CART]->(c)
+      ON CREATE SET  r.updatedAt = datetime(), r.createdAt = datetime()
+      ON MATCH SET   r.updatedAt = datetime()
+      RETURN *;
+    `;
+
+    try {
+      await this.neo.write(query, { cartId, value });
+    }
+    catch (e) {
+      throw new CouldNotAttachModelToCartException('COULD_NOT_ATTACH_MODEL_TO_CART', '200.0', e);
+    }
+  }
   async attachCartToUser(userFilter: IBaseFilter, cartId: string) {
     const user = await new UserService().findOne(userFilter);
     if (!user) {
       throw new UserNotFoundException(`Can't find user`);
     }
 
-    const query = `MATCH (u:User {uuid: $userId})
+    const query = `
+    MATCH (u:User {uuid: $userId})
     MATCH (c:Cart {id: $cartId})
     MERGE (u)-[r:HAS_CART]->(c)
     ON CREATE SET  r.updatedAt = datetime(), r.createdAt = datetime()
@@ -102,7 +148,12 @@ export class CartService extends BaseNeoService {
     RETURN *;
     `;
 
-    const res = await this.neo.write(query, { userId: user['uuid'], cartId });
+    try {
+      await this.neo.write(query, { userId: user['uuid'], cartId });
+    }
+    catch (e) {
+      throw new CouldNotAttachUserToCartException('COULD_NOT_ATTACH_USER_TO_CART', '200.1', e);
+    }
 
     return this;
   }

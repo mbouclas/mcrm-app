@@ -8,6 +8,7 @@ import { MoneyService } from './money.service';
 import { ConditionService } from './condition.service';
 import { CartModel } from "~eshop/models/Cart.model";
 
+
 @Module({
   imports: [
     SharedModule,
@@ -19,6 +20,7 @@ import { CartModel } from "~eshop/models/Cart.model";
     MoneyService,
     ConditionService,
     CartModel,
+
   ],
   controllers: [
     CartController,
