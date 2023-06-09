@@ -26,5 +26,47 @@ module.exports = {
   ],
   users: {
     registerGuests: false,
-  }
+  },
+  notifications: {
+    email: {
+      from: {
+        mail: 'mailer@mcrm.io',
+        name: 'Mailer'
+      },
+      adminEmail: {
+        mail: 'mailer@mcrm.io',
+        name: 'Mailer'
+      },
+      order: {
+        admin: {
+          created: {
+            subject: 'New order',
+            template: 'emails/notifications/admin/orders/order-created.liquid'
+          },
+          updated: {
+            subject: 'Order updated',
+            template: 'emails/notifications/admin/orders/order-updated.liquid'
+          },
+          cancelled: {
+            subject: 'Order cancelled',
+            template: 'emails/notifications/admin/orders/order-cancelled.liquid'
+          }
+        },
+        customer: {
+          created: {
+            subject: 'New order',
+            template: 'emails/notifications/customer/orders/order-created.liquid'
+          },
+          updated: {
+            subject: 'Order updated',
+            template: 'emails/notifications/customer/orders/order-updated.liquid'
+          },
+          cancelled: {
+            subject: 'Order cancelled',
+            template: 'emails/notifications/customer/orders/order-cancelled.liquid'
+          }
+        },
+      }
+    }
+  },
 }

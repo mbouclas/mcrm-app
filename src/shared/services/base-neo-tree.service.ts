@@ -169,7 +169,7 @@ export class BaseNeoTreeService extends BaseNeoService {
                         ',{a:a}) YIELD value
 
           return a, collect(distinct value) as children;`;
-
+// console.log('=---------', query)
     const res = await this.neo.readWithCleanUp(query, {});
 
     return sortBy(
@@ -182,9 +182,16 @@ export class BaseNeoTreeService extends BaseNeoService {
         if (children.length === 1 && !children[0]) {
           return category;
         }
+        // This stupid check is for when there's no children and the query returns children: [{category: null, parents: {}}]. It happens on root categories mainly
+        if (children.length === 1 && children[0].category === null) {
+          return category;
+        }
+
+
 
         category.children = sortBy(
           children.map((child) => {
+
             return {
               ...child.category,
               ...{ parents: child.parents },

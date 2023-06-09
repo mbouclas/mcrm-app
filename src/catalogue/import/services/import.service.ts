@@ -264,7 +264,7 @@ export class ImportService implements OnApplicationBootstrap {
     }
     let products: IImportSchema[] = [];
 
-    console.log('-=-----------', Object.entries(productsRaw).length, ' Products found ------------------');
+    // console.log('-=-----------', Object.entries(productsRaw).length, ' Products found ------------------');
     let idx = 0;
     try {
       products = Object.keys(productsRaw).map((key) => {

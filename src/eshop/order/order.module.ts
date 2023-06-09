@@ -4,6 +4,7 @@ import { SharedModule } from "~shared/shared.module";
 import { OrderModel } from './models/order.model';
 import { OrderController } from './controllers/order.controller';
 import { OrderService } from './services/order.service';
+import { OrderMailEvents } from "~eshop/order/event-handlers/order.mail.events";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { OrderService } from './services/order.service';
   providers: [
     OrderModel,
     OrderService,
+    OrderMailEvents,
   ],
   controllers: [OrderController]
 })

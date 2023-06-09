@@ -18,6 +18,7 @@ import { AddressService } from "~eshop/address/services/address.service";
 import { SharedModule } from "~shared/shared.module";
 import { CartService } from "~eshop/cart/cart.service";
 import { OrderModel } from "~eshop/order/models/order.model";
+import { RealIP } from "nestjs-real-ip";
 
 
 export interface IStoreInitialQuery {
@@ -52,7 +53,7 @@ export class StoreController {
   }
 
   @Post('order')
-  async newOrder(@Session() session: SessionData, @Body() body: ICheckoutStore) {
+  async newOrder(@Session() session: SessionData, @Body() body: ICheckoutStore, @RealIP() ip: string) {
     if (!session.cart) {
       return {success: false, message: 'Cart is empty', error: 'CART_EMPTY'};
     }
@@ -91,7 +92,7 @@ export class StoreController {
         shippingMethod: body.shippingMethod.uuid,
         paymentMethod: body.paymentMethod.uuid,
         notes: body.notes,
-        metaData: body.orderMetaData,
+        metaData: {...body.orderMetaData, ...{ip, cart: cart.toObject()}},
       };
     // Write the order first
     try {
@@ -172,13 +173,13 @@ export class StoreController {
     }
 
     // Attach the cart to the order
-    try {
+/*    try {
       await (new CartService()).attachModelToCart(OrderModel, {uuid: order.uuid}, cart.id);
     }
     catch (e) {
       console.log('Error attaching cart', e.message, e);
       return {success: false, message: 'ERROR_ATTACHING_CART', error: e.message};
-    }
+    }*/
 
     (new OrderService).notify(OrderEventNames.orderAttachedToNodes, order);
 

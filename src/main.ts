@@ -121,6 +121,11 @@ async function bootstrap() {
   const server = await app.listen(process.env.PORT || 3000);
   companion.socket(server);
   console.log(`App is running on port ${process.env.PORT}`);
+
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
 }
 
 createDriver(defaultNeo4JConfig).then(async (driver) => {

@@ -95,7 +95,7 @@ export class CartService extends BaseNeoService {
 
   @OnEvent(CartService.userReadyToAttachEventName)
   async onUserReadyToAttach({ userId, cart }: { userId: string; cart: Cart }) {
-    console.log('-------------',cart.id, userId);
+
     try {
       await this.attachModelToCart(UserModel, { uuid: userId }, cart.id);
     }
