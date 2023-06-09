@@ -64,6 +64,10 @@ export class PropertyModel extends BaseModel {
       label: 'Type',
       placeholder: 'Type',
       type: 'text',
+      ui: {
+        component: 'DropDown',
+        defaultValues: ['text', 'color'],
+      },
       isSortable: true,
       group: 'main',
     },
