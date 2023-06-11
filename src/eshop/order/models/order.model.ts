@@ -9,6 +9,7 @@ import { AddressModel } from '~root/eshop/address/models/address.model';
 import { CartModel } from "~eshop/models/Cart.model";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
+import { AddressService } from "~eshop/address/services/address.service";
 
 const modelName = 'Order';
 @McmsDi({
@@ -158,7 +159,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
         modelAlias: 'address',
         alias: 'addressRelationship',
         type: 'normal',
-        isCollection: false,
+        isCollection: true,
         rel: 'HAS_ADDRESS',
         tabs: ['General'],
         fields: AddressModel.fields.map((field) => ({
@@ -176,6 +177,24 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             ],
           },
         })),
+        postProcessing: async (record: Record<any, any>, model: OrderModel) => {
+          if (!Array.isArray(record.address)) {
+            return record;
+          }
+          // get the type of the address
+          for (const address of record.address) {
+            const type = await (new AddressService()).getAddressType({uuid: address.uuid}, 'Order', {uuid: record.uuid});
+
+            // Same address can be used for billing and shipping
+            if (type.length > 1 && record.address.length === 1) {
+              address.type = ['billing', 'shipping'];
+            }
+            else if (type.length === 1){
+              address.type = [type[0].type];
+            }
+
+          }
+        },
       },
     },
   };

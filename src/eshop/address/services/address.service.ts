@@ -14,6 +14,7 @@ import { IAddress } from "~eshop/models/checkout";
 import { InvalidAddressException } from "~eshop/address/exceptions/invalid-address.exception";
 import { BaseModel } from "~models/base.model";
 import { UserModel } from "~user/models/user.model";
+import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 
 export class AddressModelDto {
   userId?: string;
@@ -184,5 +185,18 @@ export class AddressService extends BaseNeoService {
       console.log(e)
       throw new RecordStoreFailedException('Failed to store address', '600.2', e);
     }
+  }
+
+  async getAddressType(filter: IGenericObject, destModel: string, destFilter: IGenericObject){
+    const {key: sourceKey, value: sourceValue} = extractSingleFilterFromObject(filter);
+    const {key : destKey, value : destValue} = extractSingleFilterFromObject(destFilter);
+    const q = `
+    MATCH (n:Address) WHERE n.${sourceKey} = "${sourceValue}"
+    MATCH (n)<-[r:HAS_ADDRESS]-(u:${destModel}) WHERE u.${destKey} = "${destValue}"
+    return r.type as type;
+    `;
+
+    const res = await this.neo.readWithCleanUp(q);
+    return res;
   }
 }
