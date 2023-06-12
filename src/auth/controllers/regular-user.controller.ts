@@ -15,10 +15,7 @@ import { IGenericObject } from "~models/general";
 import { SessionData } from "express-session";
 import { IAddress } from "~eshop/models/checkout";
 import { AddressService } from "~eshop/address/services/address.service";
-import { UserSession } from "~eshop/middleware/cart.middleware";
-import { SharedModule } from "~shared/shared.module";
-import { CartService } from "~eshop/cart/cart.service";
-import { CacheService } from "~shared/services/cache.service";
+import { ISessionData } from "~shared/models/session.model";
 
 
 export class RegisterGuestDto {
@@ -60,9 +57,9 @@ export class RegularUserController {
   async getToken(
     @Req() req: ExpressRequest,
     @Res() res: ExpressResponse,
+    @Session() session: ISessionData
   ) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
+
     const request = new Oauth2Request(req);
     const response = new Oauth2Response(res);
 
@@ -70,7 +67,7 @@ export class RegularUserController {
       const result = await this.server.token(request, response);
       // Make sure this matches the old one
       req.session.user = result;
-      await Session.update('user', result);
+
       res.header("x-sess-id", req.session.id);
 
       const userService = new UserService();
@@ -84,16 +81,12 @@ export class RegularUserController {
   }
 
   @Delete("/logout/")
-  async logout(@Req() req: ExpressRequest) {
+  async logout(@Req() req: ExpressRequest, @Session() session: ISessionData) {
     const token = req.header('Authorization');
     if (!token) {
       return { success: false, message: "Failed to logout user", reason: "100.11" };
     }
 
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
-    await Session.update('user', {});
     req.session.user = {};
 
     try {
@@ -170,15 +163,12 @@ export class RegularUserController {
 
   @Post("/check-email")
   @UseInterceptors(OtpInterceptor)
-  async checkUserEmail(@Body() data: { email: string, userInfo?: IGenericObject }, @Req() req: any): Promise<ICheckUserEmailResult> {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async checkUserEmail(@Body() data: { email: string, userInfo?: IGenericObject }, @Req() req: any, @Session() session: ISessionData): Promise<ICheckUserEmailResult> {
     try {
       const user = await new UserService().findOne({ email: data.email });
 
       if (user.type === 'guest' && !session.user) {
-        await Session.update('user',user);
+        session.user = user;
       }
 
       // SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId: user.uuid, cart: session.cart});
@@ -214,7 +204,7 @@ export class RegularUserController {
       }
     }
 
-    await Session.update('user',user);
+    session.user = user;
 
     // SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId: user.uuid, cart: session.cart});
     return {
@@ -225,9 +215,9 @@ export class RegularUserController {
 
   @Post("/address/sync")
   @UseInterceptors(OtpInterceptor)
-  async syncAddress(@Body() data: AddressSyncDto,@Req() req: any) {
-    const Session = new UserSession(req),
-    session: SessionData = await Session.get();
+  async syncAddress(@Body() data: AddressSyncDto,@Req() req: any, @Session() session: ISessionData) {
+
+
 
     if (!session.user || !session.user.uuid) {
       return {success: false, message: "User not found"};

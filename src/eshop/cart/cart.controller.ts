@@ -1,8 +1,7 @@
 import { Controller, Get, Put, Post, Session, Body, Delete, Param, Patch, Req } from "@nestjs/common";
-import { SessionData } from 'express-session';
-import { CartService, ICart, ICartItem } from "~eshop/cart/cart.service";
+import { CartService, ICartItem } from "~eshop/cart/cart.service";
 import { IGenericObject } from '~models/general';
-import { UserSession } from "~eshop/middleware/cart.middleware";
+import { ISessionData } from "~shared/models/session.model";
 
 export class AddToCartDto {
   id: string;
@@ -23,18 +22,13 @@ export class CartController {
   constructor(protected cartService: CartService) {}
 
   @Get('get')
-  async get(@Req() req: any) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
+  async get(@Req() req: any, @Session() session: ISessionData) {
 
     return session.cart.toObject();
   }
 
   @Post('add')
-  async addToCart(@Req() req: any, @Body() item: AddToCartDto) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async addToCart(@Req() req: any, @Body() item: AddToCartDto, @Session() session: ISessionData) {
     const userId = session.user && session.user['uuid'];
     let cartItem;
 
@@ -62,10 +56,7 @@ export class CartController {
   }
 
   @Patch('update')
-  async updateCart(@Req() req: any, @Body() items: ICartItem[]) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async updateCart(@Req() req: any, @Body() items: ICartItem[], @Session() session: ISessionData) {
     session.cart.updateItems(items);
 
     await session.cart.save();
@@ -73,10 +64,7 @@ export class CartController {
   }
 
   @Post('clear')
-  async clear(@Req() req: any) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async clear(@Req() req: any, @Session() session: ISessionData) {
     try {
       session.cart.clear();
       await session.cart.clearWithDb();
@@ -90,10 +78,7 @@ export class CartController {
   }
 
   @Delete(':id')
-  async delete(@Req() req: any, @Param('id') productId: string) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async delete(@Req() req: any, @Param('id') productId: string, @Session() session: ISessionData) {
     try {
       session.cart.remove({ productId });
       //  // need to disassociate the cart from the user with detach
@@ -105,10 +90,7 @@ export class CartController {
   }
 
   @Put(':id')
-  async manageCart(@Req() req: any, @Param('id') productId: string, @Body() item: ManageCartDto) {
-    const Session = new UserSession(req),
-      session: SessionData = await Session.get();
-
+  async manageCart(@Req() req: any, @Param('id') productId: string, @Body() item: ManageCartDto, @Session() session: ISessionData) {
     const userId = session.user && session.user['uuid'];
 
     try {

@@ -8,7 +8,7 @@ import { join, resolve } from 'path';
 import * as session from 'express-session';
 import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
-import { readDirFiles } from './helpers/readDirFiles';
+import { readDirFiles } from "~helpers/readDirFiles";
 import { createRedisClient } from './app.providers';
 import * as passport from 'passport';
 import flash = require('connect-flash');
@@ -18,13 +18,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { defaultNeo4JConfig } from '~root/neo4j/neo4j.module';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
 import * as process from "process";
-const RedisStore = require('connect-redis')(session);
+const RedisStore = require("connect-redis").default
 const viewsDir = resolve(join(__dirname, '../../', 'views'));
 const publicDir = resolve(join(__dirname, '../../', 'public'));
 const uploadDir = resolve(join(__dirname, '../../', 'upload'));
 declare const module: any;
 const tokenExpiry = process.env.OAUTH_TOKEN_EXPIRY ? parseInt(process.env.OAUTH_TOKEN_EXPIRY) : 60 * 60 * 23;
 export const redisSessionStore = new RedisStore({ client: createRedisClient(), ttl: tokenExpiry });
+
 const companion = require('@uppy/companion');
 const { app: companionApp } = companion.app({
   s3: {
@@ -64,17 +65,20 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
     cors: {
       credentials: true,
-      origin: true,
-      exposedHeaders: ['x-sess-id', 'set-cookie'],
+      origin: function(origin, callback) {
+        callback(null, true);
+      },
+      exposedHeaders: ['x-sess-id'],
+      maxAge: 2000,
       methods: ['GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     },
   });
-
+  // app.enableCors();
 
 
   app.use(helmet({ contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false }));
   app.use(compression());
-
+  const oneMonth = 1000 * 60 * 60 * 24 * 30;
   app.use(
     session({
       store: redisSessionStore,
@@ -83,25 +87,25 @@ async function bootstrap() {
       cookie: {
         secure: false,
         path: '/',
-        maxAge: null, //Needs to be in milliseconds
+        maxAge: oneMonth, //Needs to be in milliseconds
         httpOnly: false,
+        sameSite: 'lax',
       },
       name: 'app.sess.id',
       resave: false,
     }),
   );
-  app.use(function (req, res, next) {
+/*  app.use('*', function (req, res, next) {
     res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
-    res.header(
+/!*    res.header(
       'Access-Control-Allow-Headers',
-      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Set-Cookie',
-    );
+      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, cookie',
+    );*!/
 
-    res.header('x-sess-id', req.session.id);
     next();
-  });
+  });*/
   app.enable('trust proxy');
   app.useStaticAssets(publicDir);
   app.setBaseViewsDir(viewsDir);
@@ -112,6 +116,7 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
+
   app.use(cookieParser());
   app.use(passport.initialize());
   app.use(passport.session());

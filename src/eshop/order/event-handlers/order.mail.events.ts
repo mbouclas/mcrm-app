@@ -45,8 +45,8 @@ export class OrderMailEvents implements OnModuleInit {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     try {
-      const order = await (new OrderService()).findOne({orderId: 'c59f7d2d-0f1f-4cf5-a254-006e47ddefbb'}, ['*']);
-      await (new OrderMailEvents()).onOrderAttachedToNodes(order);
+      // const order = await (new OrderService()).findOne({orderId: 'c59f7d2d-0f1f-4cf5-a254-006e47ddefbb'}, ['*']);
+      // await (new OrderMailEvents()).onOrderAttachedToNodes(order);
       OrderMailEvents.config = store.getState().configs['store']['notifications']['email'];
     }
     catch (e) {

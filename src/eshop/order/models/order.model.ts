@@ -194,6 +194,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             }
 
           }
+
+          return record;
         },
       },
     },

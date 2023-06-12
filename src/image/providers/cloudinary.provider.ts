@@ -3,7 +3,7 @@ import * as cloudinary from 'cloudinary';
 import { UploadApiResponse, CommonTransformationOptions } from 'cloudinary';
 import { ICloudinaryEager, ICloudinaryUploadResponse } from "~image/models/cloudinary.types";
 import { IImageBlueprint, IImageCopyBlueprint, IItemImage } from "~image/models/image.types";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 } from "uuid";
 import { CloudinaryUploadFailedException } from "~image/exceptions/CloudinaryUploadFailedException";
 import { IGenericObject } from "~models/general";
 import { McmsDi } from "~helpers/mcms-component.decorator";
@@ -52,7 +52,7 @@ export class CloudinaryProvider implements IImageProcessingProvider{
    */
   async upload(file: string, imageId?: string, transformations: CommonTransformationOptions[] = []): Promise<ICloudinaryUploadResponse> {
     let res;
-    imageId = (!imageId) ? uuidv4() : imageId;
+    imageId = (!imageId) ? v4() : imageId;
     if (this.config && this.config.folder) {
       imageId = `${this.config.folder}/${imageId}`;
     }

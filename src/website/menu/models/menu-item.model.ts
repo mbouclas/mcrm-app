@@ -21,7 +21,7 @@ export class MenuItemModel extends BaseTreeModel {
     as: 'menuItem',
     relationships: {
       menu: {
-        rel: 'HAS_MENU_ITEM',
+        rel: 'HAS_ITEM',
         alias: 'menuRelationship',
         model: 'Menu',
         modelAlias: 'menu',

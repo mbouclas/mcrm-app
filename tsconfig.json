@@ -33,6 +33,7 @@
       "~config/*": ["src/config/*"],
       "~catalogue/*": ["src/catalogue/*"],
       "~eshop/*": ["src/eshop/*"],
+      "~website/*": ["src/website/*"],
       "~es/*": ["src/elastic-search/*"],
       "~dashboard/*": ["src/dashboard/*"],
       "~models/*": ["src/models/*"]
