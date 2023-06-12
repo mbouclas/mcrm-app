@@ -8,7 +8,7 @@ export class FilesController {
     const service = new FilesService();
 
     try {
-      return await service.getFile(filename);
+      return await service.getFile({ filename });
     }
     catch (e) {
       return {success: false, error: e.message};

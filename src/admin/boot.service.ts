@@ -8,6 +8,7 @@ export class BootService extends BaseNeoService {
   async boot() {
     const gates = await new GateService().find({ limit: 100 });
     const allModels = store.getState().models;
+    const configs = store.getState().configs;
     const models = Object.keys(allModels)
       .filter(
         (key) =>
@@ -26,6 +27,7 @@ export class BootService extends BaseNeoService {
     return {
       gates: gates.data,
       models,
+      configs,
     };
   }
 }

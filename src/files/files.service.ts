@@ -4,6 +4,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { store } from "~root/state";
 import { FileNotFoundException } from "~files/exceptions/file-not-found.exception";
 import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service";
+import { IGenericObject } from "~models/general";
 
 export enum FileEventNames {
   FileUploaded = 'file.uploaded',
@@ -36,10 +37,10 @@ export class FilesService extends BaseNeoService {
 
   }
 
-  async getFile(filename: string) {
+  async getFile(filter: IGenericObject) {
     let found;
     try {
-      found = await this.findOne({filename});
+      found = await this.findOne(filter);
     }
     catch (e) {
       throw new FileNotFoundException('FILE_NOT_FOUND', '100.10');
@@ -49,6 +50,7 @@ export class FilesService extends BaseNeoService {
     let file: IUploadedFileResponse;
 
     switch (found.driver) {
+      //todo: add local driver
       case 'local': {
         file = {
           url: ``
