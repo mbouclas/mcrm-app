@@ -39,6 +39,7 @@ import { loadConfigs } from '~helpers/load-config';
 import { SyncModule } from './sync/sync.module';
 import { ClientModule } from './client/client.module';
 import { ObjectStorageModule } from './object-storage/object-storage.module';
+import { FilesModule } from './files/files.module';
 const Lang = require('mcms-node-localization');
 export let Translate;
 export let Test = { token: null };
@@ -76,6 +77,7 @@ export let Test = { token: null };
     SyncModule,
     ClientModule,
     ObjectStorageModule,
+    FilesModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],

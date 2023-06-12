@@ -34,6 +34,7 @@
       "~catalogue/*": ["src/catalogue/*"],
       "~eshop/*": ["src/eshop/*"],
       "~website/*": ["src/website/*"],
+      "~files/*": ["src/files/*"],
       "~es/*": ["src/elastic-search/*"],
       "~dashboard/*": ["src/dashboard/*"],
       "~models/*": ["src/models/*"]

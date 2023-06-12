@@ -746,7 +746,7 @@ function createCypherQuery(menuName: string, menu: any[], parent = null) {
     const query = `
     ${menuSelectQuery}
     MERGE (n:MenuItem {itemId: "${item.uuid}"})
-      SET n.title = "${item.title}", n.permalink = "/products/${item.slug}", n.slug = "${item.slug}", n.order = ${index}, n.active = true, n.itemId = "${item.uuid}"
+      SET n.title = "${item.title}", n.permalink = "/products/${item.slug}", n.slug = "${item.slug}", n.order = ${index}, n.active = true, n.itemId = "${item.uuid}", n.model = 'ProductCategory'
   ${menuRelationQuery}
       ${parentQuery}
       return *;

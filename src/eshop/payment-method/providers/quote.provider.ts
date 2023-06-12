@@ -40,7 +40,7 @@ export class QuoteProvider extends BasePaymentMethodProvider {
   }
 
   async handle() {
-    this.bucketName = crypto.createHash('md5').update(this.settings.user.email).digest("hex");
+    // this.bucketName = crypto.createHash('md5').update(this.settings.user.email).digest("hex");
     const attachments = this.settings.cart.items.filter(item => item.metaData && item.metaData.uploadedFiles && Array.isArray(item.metaData.uploadedFiles))
       .map(item => item.metaData.uploadedFiles).flat();
 
@@ -60,8 +60,6 @@ export class QuoteProvider extends BasePaymentMethodProvider {
     for (const attachment of attachments) {
       try {
         const res = await this.handleAttachment(attachment);
-        console.log(res)
-
       }
       catch (e) {
         console.log(`Error handling attachment: ${e.message}`);
