@@ -10,5 +10,5 @@ export abstract class BaseException implements Error {
 
     getMessage() {return this.message;}
 
-    getErrors() {return this.errors;}
+    getErrors() {return this.errors || {};}
 }

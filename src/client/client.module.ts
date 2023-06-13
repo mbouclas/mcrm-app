@@ -5,8 +5,12 @@ import { MulterModule } from "@nestjs/platform-express";
 import { extname, resolve } from "path";
 import { diskStorage } from "multer";
 import { uuid } from "uuidv4";
+import { LatestProductsExecutor } from "~root/client/executors/latest-products.executor";
 
 @Module({
+  providers: [
+    LatestProductsExecutor
+  ],
   imports: [
     SharedModule,
     MulterModule.registerAsync({

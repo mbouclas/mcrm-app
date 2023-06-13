@@ -7,7 +7,11 @@ import { IBaseFilter } from "~models/general";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import { findIndex } from "lodash";
 import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
-
+import { McmsDi } from "~helpers/mcms-component.decorator";
+@McmsDi({
+  id: 'ProductCategoryService',
+  type: 'service',
+})
 @Injectable()
 export class ProductCategoryService extends BaseNeoTreeService {
   protected changeLog: ChangeLogService;

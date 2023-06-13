@@ -128,11 +128,11 @@ export class BaseNeoService {
 
     this.logger(query);
     const records = await this.neo.readWithCleanUp(query, {});
-
     let result = this.neo.mergeRelationshipsToParent(records[0], this.model);
 
-    if (!result || result.length === 0) {
-      throw new RecordNotFoundException(`Record Not Found`);
+
+    if (!result || (Array.isArray(result) && result.length === 0)) {
+      throw new RecordNotFoundException(`RECORD_NOT_FOUND`, '001.1', {filter, rels, query});
     }
 
     result = await modelPostProcessing(result, this.model);

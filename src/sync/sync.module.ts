@@ -5,6 +5,7 @@ import { PropertiesSyncAstroController } from "~root/sync/properties-sync-astro.
 import { SyncAllCommand } from "~root/sync/commands/sync-all.command";
 import { SharedModule } from "~shared/shared.module";
 import { MenusSyncAstroService } from "~root/sync/menus-sync-astro.service";
+import { WebsiteSyncAstroController } from './website-sync-astro.controller';
 
 
 @Module({
@@ -15,6 +16,7 @@ import { MenusSyncAstroService } from "~root/sync/menus-sync-astro.service";
     ProductsSyncAstroController,
     PropertiesSyncAstroController,
     MenusSyncAstroService,
+    WebsiteSyncAstroController,
   ],
   providers: [
     ProductsSyncAstroService,

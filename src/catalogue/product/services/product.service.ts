@@ -19,6 +19,7 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
+import { McmsDi } from "~helpers/mcms-component.decorator";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -59,7 +60,10 @@ export class ProductModelDto {
     basicUnit?: string;
   };
 }
-
+@McmsDi({
+  id: 'ProductService',
+  type: 'service',
+})
 @Injectable()
 export class ProductService extends BaseNeoService {
   protected changeLog: ChangeLogService;
@@ -79,6 +83,13 @@ export class ProductService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     const s = new ProductService();
+/*    try {
+      await s.findOne({uuid: 'a03f3e4e-f053-4531-b96c-f5e4a3e4d1da'});
+    }
+    catch (e) {
+      console.log(e);
+      console.log(e.getQuery());
+    }*/
     /*
         const r = await s.findOne({slug: 'cretus'}, [
           // 'properties',
@@ -94,12 +105,18 @@ export class ProductService extends BaseNeoService {
         ])*/
     // const r = await s.find({limit: 2}, ['variants', 'properties'])
     // console.log(r)
-
     // await s.removeRelated({slug: 'betty'}, 'Product', {slug: 'trebol'})
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
-    const item = (await super.findOne(filter, rels)) as unknown as ProductModel;
+    let item: ProductModel;
+    try {
+      item = (await super.findOne(filter, rels)) as unknown as ProductModel;
+    }
+    catch (e) {
+      throw e;
+    }
+
     item['images'] = await this.imageService.getItemImages('Product', item['uuid']);
     item['thumb'] = item['images'].find((img) => img.type === 'main') || null;
 
