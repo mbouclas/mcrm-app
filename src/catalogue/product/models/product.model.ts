@@ -4,6 +4,8 @@ import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.mod
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PropertyService } from '~catalogue/property/services/property.service';
+import { OnEvent } from "@nestjs/event-emitter";
+import { getStoreProperty, store } from "~root/state";
 
 const modelName = 'Product';
 @McmsDi({
@@ -21,6 +23,21 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public slug;
   public sku;
   public uuid: string;
+
+
+  constructor() {
+    super();
+
+    this.loadModelSettingsFromConfig();
+
+  }
+
+  @OnEvent('app.loaded')
+  async onAppLoaded() {
+
+
+
+  }
 
   async onModuleInit() {}
 

@@ -5,6 +5,7 @@ import { IRelationshipToInject } from '../admin/services/model-generator.service
 import { findIndex } from 'lodash';
 import { IItemSelectorConfig } from '~models/item-selector';
 import { Logger } from '@nestjs/common';
+import { getStoreProperty } from "~root/state";
 export interface IBaseModelFilterConfig {
   results_per_page?: number;
   allowMultiple?: boolean;
@@ -56,9 +57,9 @@ export class BaseModel {
   public static modelName: string;
   public modelName: string;
   public name;
-  public test = 1;
   public static modelConfig: INeo4jModel;
   public static fields: IDynamicFieldConfigBlueprint[] = [];
+  public slugPattern = '';
   public static itemSelector?: IItemSelectorConfig;
   public static filterFields: IQueryBuilderFieldBlueprint[] = [];
   public static filterConfig: IBaseModelFilterConfig = {
@@ -66,6 +67,7 @@ export class BaseModel {
     defaultOrderBy: 'createdAt',
     defaultWay: 'DESC',
   };
+
 
   public static injectRelationships:
     | IGenericObject<IRelationshipToInject>
@@ -122,5 +124,16 @@ export class BaseModel {
     }
 
     return fields[0];
+  }
+
+  /**
+   * Apply any settings found on the config file
+   */
+  loadModelSettingsFromConfig() {
+    const modelSettings = getStoreProperty(`configs.general.modelSettings.${this.modelName}`);
+    for (const key in modelSettings) {
+      this[key] = modelSettings[key];
+    }
+
   }
 }

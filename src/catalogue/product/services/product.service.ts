@@ -20,6 +20,7 @@ import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
 import { McmsDi } from "~helpers/mcms-component.decorator";
+import { PermalinkBuilderService } from "~website/menu/permalink-builder.service";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -82,13 +83,21 @@ export class ProductService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    const s = new ProductService();
-/*    try {
-      await s.findOne({uuid: 'a03f3e4e-f053-4531-b96c-f5e4a3e4d1da'});
+/*    const s = new ProductService();
+    let n;
+    try {
+      n = await s.findOne({uuid: 'a03f3e4e-f053-4531-b96c-f5e4a3e4d1da'});
     }
     catch (e) {
       console.log(e);
       console.log(e.getQuery());
+    }*/
+
+/*    try {
+      console.log((new PermalinkBuilderService()).build('Product', n))
+    }
+    catch (e) {
+      console.log(e)
     }*/
     /*
         const r = await s.findOne({slug: 'cretus'}, [

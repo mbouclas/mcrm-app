@@ -137,7 +137,7 @@ export class EditableRegionsService extends BaseNeoService {
   private async launchExecutor(executor: string, settings: IGenericObject = {}) {
     // try to get the executor from the container
     const container = McmsDiContainer.get({id: executor});
-    console.log(container, executor)
+
     if (!container) {
       return [];
     }

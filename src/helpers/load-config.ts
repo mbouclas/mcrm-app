@@ -16,7 +16,11 @@ export async function loadConfigs(readFrom = './config', merge = false) {
   const files = await readDirFiles(dir, ['.js', '.json']);
 
   for (let i = 0; i < files.length; i++) {
-    const config = await import(files[i].fullFileName);
+    let config = await import(files[i].fullFileName);
+    if (config.default) {
+      config = config.default;
+    }
+
     const name = files[i].fileName.replace('.js', '').replace('.json', '');
     AppStateActions.setConfig(name, config, merge);
   }
