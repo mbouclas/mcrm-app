@@ -9,14 +9,14 @@ import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
 import { v4 } from 'uuid';
-import { IAddress, ICheckoutStore, IPaymentMethod, IShippingMethod } from "~eshop/models/checkout";
-import { AddressService } from "~eshop/address/services/address.service";
-import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
-import { PaymentMethodService } from "~eshop/payment-method/services/payment-method.service";
-import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
-import { ICartItem } from "~eshop/cart/cart.service";
-import { ProductModel } from "~catalogue/product/models/product.model";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { IAddress, ICheckoutStore, IPaymentMethod, IShippingMethod } from '~eshop/models/checkout';
+import { AddressService } from '~eshop/address/services/address.service';
+import { InvalidOrderException } from '~eshop/order/exceptions/invalid-order.exception';
+import { PaymentMethodService } from '~eshop/payment-method/services/payment-method.service';
+import { ShippingMethodService } from '~eshop/shipping-method/services/shipping-method.service';
+import { ICartItem } from '~eshop/cart/cart.service';
+import { ProductModel } from '~catalogue/product/models/product.model';
+import { ProductService } from '~catalogue/product/services/product.service';
 
 export class OrderModelDto {
   orderId?: string;
@@ -141,7 +141,7 @@ export class OrderService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     OrderService.statuses = store.getState().configs['store']['orderStatuses'];
-    OrderService.VAT = store.getState().configs['store']['VAT'];
+    OrderService.VAT = store.getState().configs['tore']['VAT'];
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
@@ -206,34 +206,44 @@ export class OrderService extends BaseNeoService {
       this.eventEmitter.emit(OrderEventNames.orderCreated, r);
 
       return r;
-    }
-    catch (e) {
+    } catch (e) {
       throw new InvalidOrderException('ORDER_STORE_ERROR', '900.0', e.getErrors());
     }
-
   }
 
   async update(uuid: string, record: OrderModelDto, userId?: string) {
-    const r = await super.update(uuid, record, userId);
+    if (!OrderService.statuses.map((status) => status.id).includes(record.status)) {
+      throw new InvalidOrderException('ORDER_UPDATE_ERROR', '900.2');
+    }
 
-    return r;
+    try {
+      const r = await super.update(uuid, record, userId);
+
+      return r;
+    } catch (e) {
+      throw new InvalidOrderException('ORDER_UPDATE_ERROR', '900.1', e.getErrors());
+    }
   }
 
   async processStoreOrder(order: ICheckoutStore) {
     // validate shipping information
     const shippingAddressValidation = AddressService.validateAddress(order.shippingInformation);
     if (!shippingAddressValidation.success) {
-      throw new InvalidOrderException('INVALID_SHIPPING_ADDRESS','700.1', shippingAddressValidation.errors as any);
+      throw new InvalidOrderException('INVALID_SHIPPING_ADDRESS', '700.1', shippingAddressValidation.errors as any);
     }
     // validate billing information
     const billingAddressValidation = AddressService.validateAddress(order.billingInformation);
     if (!billingAddressValidation.success) {
-      throw new InvalidOrderException('INVALID_BILLING_ADDRESS','700.2', billingAddressValidation.errors as any);
+      throw new InvalidOrderException('INVALID_BILLING_ADDRESS', '700.2', billingAddressValidation.errors as any);
     }
     // validate contact information
     const contactInformationValidation = AddressService.validateContactInformation(order.contactInformation);
     if (!contactInformationValidation.success) {
-      throw new InvalidOrderException('INVALID_CONTACT_INFORMATION','700.3', contactInformationValidation.errors as any);
+      throw new InvalidOrderException(
+        'INVALID_CONTACT_INFORMATION',
+        '700.3',
+        contactInformationValidation.errors as any,
+      );
     }
     // validate payment method
     const paymentMethod = await this.validateStorePaymentMethod(order.paymentMethod);
@@ -242,31 +252,30 @@ export class OrderService extends BaseNeoService {
 
     return {
       paymentMethod,
-      shippingMethod
-    }
+      shippingMethod,
+    };
   }
 
-
   async validateStorePaymentMethod(paymentMethod: IPaymentMethod) {
-    if (!paymentMethod){
+    if (!paymentMethod) {
       throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4');
     }
 
-    const found = await (new PaymentMethodService()).findOne({uuid: paymentMethod.uuid});
-    if (!found){
-      throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4' );
+    const found = await new PaymentMethodService().findOne({ uuid: paymentMethod.uuid });
+    if (!found) {
+      throw new InvalidOrderException('INVALID_PAYMENT_METHOD', '700.4');
     }
 
     return found;
   }
 
   async validateStoreShippingMethod(shippingMethod: IShippingMethod) {
-    if (!shippingMethod){
+    if (!shippingMethod) {
       throw new InvalidOrderException('INVALID_SHIPPING_METHOD', '700.5');
     }
 
-    const found = await (new ShippingMethodService()).findOne({uuid: shippingMethod.uuid});
-    if (!found){
+    const found = await new ShippingMethodService().findOne({ uuid: shippingMethod.uuid });
+    if (!found) {
       throw new InvalidOrderException('INVALID_SHIPPING_METHOD', '700.5');
     }
 
@@ -284,32 +293,33 @@ export class OrderService extends BaseNeoService {
 
   async attachProductsToOrder(uuid, items: ICartItem[]) {
     let query = `MATCH (o:Order {uuid: '${uuid}'}) `;
-    query += items.map((item, index) => {
-      let q = ''
-      if (item.variantId) {
-        q += `MATCH (v${index}:ProductVariant {uuid: '${item.variantId}'}) `;
-        q += `MERGE (o)-[r${index}:HAS_ITEM]->(v${index}) 
+    query += items
+      .map((item, index) => {
+        let q = '';
+        if (item.variantId) {
+          q += `MATCH (v${index}:ProductVariant {uuid: '${item.variantId}'}) `;
+          q += `MERGE (o)-[r${index}:HAS_ITEM]->(v${index}) 
         ON CREATE SET r${index}.quantity = ${item.quantity}, r${index}.createdAt = timestamp()
         ON MATCH SET r${index}.quantity = ${item.quantity}, r${index}.updatedAt = timestamp()
         `;
-        return q;
-      }
+          return q;
+        }
 
-      q += `MATCH (p${index}:Product {uuid: '${item.productId}'}) `;
-      q += `MERGE (o)-[r${index}:HAS_ITEM]->(p${index})
+        q += `MATCH (p${index}:Product {uuid: '${item.productId}'}) `;
+        q += `MERGE (o)-[r${index}:HAS_ITEM]->(p${index})
       ON CREATE SET r${index}.quantity = ${item.quantity}, r${index}.createdAt = timestamp()
       ON MATCH SET r${index}.quantity = ${item.quantity}, r${index}.updatedAt = timestamp()
       `;
 
-      return q;
-    }).join('\n WITH * \n');
+        return q;
+      })
+      .join('\n WITH * \n');
 
     query += `RETURN *`;
 
     try {
       await this.neo.write(query);
-    }
-    catch (e) {
+    } catch (e) {
       throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e.getErrors());
     }
 
@@ -321,13 +331,17 @@ export class OrderService extends BaseNeoService {
    * @param orderId
    * @param addresses
    */
-  async attachAddressesToOrder(orderId: string, addresses: IAddress[]): Promise<{unsavedAddresses: IAddress[], correctAddresses: IAddress[]}> {
-    const unsavedAddresses = addresses.filter(a => !a.uuid);
+  async attachAddressesToOrder(
+    orderId: string,
+    addresses: IAddress[],
+  ): Promise<{ unsavedAddresses: IAddress[]; correctAddresses: IAddress[] }> {
+    const unsavedAddresses = addresses.filter((a) => !a.uuid);
 
-    const correctAddresses = addresses.filter(a => a.uuid);
+    const correctAddresses = addresses.filter((a) => a.uuid);
 
     try {
-      await this.neo.write(`
+      await this.neo.write(
+        `
         MATCH (o:Order {uuid: '${orderId}'})
         UNWIND $addresses AS address
         MATCH (a:Address {uuid: address.uuid})
@@ -335,24 +349,26 @@ export class OrderService extends BaseNeoService {
         ON CREATE SET r.createdAt = timestamp(), r.type = address.type
         ON MATCH SET r.updatedAt = timestamp(), r.type = address.type
         return *
-      `, {addresses: correctAddresses});
-    }
-    catch (e) {
-      console.log(e)
+      `,
+        { addresses: correctAddresses },
+      );
+    } catch (e) {
+      console.log(e);
     }
 
-    return {unsavedAddresses, correctAddresses};
+    return { unsavedAddresses, correctAddresses };
   }
 
   static async validateCartItems(items: ICartItem[]) {
     const products = await new ProductService().find({
-      active: true, uuids: items.map((item) => item.productId),
+      active: true,
+      uuids: items.map((item) => item.productId),
     });
     // fix any "broken" prices
     const toRemove = [];
     // remove any products that are not available
     items.forEach((item, idx) => {
-      const found = products.data.find(p => p['uuid'] === item.productId) as ProductModel;
+      const found = products.data.find((p) => p['uuid'] === item.productId) as ProductModel;
       if (!found) {
         toRemove.push(idx);
       }
@@ -368,6 +384,4 @@ export class OrderService extends BaseNeoService {
 
     return items;
   }
-
-
 }

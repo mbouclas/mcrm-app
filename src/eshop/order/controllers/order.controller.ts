@@ -33,14 +33,14 @@ import {
 
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
     const userId = session.user && session.user['uuid'];
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new OrderService().findAll({  }, rels);
+    return await new OrderService().findAll({}, rels);
   }
 
   @Get(':uuid')
@@ -59,7 +59,7 @@ export class OrderController {
   @Post('/webhooks')
   async webhook(@Body() body: IGenericObject) {
     if (body.type === 'payment_intent.succeeded') {
-      let clientSecret = body.data.client_secret;
+      const clientSecret = body.data.client_secret;
 
       // clientSecret = 'pi_3MMaBpFVnCuD42ua2CDyjXPL_secret_BwHVPZzQYElqvG9LZgwjdHSCj';
 
@@ -157,9 +157,8 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${
-        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
@@ -177,9 +176,8 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
@@ -193,12 +191,12 @@ export class OrderController {
       uuids: cart.items.map((item) => item.productId),
     });
 
-    let fullPrice = products.data.reduce(
+    const fullPrice = products.data.reduce(
       (accumulator, productItem: ProductModel) => (productItem.price ? accumulator + productItem.price : accumulator),
       0,
     );
 
-    let [error, customer] = await handleAsync(
+    const [error, customer] = await handleAsync(
       new CustomerService().findOne({
         userId,
         provider: paymentProviderSettings.providerName,
@@ -295,8 +293,6 @@ export class OrderController {
 
   @Post(`:uuid`)
   async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
-    const userId = session.user && session.user['uuid'];
-
     const orderService = new OrderService();
 
     const orderItem = await orderService.findOne({ uuid });
@@ -305,31 +301,8 @@ export class OrderController {
       throw new Error("Order doesn't exist");
     }
 
-    const paymentMethodBody = body.paymentMethod[0];
-    const paymentMethod = await new PaymentMethodService().update(paymentMethodBody.uuid, paymentMethodBody);
-
-    const shippingMethodBody = body.shippingMethod[0];
-    const shippingMethod = await new ShippingMethodService().update(shippingMethodBody.uuid, shippingMethodBody);
-
-    const shippingAdressBody = body.address.find((address) => address.type === 'SHIPPING');
-    const shippingAddress = await new AddressService().update(shippingAdressBody.uuid, shippingAdressBody);
-
-    const billingAdressBody = body.address.find((address) => address.type === 'BILLING');
-    const billingAddress = await new AddressService().update(billingAdressBody.uuid, billingAdressBody);
-
     const order = await orderService.update(uuid, {
-      status: 1,
-      paymentMethod: paymentMethod.title,
-      shippingMethod: shippingMethod.title,
-      salesChannel: body.salesChannel,
-      billingAddressId: billingAddress.uuid,
-      shippingAddressId: shippingAddress.uuid,
-      paymentStatus: 1,
-      shippingStatus: 1,
-      shippingInfo: body.shippingInfo,
-      VAT: body.VAT,
-      total: body.total,
-      userId,
+      status: body.status,
     });
 
     return order;
