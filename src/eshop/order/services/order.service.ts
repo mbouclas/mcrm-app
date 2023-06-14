@@ -141,7 +141,7 @@ export class OrderService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     OrderService.statuses = store.getState().configs['store']['orderStatuses'];
-    OrderService.VAT = store.getState().configs['tore']['VAT'];
+    OrderService.VAT = store.getState().configs['store']['VAT'];
   }
 
   async findOne(filter: IGenericObject, rels = []): Promise<OrderModel> {
