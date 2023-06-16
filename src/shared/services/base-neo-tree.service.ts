@@ -9,6 +9,7 @@ import { BaseTreeModel } from '~models/generic.model';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
 import { BaseModel } from '../../models/base.model';
 import { store } from '~root/state';
+import { fromRecordToModel } from "~helpers/fromRecordToModel";
 
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
@@ -97,7 +98,13 @@ export class BaseNeoTreeService extends BaseNeoService {
         WITH parent, [(x)<-[:HAS_CHILD*]-(parent) | x] as descendants
         return parent, descendants`;
 
-    const res = await this.neo.readWithCleanUp(query, { uuid });
+    let res = await this.neo.readWithCleanUp(query, { uuid });
+    try {
+      res[0].parent = fromRecordToModel(res[0].parent, this.model);
+    }
+    catch (e) {
+
+    }
 
     let descendants = res[0].descendants;
     let parent = res[0].parent;

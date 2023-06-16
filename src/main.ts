@@ -66,7 +66,20 @@ async function bootstrap() {
     cors: {
       credentials: true,
       origin: function(origin, callback) {
-        callback(null, true);
+        if (process.env.ENV === 'development') {
+          callback(null, true);
+          return;
+        }
+
+        if (!origin) {
+          callback(null, false);
+          return;
+        }
+
+        const allow = process.env.ALLOWED_CLIENT_DOMAIN.split(',').some((domain) => {
+          return origin.includes(domain);
+        });
+        callback(null, allow);
       },
       exposedHeaders: ['x-sess-id'],
       maxAge: 2000,

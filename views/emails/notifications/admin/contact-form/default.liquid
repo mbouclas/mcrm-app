@@ -1,0 +1,12 @@
+{% layout "emails/notifications/admin/layouts/layout.liquid" %}
+{% block content %}
+<ul>
+    <li>First Name: {{ firstName }}</li>
+    <li>Last Name: {{ lastName }}</li>
+    <li>Email: {{ email }}</li>
+    <li>Phone: {{ phone }}</li>
+    <li>Company: {{ company }}</li>
+    <li>Question: {{ question }}</li>
+</ul>
+
+{% endblock %}

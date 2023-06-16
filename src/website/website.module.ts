@@ -9,8 +9,9 @@ import { LocaleModule } from './locale/locale.module';
 import { TranslationsModule } from './translations/translations.module';
 import { MailLogModule } from './mail-log/mail-log.module';
 import { SettingsModule } from './settings/settings.module';
+import { ContactFormsModule } from './contact-forms/contact-forms.module';
 
 @Module({
-  imports: [EditableRegionsModule, RedirectsModule, FormBuilderModule, FormLogModule, MediaLibraryModule, MenuModule, LocaleModule, TranslationsModule, MailLogModule, SettingsModule]
+  imports: [EditableRegionsModule, RedirectsModule, FormBuilderModule, FormLogModule, MediaLibraryModule, MenuModule, LocaleModule, TranslationsModule, MailLogModule, SettingsModule, ContactFormsModule]
 })
 export class WebsiteModule {}

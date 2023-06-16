@@ -59,5 +59,13 @@ export class ProductCategoryModel extends BaseModel {
       translatable: true,
       group: 'main',
     },
+    {
+      varName: 'metaData',
+      label: 'Meta Data',
+      placeholder: 'Meta Data',
+      type: 'json',
+      translatable: false,
+      group: 'main',
+    },
   ];
 }

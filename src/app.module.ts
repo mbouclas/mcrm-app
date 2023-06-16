@@ -122,6 +122,8 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
       ...ViewEngine.options.globals,
       ...{
         SITE_NAME: process.env.SITE_TITLE,
+        CURRENT_DATE: new Date(),
+        CURRENT_YEAR: new Date().getFullYear(),
         isInProduction: process.env.NODE_ENV === 'production',
       },
     };

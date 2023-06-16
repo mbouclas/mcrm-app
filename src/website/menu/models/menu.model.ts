@@ -40,6 +40,7 @@ export class MenuModel extends BaseModel {
           if (!Array.isArray(record.menuItem)) {
             return record;
           }
+
           const service = new MenuItemService();
           record.menuItem = sortBy(record.menuItem, 'order');
           // This query returns top level items only. Let's build a tree
@@ -83,6 +84,22 @@ export class MenuModel extends BaseModel {
       label: 'Description',
       placeholder: 'Description',
       type: 'text',
+      translatable: true,
+      group: 'main',
+    },
+    {
+      varName: 'caption',
+      label: 'Caption',
+      placeholder: 'Caption',
+      type: 'text',
+      translatable: true,
+      group: 'main',
+    },
+    {
+      varName: 'metaData',
+      label: 'Meta Data',
+      placeholder: 'Meta Data',
+      type: 'json',
       translatable: true,
       group: 'main',
     },
