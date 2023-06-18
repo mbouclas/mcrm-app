@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Inject, Param, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
 import { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import OAuth2Server, { Request as Oauth2Request, Response as Oauth2Response } from "oauth2-server";
 import { InvalidCredentials, UserExists } from "~root/auth/exceptions";
@@ -7,15 +7,17 @@ import { AuthService, cleanUpUserPayloadForRegularUsers, returnNewGuestUser } fr
 import { UserService } from "~user/services/user.service";
 import { ICheckUserEmailResult } from "~eshop/controllers/store.controller";
 import { IsEmail, IsNotEmpty } from "class-validator";
-import crypto from "crypto";
 import { OtpInterceptor } from "~root/auth/interceptors/otp.interceptor";
 import { GuestInterceptor } from "~root/auth/interceptors/guest.interceptor";
-import { store } from "~root/state";
+import { getStoreProperty, store } from "~root/state";
 import { IGenericObject } from "~models/general";
 import { SessionData } from "express-session";
 import { IAddress } from "~eshop/models/checkout";
 import { AddressService } from "~eshop/address/services/address.service";
 import { ISessionData } from "~shared/models/session.model";
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { ExecutorsService } from "~shared/services/executors.service";
+const crypto = require('crypto');
 
 
 export class RegisterGuestDto {
@@ -119,14 +121,42 @@ export class RegularUserController {
   }
 
   @Post("/register")
+  @UseInterceptors(OtpInterceptor)
   async register(@Body() data: RegisterGuestDto) {
     const userService = new UserService();
+    const hooks = getStoreProperty("configs.store.users.hooks");
+    let existingUser;
+
     try {
-      await (new UserService()).findOne({
+      await ExecutorsService.executeHook(hooks.beforeUserValidation, [data]);
+    }
+    catch (e) {
+      console.log(e.errors)
+    }
+
+
+    try {
+      existingUser = await (new UserService()).findOne({
         email: data.email
       });
     } catch (e) {
-      return { success: false, message: "User already exists" };
+      const isRecordNotFoundError = e instanceof RecordNotFoundException;
+      if (!isRecordNotFoundError) {
+        return { success: false, message: e.message };
+      }
+    }
+
+
+
+    if (existingUser) {
+      return { success: false, message: 'USER_EXISTS', reason: "100.10" };
+    }
+
+    try {
+      await ExecutorsService.executeHook(hooks.afterUserValidation, [data]);
+    }
+    catch (e) {
+      console.log(e)
     }
 
     const authService = new AuthService();
@@ -137,9 +167,16 @@ export class RegularUserController {
       .update(data.email)
       .digest("hex");
 
-
     try {
-      const user = await userService.store({
+      await ExecutorsService.executeHook(hooks.beforeUserCreate, [data]);
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    let user;
+    try {
+      user = await userService.store({
         ...data,
         password: hashedPassword,
         confirmToken,
@@ -147,10 +184,7 @@ export class RegularUserController {
         active: false
       });
 
-      return {
-        success: true,
-        user: returnNewGuestUser(user)
-      };
+
     } catch (e) {
       return {
         success: false,
@@ -159,11 +193,23 @@ export class RegularUserController {
       };
     }
 
+    try {
+      await ExecutorsService.executeHook(hooks.afterUserCreate, [data]);
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    return {
+      success: true,
+      user: returnNewGuestUser(user)
+    };
+
   }
 
   @Post("/check-email")
   @UseInterceptors(OtpInterceptor)
-  async checkUserEmail(@Body() data: { email: string, userInfo?: IGenericObject }, @Req() req: any, @Session() session: ISessionData): Promise<ICheckUserEmailResult> {
+  async checkUserEmail(@Body() data: { email: string, userInfo?: IGenericObject, jciue: boolean }, @Req() req: any, @Session() session: ISessionData): Promise<ICheckUserEmailResult> {
     try {
       const user = await new UserService().findOne({ email: data.email });
 
@@ -183,7 +229,8 @@ export class RegularUserController {
     }
 
     const registerGuest = store.getState().configs["store"]["users"]["registerGuests"];
-    if (!registerGuest) {
+    // jciue === Just Check If User Exists
+    if (!registerGuest || data.jciue) {
       return {
         email: data.email,
         exists: false
@@ -238,5 +285,17 @@ export class RegularUserController {
 
 
     return data;
+  }
+
+  @Get('/verify/:token')
+  @UseInterceptors(OtpInterceptor)
+  async verifyEmail(@Param('token') token: string) {
+    try {
+      return await new UserService().verifyEmail(token);
+    }
+    catch (e) {
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+
   }
 }

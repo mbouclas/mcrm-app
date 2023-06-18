@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { ClientOpts, RedisClient } from "redis";
-import { createRedisClient } from "../../app.providers";
+
+import { createRedisClient } from "~root/app.providers";
+import { createClient, RedisClientOptions } from "redis";
 
 @Injectable()
 export class CacheService {
-  private redis: RedisClient;
-  constructor(opts?: ClientOpts) {
+  private redis: ReturnType<typeof createClient>;
+  constructor(opts?: RedisClientOptions) {
     this.redis = createRedisClient(opts);
   }
 

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeLogService } from '~change-log/change-log.service';
-import { store } from '~root/state';
+import { getStoreProperty, store } from "~root/state";
 import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { CustomerModel } from '~eshop/customer/models/customer.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject, IPagination } from '~models/general';
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
+
 
 export class CustomerModelDto {
   userId?: string;
@@ -19,6 +20,7 @@ export class CustomerService extends BaseNeoService {
   protected changeLog: ChangeLogService;
   protected eventEmitter: EventEmitter2;
 
+
   constructor() {
     super();
     this.model = store.getState().models.Customer;
@@ -27,7 +29,10 @@ export class CustomerService extends BaseNeoService {
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() {}
+  async onAppLoaded() {
+
+  }
+
 
   async findOne(filter: IGenericObject, rels = []): Promise<CustomerModel> {
     const item = (await super.findOne(

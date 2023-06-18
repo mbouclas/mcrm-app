@@ -1,4 +1,6 @@
 module.exports = {
+  name: 'MCRM',
+  storeUrl: process.env.BASE_URL,
   VAT: 19,
   quickCheckout: true,
   guestCheckout: false,
@@ -26,6 +28,28 @@ module.exports = {
   ],
   users: {
     registerGuests: false,
+    hooks: {
+      beforeUserValidation: '',
+      afterUserValidation: '',
+      beforeCreate: '',
+      afterCreate: '',
+      beforeUpdate: '',
+      afterUpdate: '',
+      beforeDelete: '',
+      afterDelete: '',
+    }
+  },
+  order: {
+    hooks: {
+      beforeOrderValidation: '',
+      afterOrderValidation: '',
+      beforeCreate: '',
+      afterCreate: '',
+      beforeUpdate: '',
+      afterUpdate: '',
+      beforeDelete: '',
+      afterDelete: '',
+    }
   },
   notifications: {
     email: {
@@ -66,6 +90,18 @@ module.exports = {
             template: 'emails/notifications/customer/orders/order-cancelled.liquid'
           }
         },
+      },
+      user: {
+        created: {
+          customer: {
+            subject: 'Welcome to %(storeName)s',
+            template: 'emails/notifications/customer/account-created.liquid'
+          },
+          admin: {
+            subject: 'New user registration',
+            template: 'emails/notifications/admin/customers/user-created.liquid'
+          }
+        }
       }
     }
   },

@@ -6,6 +6,7 @@ import { CustomerPaymentMethodModel } from './models/customer-payment-method.mod
 import { CustomerPaymentMethodController } from './controllers/customer-payment-method.controller';
 import { CustomerService } from './services/customer.service';
 import { CustomerPaymentMethodService } from './services/customer-payment-method.service';
+import { NotificationsService } from './services/notifications.service';
 
 @Module({
   imports: [SharedModule],
@@ -14,6 +15,7 @@ import { CustomerPaymentMethodService } from './services/customer-payment-method
     CustomerPaymentMethodModel,
     CustomerService,
     CustomerPaymentMethodService,
+    NotificationsService,
   ],
   controllers: [CustomerPaymentMethodController],
 })

@@ -11,9 +11,15 @@ export class OtpInterceptor implements NestInterceptor {
     }
 
     const headers = context.switchToHttp().getRequest().headers;
+    let cashed;
+    try {
+      const cashed = await (new CacheService()).get(headers['x-otp-id']);
+    }
+    catch (e) {
+      return of({success: false, reason: 'Unauthorized', code: `500.3`});
+    }
 
-    const cashed = await (new CacheService()).get(headers['x-otp-id']);
-    if (!cashed) return of({success: false, reason: 'Unauthorized', code: `500.3`})
+    if (!cashed) return of({success: false, reason: 'Unauthorized', code: `500.3`});
 
     if (cashed !== headers['x-otp']) return of({success: false, reason: 'Unauthorized', code: `500.4`});
 

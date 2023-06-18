@@ -11,6 +11,8 @@ import { AuthService } from '~root/auth/auth.service';
 import { MailService } from '~root/mail/services/mail.service';
 import { GateService } from '~root/auth/gate.service';
 import { CouldNotSaveGuestUserException } from "~user/exceptions/could-not-save-guest-user.exception";
+import { CouldNotVerifyUserTokenException } from "~user/exceptions/could-not-verify-user-token.exception";
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -47,6 +49,7 @@ export class UserService extends BaseNeoService {
   static updatedEventName = 'user.model.updated';
   static createdEventName = 'user.model.created';
   static deletedEventName = 'user.model.deleted';
+  static userVerifiedEventName = 'user.verified';
 
   constructor() {
     super();
@@ -67,8 +70,11 @@ export class UserService extends BaseNeoService {
   }
 
   @OnEvent(UserService.createdEventName)
-  async onStore(payload: UserModel) {
-    console.log(`in ${UserService.createdEventName} event`, payload);
+  async onStore(user: UserModel) {
+    if (user.type === 'guest') {
+      return ;
+    }
+    console.log(`in ${UserService.createdEventName} event`, user);
   }
 
   @OnEvent('user.created')
@@ -229,4 +235,28 @@ export class UserService extends BaseNeoService {
     }
   }
 
+  async verifyEmail(token: string) {
+    let user;
+    try {
+      user = await this.findOne({ confirmToken: token, active: false });
+    }
+    catch (e) {
+      throw new CouldNotVerifyUserTokenException(e.message, '100.7');
+    }
+
+    user.active = true;
+    user.confirmToken = null;
+
+
+    try {
+      await this.update(user.uuid, user);
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e.message, '100.8', {user, token, error: e});
+    }
+
+    this.eventEmitter.emit(UserService.userVerifiedEventName, user);
+
+    return {success: true};
+  }
 }

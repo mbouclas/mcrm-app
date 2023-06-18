@@ -4,21 +4,17 @@ import { PaymentMethodService } from "~eshop/payment-method/services/payment-met
 import {  IPagination } from "~models/general";
 import { BaseModel } from "~models/base.model";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
-import { store } from "~root/state";
+import { getStoreProperty, store } from "~root/state";
 import { SessionData } from "express-session";
 import { OrderEventNames, OrderService } from "~eshop/order/services/order.service";
 import { ICheckoutStore } from "~eshop/models/checkout";
-import { ProductService } from "~catalogue/product/services/product.service";
-import { ProductModel } from "~catalogue/product/models/product.model";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { capitalize } from "lodash";
 import type { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
 import { BaseShippingMethodProvider } from "~eshop/shipping-method/providers/base-shipping-method.provider";
 import { AddressService } from "~eshop/address/services/address.service";
-import { SharedModule } from "~shared/shared.module";
-import { CartService } from "~eshop/cart/cart.service";
-import { OrderModel } from "~eshop/order/models/order.model";
-import { RealIP } from "nestjs-real-ip";
+import { ExecutorsService } from "~shared/services/executors.service";
+import { RealIP } from "~helpers/real-ip.decorator";
 
 
 export interface IStoreInitialQuery {
@@ -66,10 +62,17 @@ export class StoreController {
       return {success: false, message: 'User not set', error: 'USER_NOT_SET'};
     }
 
+    const hooks = getStoreProperty("configs.store.order.hooks");
 
     let userId = session.user.uuid,
       user = session.user,
     validatedOrder;
+    try {
+      await ExecutorsService.executeHook(hooks.beforeOrderValidation, [body, session, ip, userId, user]);
+    }
+    catch (e) {
+      console.log(e)
+    }
 
     try {
       validatedOrder = await (new OrderService()).processStoreOrder(body);

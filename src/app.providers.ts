@@ -1,29 +1,22 @@
-import { ClientOpts, RedisClient } from "redis";
-const redis = require('promise-redis')();
-export const httpCacheDuration = (process.env.ENV === 'production') ? 60 : 1;
-export const REDIS = 'REDIS';
-export const TAG_CLOUD_CACHE_KEY = `${process.env.SITE_NAME}-tag-cloud`;
-export const neo4jProvider = {
-  provide: 'NEO4J_CONNECTION',
-  useFactory: async () => {},
-};
+import { createClient } from "redis";
+import type {RedisClientOptions, RedisClientType} from "redis";
+import * as process from "process";
 
-export function createRedisClient(redisOptions: ClientOpts = {}): RedisClient {
+export function createRedisClient(redisOptions: RedisClientOptions = {}): ReturnType<typeof createClient> {
   if (typeof process.env.REDIS_URL !== 'undefined') {
     redisOptions.url = process.env.REDIS_URL;
   } else {
-    redisOptions.host = process.env.REDIS_HOST;
-    redisOptions.auth_pass = process.env.REDIS_AUTH;
-    redisOptions.db = process.env.REDIS_DB || 0;
-    redisOptions.port = parseInt(process.env.REDIS_PORT as any);
+    redisOptions.url = `redis://:${process.env.REDIS_AUTH}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}/${process.env.REDIS_DB}`
   }
+  const client = createClient(redisOptions);
 
-  return redis.createClient(redisOptions)
+  client.connect()
+    .then(() => {
+      console.log('Redis client connected');
+    })
+    .catch((err) => {
+      console.error('Redis client connection error', err);
+    });
+
+  return client;
 }
-
-export const redisProvider =   {
-  provide: REDIS,
-  useFactory: async () => {
-    return createRedisClient();
-  }
-};

@@ -1,0 +1,9 @@
+{% layout "emails/notifications/admin/layouts/layout.liquid" %}
+{% block content %}
+<p>
+    Hi {{config.emails.adminEmail.name}},
+</p>
+<p>
+    {{ user.firstName }} {{ user.lastName }} has registered on the store.
+</p>
+{% endblock %}

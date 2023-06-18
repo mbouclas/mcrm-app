@@ -1,29 +1,33 @@
-import { CacheModule, Module, OnModuleInit } from "@nestjs/common";
-import { Neo4jModule } from "../neo4j/neo4j.module";
+import {  Module, OnModuleInit } from "@nestjs/common";
+import { Neo4jModule } from "~neo4j/neo4j.module";
 import * as redisStore from 'cache-manager-redis-store';
-import { ElasticSearchModule } from "../elastic-search/elastic-search.module";
+import { ElasticSearchModule } from "~es/elastic-search.module";
 import { HttpModule } from "@nestjs/axios";
-import { redisProvider } from "../app.providers";
 import { ModelSchematic } from "./schematics/model/model.schematic";
 import { ServiceSchematic } from "~shared/schematics/service/service.schematic";
 import { ModuleRef } from "@nestjs/core";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { LocationModel } from "~shared/models/location.model";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ExecutorsService } from "~shared/services/executors.service";
+import { CacheModule } from '@nestjs/cache-manager';
+import type { RedisClientOptions } from 'redis';
 
-
+// @ts-ignore
 @Module({
   providers: [
-    redisProvider,
+    // redisProvider,
     ModelSchematic,
     ServiceSchematic,
     BaseNeoService,
     LocationModel,
+    ExecutorsService,
     // LocationService,
     // BaseNeoTreeService,
   ],
   imports: [
-    CacheModule.register({
+    CacheModule.register<RedisClientOptions>({
+      // @ts-ignore
       store: redisStore,
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
@@ -53,7 +57,6 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
     Neo4jModule,
     ElasticSearchModule,
     HttpModule,
-    redisProvider,
     BaseNeoService,
   ],
 })
