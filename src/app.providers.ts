@@ -1,5 +1,5 @@
 import { createClient } from "redis";
-import type {RedisClientOptions, RedisClientType} from "redis";
+import type {RedisClientOptions} from "redis";
 import * as process from "process";
 
 export function createRedisClient(redisOptions: RedisClientOptions = {}): ReturnType<typeof createClient> {

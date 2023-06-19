@@ -7,6 +7,7 @@ import { CustomerPaymentMethodController } from './controllers/customer-payment-
 import { CustomerService } from './services/customer.service';
 import { CustomerPaymentMethodService } from './services/customer-payment-method.service';
 import { NotificationsService } from './services/notifications.service';
+import { EmailListeners } from "~eshop/customer/listeners/email.listeners";
 
 @Module({
   imports: [SharedModule],
@@ -16,6 +17,7 @@ import { NotificationsService } from './services/notifications.service';
     CustomerService,
     CustomerPaymentMethodService,
     NotificationsService,
+    EmailListeners
   ],
   controllers: [CustomerPaymentMethodController],
 })

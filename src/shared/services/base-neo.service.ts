@@ -21,6 +21,7 @@ import { store } from '~root/state';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
 import { range } from 'lodash';
+import { AppModule } from "~root/app.module";
 
 const debug = require('debug')('mcms:neo:query');
 
@@ -53,7 +54,7 @@ export class BaseNeoService {
 
   constructor() {
     this.neo = new Neo4jService();
-    this.eventEmitter = SharedModule.eventEmitter;
+    this.eventEmitter = AppModule.eventEmitter;
   }
 
   setModel(model: typeof BaseModel) {

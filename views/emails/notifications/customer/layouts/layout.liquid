@@ -515,17 +515,12 @@
             --tw-backdrop-sepia:  ;
         }
 
-        .mx-auto {
-            margin-left: auto;
-            margin-right: auto;
-        }
-
         .mt-2 {
             margin-top: 0.5rem;
         }
 
-        .mt-3 {
-            margin-top: 0.75rem;
+        .mt-4 {
+            margin-top: 1rem;
         }
 
         .mt-6 {
@@ -540,16 +535,12 @@
             display: flex;
         }
 
-        .h-7 {
-            height: 1.75rem;
+        .h-10 {
+            height: 2.5rem;
         }
 
-        .w-auto {
-            width: auto;
-        }
-
-        .max-w-2xl {
-            max-width: 42rem;
+        .w-10 {
+            width: 2.5rem;
         }
 
         .transform {
@@ -560,22 +551,34 @@
             align-items: center;
         }
 
-        .gap-x-6 {
-            column-gap: 1.5rem;
+        .justify-center {
+            justify-content: center;
+        }
+
+        .gap-x-4 {
+            column-gap: 1rem;
         }
 
         .rounded-lg {
             border-radius: 0.5rem;
         }
 
+        .rounded-md {
+            border-radius: 0.375rem;
+        }
+
+        .border {
+            border-width: 1px;
+        }
+
+        .border-blue-500 {
+            --tw-border-opacity: 1;
+            border-color: rgb(59 130 246 / var(--tw-border-opacity));
+        }
+
         .bg-blue-600 {
             --tw-bg-opacity: 1;
             background-color: rgb(37 99 235 / var(--tw-bg-opacity));
-        }
-
-        .bg-white {
-            --tw-bg-opacity: 1;
-            background-color: rgb(255 255 255 / var(--tw-bg-opacity));
         }
 
         .px-6 {
@@ -588,9 +591,9 @@
             padding-bottom: 0.5rem;
         }
 
-        .py-8 {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
         }
 
         .text-sm {
@@ -614,14 +617,9 @@
             letter-spacing: 0.05em;
         }
 
-        .text-blue-600 {
+        .text-blue-500 {
             --tw-text-opacity: 1;
-            color: rgb(37 99 235 / var(--tw-text-opacity));
-        }
-
-        .text-gray-500 {
-            --tw-text-opacity: 1;
-            color: rgb(107 114 128 / var(--tw-text-opacity));
+            color: rgb(59 130 246 / var(--tw-text-opacity));
         }
 
         .text-gray-600 {
@@ -656,16 +654,6 @@
             background-color: rgb(59 130 246 / var(--tw-bg-opacity));
         }
 
-        .hover\:text-blue-500:hover {
-            --tw-text-opacity: 1;
-            color: rgb(59 130 246 / var(--tw-text-opacity));
-        }
-
-        .hover\:underline:hover {
-            -webkit-text-decoration-line: underline;
-            text-decoration-line: underline;
-        }
-
         .focus\:outline-none:focus {
             outline: 2px solid transparent;
             outline-offset: 2px;
@@ -687,9 +675,9 @@
         }
 
         @media (prefers-color-scheme: dark) {
-            .dark\:bg-gray-900 {
-                --tw-bg-opacity: 1;
-                background-color: rgb(17 24 39 / var(--tw-bg-opacity));
+            .dark\:border-blue-400 {
+                --tw-border-opacity: 1;
+                border-color: rgb(96 165 250 / var(--tw-border-opacity));
             }
 
             .dark\:text-blue-400 {
@@ -706,31 +694,8 @@
                 --tw-text-opacity: 1;
                 color: rgb(209 213 219 / var(--tw-text-opacity));
             }
-
-            .dark\:text-gray-400 {
-                --tw-text-opacity: 1;
-                color: rgb(156 163 175 / var(--tw-text-opacity));
-            }
-
-            .dark\:hover\:text-blue-400:hover {
-                --tw-text-opacity: 1;
-                color: rgb(96 165 250 / var(--tw-text-opacity));
-            }
         }
 
-        @media (min-width: 640px) {
-            .sm\:h-8 {
-                height: 2rem;
-            }
-
-            .sm\:h-16 {
-                height: 5rem;
-            }
-
-            .sm\:gap-x-8 {
-                column-gap: 2rem;
-            }
-        }
 
     </style>
 </head>

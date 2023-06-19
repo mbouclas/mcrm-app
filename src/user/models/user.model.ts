@@ -139,7 +139,7 @@ export class UserModel extends BaseModel {
       placeholder: 'ConfirmToken',
       required: false,
       type: 'text',
-      group: 'main',
+      group: 'hidden',
     },
     {
       varName: 'forgotPasswordToken',
@@ -147,7 +147,7 @@ export class UserModel extends BaseModel {
       placeholder: 'ForgotPasswordToken',
       required: false,
       type: 'text',
-      group: 'main',
+      group: 'hidden',
     },
   ];
 

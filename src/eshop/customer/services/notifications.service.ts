@@ -11,6 +11,7 @@ import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.
 import { MailService } from "~root/mail/services/mail.service";
 import { sprintf } from "sprintf-js";
 import { ExecutorsService } from "~shared/services/executors.service";
+import { McmsDi } from "~helpers/mcms-component.decorator";
 
 export interface ICustomerJob {
   user: UserModel;
@@ -20,24 +21,27 @@ export interface ICustomerJob {
 enum NotificationsQueueEventNames {
   created = 'sendVerificationEmail',
   verified = 'sendWelcomeEmail',
-  forgotPassword = 'sendForgotPasswordEmail',
   resetPassword = 'sendResetPasswordEmail',
   updatedPassword = 'sendUpdatedPasswordEmail',
 }
 
+@McmsDi({
+  id: 'NotificationsService',
+  type: 'service',
+})
 @Injectable()
 export class NotificationsService extends BaseNeoService {
   public static config: any;
   public static queueName = `${MailQueueEventNames.default}:customerEmails`;
   public static queue: Queue;
 
-     async onModuleInit() {
+  async onModuleInit() {
 
     NotificationsService.queue = new Queue(NotificationsService.queueName, {
       connection: MailQueueService.redisConnection
     });
 
-    NotificationsService.queue.on('waiting', (job) => console.log(`${NotificationsService.queueName}: ${job.id}  now waiting`));
+    NotificationsService.queue.on("waiting", (job) => console.log(`${NotificationsService.queueName}: ${job.id}  now waiting`));
     MailQueueService.addWorker(this.customerWorker, NotificationsService.queueName);
   }
 
@@ -47,26 +51,7 @@ export class NotificationsService extends BaseNeoService {
     // const user = await (new UserService()).findOne({email: 'kid@rock.com'});
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'created' } );
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
-  }
-
-
-  /**
-   * When a new guest user is created, we need to send a notification to the admin and a verification email to the user
-   * @param user
-   */
-  @OnEvent(UserService.createdEventName)
-  async onUserCreated(user: UserModel) {
-    // we only care about guest users
-    if (user.type !== 'guest') {
-      return;
-    }
-
-    await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
-  }
-
-  @OnEvent(UserService.userVerifiedEventName)
-  async onUserVerified(user: UserModel) {
-    await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
+    // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'resetPassword' } );
   }
 
   async customerWorker(job: Job<ICustomerJob>) {
@@ -138,17 +123,38 @@ export class NotificationsService extends BaseNeoService {
     }
   }
 
-  async sendForgotPasswordEmail(user: UserModel) {
-    if (NotificationsService.config.user.resetPassword.customer.executor) {
-      ExecutorsService.executorFromString(NotificationsService.config.user.resetPassword.customer.executor, false, true, [user] );
-      return ;
-    }
-  }
 
   async sendResetPasswordEmail(user: UserModel) {
     if (NotificationsService.config.user.resetPassword.customer.executor) {
       ExecutorsService.executorFromString(NotificationsService.config.user.resetPassword.customer.executor, false, true, [user] );
       return ;
+    }
+
+    const service = new UserService();
+    const u = await service.findOne({email: user.email});
+
+    if (!u.forgotPasswordToken) {
+      return;
+    }
+
+    let html;
+    const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
+    const config = NotificationsService.config.user.resetPassword.customer;
+
+    try {
+      html = await ViewEngine.renderFile(config.template, { storeConfig, user: u });
+    } catch (e) {
+      console.log(e);
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }
+
+
+    try {
+      await NotificationsService.sendEmailToCustomer(user, html, sprintf(config.subject, {storeName: storeConfig.config.name, user: u}));
+    }
+    catch (e) {
+      console.log(e)
+      throw (e);
     }
   }
 

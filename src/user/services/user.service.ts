@@ -13,6 +13,10 @@ import { GateService } from '~root/auth/gate.service';
 import { CouldNotSaveGuestUserException } from "~user/exceptions/could-not-save-guest-user.exception";
 import { CouldNotVerifyUserTokenException } from "~user/exceptions/could-not-verify-user-token.exception";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
+import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
+import { tokenGenerator } from "~helpers/tokenGenerator";
+import { SharedModule } from "~shared/shared.module";
+import { AppModule } from "~root/app.module";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -50,6 +54,7 @@ export class UserService extends BaseNeoService {
   static createdEventName = 'user.model.created';
   static deletedEventName = 'user.model.deleted';
   static userVerifiedEventName = 'user.verified';
+  static passwordResetEventName = 'user.password.reset.generated';
 
   constructor() {
     super();
@@ -77,28 +82,11 @@ export class UserService extends BaseNeoService {
     console.log(`in ${UserService.createdEventName} event`, user);
   }
 
-  @OnEvent('user.created')
-  async confirmEmail(payload: UserModel) {
-    await this.mail.send({
-      from: '0xdjole@gmail.com',
-      to: payload.email,
-      subject: 'Confirm email',
-      text: `Use me ${payload.confirmToken}`,
-    });
-  }
-
-  @OnEvent('user.forgotPassword')
-  async forgotPasswordEmail(payload: UserModel) {
-    await this.mail.send({
-      from: '0xdjole@gmail.com',
-      to: payload.email,
-      subject: 'Forgot password email',
-      text: `Use me ${payload.forgotPasswordToken}`,
-    });
-  }
 
   @OnEvent(UserService.updatedEventName)
-  async onUpdate(payload: UserModel) {}
+  async onUpdate(payload: UserModel) {
+    console.log('-==-=-=-=-=-=-=-=-=-=-')
+  }
 
   @OnEvent(UserService.deletedEventName)
   async onDelete(payload: UserModel) {}
@@ -244,12 +232,8 @@ export class UserService extends BaseNeoService {
       throw new CouldNotVerifyUserTokenException(e.message, '100.7');
     }
 
-    user.active = true;
-    user.confirmToken = null;
-
-
     try {
-      await this.update(user.uuid, user);
+      await this.update(user.uuid, {active: true, confirmToken: null});
     }
     catch (e) {
       throw new RecordUpdateFailedException(e.message, '100.8', {user, token, error: e});
@@ -258,5 +242,59 @@ export class UserService extends BaseNeoService {
     this.eventEmitter.emit(UserService.userVerifiedEventName, user);
 
     return {success: true};
+  }
+
+  async askForPasswordResetOtp(email: string) {
+    let user;
+    try {
+      user = await this.findOne({ email, active: true });
+    }
+    catch (e) {
+      throw new RecordNotFoundException(e.message, '100.9', {email, error: e});
+    }
+
+
+    try {
+      await this.update(user.uuid, { forgotPasswordToken: tokenGenerator(6).toUpperCase() });
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e.message, '100.10', {user, email, error: e});
+    }
+
+
+    // push an event that the mail queue can process
+    this.eventEmitter.emit(UserService.passwordResetEventName, user);
+  }
+
+  async verifyPasswordResetOtp(email: string, forgotPasswordToken: string) {
+    let user;
+    try {
+      user = await this.findOne({ email, forgotPasswordToken, active: true });
+    }
+    catch (e) {
+      throw new RecordNotFoundException(e.message, '100.9', {forgotPasswordToken, error: e});
+    }
+
+    return user;
+  }
+
+  async changeUserPassword(email: string, password: string) {
+    let user;
+    try {
+      user = await this.findOne({ email, active: true });
+    }
+    catch (e) {
+      throw new RecordNotFoundException(e.message, '100.9', {email, error: e});
+    }
+
+    password = await (new AuthService).hasher.hashPassword(password);
+
+    try {
+      return await this.update(user.uuid, { password, forgotPasswordToken: null});
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e.message, '100.10', {user, email, error: e});
+    }
+
   }
 }

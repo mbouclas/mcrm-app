@@ -12,6 +12,7 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ExecutorsService } from "~shared/services/executors.service";
 import { CacheModule } from '@nestjs/cache-manager';
 import type { RedisClientOptions } from 'redis';
+import { AppModule } from "~root/app.module";
 
 // @ts-ignore
 @Module({
@@ -65,9 +66,9 @@ export class SharedModule implements OnModuleInit {
   static moduleRef: ModuleRef;
   constructor(
     private m: ModuleRef,
-    private eventEmitter: EventEmitter2,
+
   ) {
-    SharedModule.eventEmitter = eventEmitter;
+    SharedModule.eventEmitter = AppModule.eventEmitter;
   }
 
   onModuleInit(): any {

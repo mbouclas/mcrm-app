@@ -51,6 +51,7 @@ export let Test = { token: null };
       wildcard: true,
       delimiter: '.',
       verboseMemoryLeak: true,
+      maxListeners: 50,
     }),
     SharedModule,
     LoggerModule,
@@ -85,8 +86,10 @@ export let Test = { token: null };
 })
 export class AppModule implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(AppModule.name);
-
-  constructor(private eventEmitter: EventEmitter2) {}
+  public static eventEmitter: EventEmitter2;
+  constructor(private eventEmitter: EventEmitter2) {
+    AppModule.eventEmitter = this.eventEmitter;
+  }
 
   configure(consumer: MiddlewareConsumer) {
     consumer

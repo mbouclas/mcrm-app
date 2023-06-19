@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Req, Res, Session, UseInterceptors } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+  Session,
+  UseInterceptors
+} from "@nestjs/common";
 import { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import OAuth2Server, { Request as Oauth2Request, Response as Oauth2Response } from "oauth2-server";
 import { InvalidCredentials, UserExists } from "~root/auth/exceptions";
@@ -297,5 +310,58 @@ export class RegularUserController {
       return {success: false, message: e.message, code: e.getCode()};
     }
 
+  }
+
+  @Get('password-reset')
+  @UseInterceptors(OtpInterceptor)
+  async askForPasswordResetOtp(@Query('email') email: string) {
+    try {
+      await new UserService().askForPasswordResetOtp(email);
+    }
+    catch (e) {
+      let message;
+      switch (e.message) {
+        case 'RECORD_NOT_FOUND':
+          message = 'EMAIL_NOT_FOUND';
+          break;
+      }
+
+      return {success: false, message, code: e.getCode()};
+    }
+
+    return {success: true}
+  }
+
+  @Get('verify-reset-otp')
+  @UseInterceptors(OtpInterceptor)
+  async verifyPasswordResetOtp(@Query('email') email: string, @Query('otp') otp: string) {
+    try {
+      await new UserService().verifyPasswordResetOtp(email, otp);
+    }
+    catch (e) {
+      let message;
+      switch (e.message) {
+        case 'RECORD_NOT_FOUND':
+          message = 'INCORRECT_RESET_CODE';
+          break;
+      }
+
+      return {success: false, message, code: e.getCode()};
+    }
+
+    return {success: true}
+  }
+
+  @Post('change-password')
+  @UseInterceptors(OtpInterceptor)
+  async changePassword(@Body() data: {password: string, email: string}) {
+    try {
+      await new UserService().changeUserPassword(data.email, data.password);
+    }
+    catch (e) {
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+
+    return {success: true};
   }
 }
