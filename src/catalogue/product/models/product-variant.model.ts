@@ -73,14 +73,6 @@ export class ProductVariantModel extends BaseModel {
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
-      varName: 'active',
-      label: 'Active',
-      placeholder: 'Active',
-      type: 'boolean',
-      translatable: true,
-      group: 'main',
-    },
-    {
       varName: 'name',
       label: 'Name',
       placeholder: 'Name',
@@ -90,14 +82,7 @@ export class ProductVariantModel extends BaseModel {
       setDefaultTranslationInModel: true,
       group: 'main',
     },
-    {
-      varName: 'description',
-      label: 'Description',
-      placeholder: 'Description',
-      type: 'text',
-      translatable: true,
-      group: 'main',
-    },
+
     {
       varName: 'price',
       label: 'Price',
@@ -134,6 +119,22 @@ export class ProductVariantModel extends BaseModel {
           },
         ],
       },
+    },
+    {
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'text',
+      translatable: true,
+      group: 'main',
+    },
+    {
+      varName: 'active',
+      label: 'Active',
+      placeholder: 'Active',
+      type: 'boolean',
+      translatable: true,
+      group: 'main',
     },
   ];
 }
