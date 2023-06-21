@@ -8,7 +8,7 @@ import { PropertyValueService } from '../services/propertyValue.service';
 
 @Controller('api/property')
 export class PropertyController {
-  constructor() { }
+  constructor() {}
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -61,48 +61,28 @@ export class PropertyController {
 
   @Patch(':uuid')
   async patch(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    const newPropertyValues = body.propertyValue;
-
-    const propertyValue = await new PropertyService().getPropertyWithValues({ uuid });
-
-    const existingUUIDs = propertyValue.values.map((value) => (value as any).uuid);
-
-    const uuidsToDelete = existingUUIDs.filter((uuid) => !newPropertyValues.some((newVal) => newVal.uuid === uuid));
-
-    await Promise.all(uuidsToDelete.map((uuid) => new PropertyValueService().delete(uuid)));
-
-    let rels = [];
-    await Promise.all(
-      newPropertyValues.map(async (newPropertyValue) => {
-        const exists = propertyValue.values.some(
-          (existingPropertyValue) => existingPropertyValue.uuid === newPropertyValue.uuid,
-        );
-        let valueUuid: string;
-
-        if (exists) {
-          await new PropertyValueService().update(newPropertyValue.uuid, newPropertyValue);
-          valueUuid = newPropertyValue.uuid;
-        }
-
-        if (!exists) {
-          const newPropertyValueCreated = await new PropertyValueService().store(newPropertyValue);
-          valueUuid = newPropertyValueCreated.uuid;
-        }
-
-        rels = [
-          ...rels,
-          {
-            id: valueUuid,
-            name: 'propertyValue',
-          },
-        ];
-      }),
-    );
-
     const service = new PropertyService();
     await service.update(uuid, body, null);
-    await service.attachToManyById(uuid, rels);
 
+    return { success: true };
+  }
+
+  @Patch('/:uuid/value/:propertyUuid')
+  async patchValue(@Param('uuid') propertyUuid: string, @Body() body: IGenericObject) {
+    await new PropertyValueService().update(propertyUuid, body);
+    return { success: true };
+  }
+
+  @Post('/:uuid/value/:propertyUuid')
+  async addValue(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    const rels = [
+      {
+        id: uuid,
+        name: 'property',
+      },
+    ];
+
+    await new PropertyValueService().store(body, null, rels);
     return { success: true };
   }
 
