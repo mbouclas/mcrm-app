@@ -293,7 +293,7 @@ export class OrderController {
     return await new OrderService().delete(uuid, userId);
   }
 
-  @Post(`:uuid`)
+  @Patch(`:uuid`)
   async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
     const orderService = new OrderService();
 
