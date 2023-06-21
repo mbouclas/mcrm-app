@@ -67,13 +67,13 @@ export class PropertyController {
     return { success: true };
   }
 
-  @Patch('/:uuid/value/:propertyUuid')
-  async patchValue(@Param('uuid') propertyUuid: string, @Body() body: IGenericObject) {
+  @Patch('/:uuid/value/:propertyValueUuid')
+  async patchValue(@Param('propertyValueUuid') propertyUuid: string, @Body() body: IGenericObject) {
     await new PropertyValueService().update(propertyUuid, body);
     return { success: true };
   }
 
-  @Post('/:uuid/value/:propertyUuid')
+  @Post('/:uuid/value')
   async addValue(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
     const rels = [
       {
