@@ -8,7 +8,7 @@ import { PropertyValueService } from '../services/propertyValue.service';
 
 @Controller('api/property')
 export class PropertyController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -70,6 +70,12 @@ export class PropertyController {
   @Patch('/:uuid/value/:propertyValueUuid')
   async patchValue(@Param('propertyValueUuid') propertyUuid: string, @Body() body: IGenericObject) {
     await new PropertyValueService().update(propertyUuid, body);
+    return { success: true };
+  }
+
+  @Delete('/:uuid/value/:propertyValueUuid')
+  async deleteValue(@Param('propertyValueUuid') propertyUuid: string) {
+    await new PropertyValueService().delete(propertyUuid);
     return { success: true };
   }
 
