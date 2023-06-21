@@ -33,7 +33,7 @@ import {
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
@@ -82,7 +82,7 @@ export class OrderController {
     return true;
   }
 
-  @Post('/basic')
+  @Patch('/basic')
   async storeBasic(@Session() session: SessionData, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
 
@@ -157,8 +157,9 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-        }Provider`,
+      id: `${
+        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
+      }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
@@ -176,8 +177,9 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-        }Provider`,
+      id: `${
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
+      }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
