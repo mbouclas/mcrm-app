@@ -88,7 +88,6 @@ export class ProductVariantModel extends BaseModel {
       label: 'Price',
       placeholder: 'Price',
       type: 'number',
-      translatable: true,
       group: 'main',
     },
     {
@@ -125,7 +124,6 @@ export class ProductVariantModel extends BaseModel {
       label: 'Description',
       placeholder: 'Description',
       type: 'text',
-      translatable: true,
       group: 'main',
     },
     {
@@ -133,7 +131,6 @@ export class ProductVariantModel extends BaseModel {
       label: 'Active',
       placeholder: 'Active',
       type: 'boolean',
-      translatable: true,
       group: 'main',
     },
   ];
