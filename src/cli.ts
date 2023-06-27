@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-import { Liquid } from "liquidjs";
-import { ListCommand } from "./cli/commands/list.command";
+import * as process from "process";
+
 require('dotenv').config();
-process.env.MODE = 'cli';
-const argv = require('minimist')(process.argv.slice(2));
-const colors = require('colors');
+import { Liquid } from "liquidjs";
+import { ListCommand } from "~cli/commands/list.command";
 import { NestFactory } from "@nestjs/core";
-import { CliModule } from "./cli/cli.module";
+import { CliModule } from "~cli/cli.module";
 import { CommandMeta } from "~cli/meta-data/command-meta";
 import { Logger } from "~cli/helpers/logger";
 import { CommandRunner } from "~cli/services/command-runner.service";
@@ -14,15 +13,20 @@ import { createDriver } from "~neo4j/neo4j.util";
 import { defaultNeo4JConfig } from "~neo4j/neo4j.module";
 import { Neo4jService } from "~neo4j/neo4j.service";
 
+process.env.MODE = 'cli';
+const argv = require('minimist')(process.argv.slice(2));
+const colors = require('colors');
+
+
 export interface ICommandResult {
   success: boolean;
   reason?: string;
   return?: any;
 }
 
-export let ViewEngine = new Liquid({
+/*export let ViewEngine = new Liquid({
   cache: false,
-});
+});*/
 
 
 async function bootstrap() {
