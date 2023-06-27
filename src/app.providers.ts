@@ -6,7 +6,7 @@ export function createRedisClient(redisOptions: RedisClientOptions = {}): Return
   if (typeof process.env.REDIS_URL !== 'undefined') {
     redisOptions.url = process.env.REDIS_URL;
   } else {
-    redisOptions.url = `redis://:${process.env.REDIS_AUTH}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}/${process.env.REDIS_DB}`
+    redisOptions.url = `redis://:${process.env.REDIS_AUTH}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}${process.env.REDIS_DB ? `/${process.env.REDIS_DB}` : ''}`
   }
   const client = createClient(redisOptions);
 

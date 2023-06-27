@@ -1,6 +1,6 @@
 {% layout "emails/notifications/customer/layouts/layout.liquid" %}
 {% block content %}
-<p>
+<p class="dark:text-gray-500">
     Hi {{user.firstName}},
 </p>
 <a href="{{ config.storeUrl }}user/verify?token={{ user.confirmToken }}" target="_blank"

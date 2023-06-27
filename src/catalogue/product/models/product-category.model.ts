@@ -60,6 +60,14 @@ export class ProductCategoryModel extends BaseModel {
       group: 'main',
     },
     {
+      varName: 'thumb',
+      label: 'Thumb',
+      placeholder: 'Thumb',
+      type: 'image',
+      translatable: true,
+      group: 'main',
+    },
+    {
       varName: 'metaData',
       label: 'Meta Data',
       placeholder: 'Meta Data',
