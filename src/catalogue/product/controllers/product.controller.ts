@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Session, Get, Delete, Param, Query } from '@nestjs/common';
+import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
@@ -14,7 +14,7 @@ export class ProductController {
     return await new ProductService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
-  @Post('/basic')
+  @Patch('/basic')
   async storeBasic(@Body() body: IGenericObject) {
     return await new ProductService().store(body);
   }

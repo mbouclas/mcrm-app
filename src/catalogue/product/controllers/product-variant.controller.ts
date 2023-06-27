@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Session, Get, Delete, Param, Query } from '@nestjs/common';
+import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
@@ -59,5 +59,12 @@ export class ProductVariantController {
     );
 
     return response;
+  }
+
+  @Patch(`:uuid`)
+  async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
+    const variant = await new ProductVariantService().update(uuid, body);
+
+    return variant;
   }
 }
