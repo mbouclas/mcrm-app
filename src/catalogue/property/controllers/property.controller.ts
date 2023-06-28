@@ -17,6 +17,11 @@ export class PropertyController {
     return await new PropertyService().find(queryParams, rels);
   }
 
+  @Get('/variant/:uuid')
+  async findValueByariant(@Param('uuid') uuid: string) {
+    return await new PropertyValueService().findByVariantId(uuid);
+  }
+
   @Post('/basic')
   async storeBasic(@Body() body: IGenericObject) {
     return await new PropertyService().store(body);

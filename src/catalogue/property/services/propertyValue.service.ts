@@ -33,6 +33,15 @@ export class PropertyValueService extends BaseNeoService {
     return item;
   }
 
+  async findByVariantId(variantId: string): Promise<PropertyValueModel> {
+    const query = `MATCH (v: ProductVariant { uuid: '${variantId}' })-[:HAS_PROPERTY_VALUE]->(pv: PropertyValue) RETURN pv;
+    `;
+
+    const res = await this.neo.readWithCleanUp(query);
+
+    return res.map((item) => item['pv']);
+  }
+
   async store(record: PropertyValueDto, userId?: string, rels = []) {
     const r = await super.store(record, userId, rels);
     return r;
