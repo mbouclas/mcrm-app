@@ -1,5 +1,4 @@
-{% layout "emails/notifications/customer/layouts/layout.liquid" %}
-{% block content %}
+<x-customer src="views/layouts/customer.html">
 <p class="dark:text-gray-500">
     Hi {{user.firstName}},
 </p>
@@ -13,4 +12,4 @@
 <p>
     {{ config.storeUrl }}user/verify?token={{ user.confirmToken }}
 </p>
-{% endblock %}
+</x-customer>

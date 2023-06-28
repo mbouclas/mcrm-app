@@ -6,6 +6,7 @@ import { ViewEngine } from "~root/main";
 import { MailService } from "~root/mail/services/mail.service";
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 import { OnEvent } from "@nestjs/event-emitter";
+import { maizzleRenderer } from "~helpers/maizzle.renderer";
 
 interface IMailJob {
   firstName: string;
@@ -38,8 +39,15 @@ export class ContactFormsService {
 
   async contactFormWorker(job: Job<IMailJob>) {
     let html;
-    try {
+/*    try {
       html = await ViewEngine.renderFile(ContactFormsService.config.contactForm.template, job.data);
+    } catch (e) {
+      console.log(e);
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }*/
+
+    try {
+      html = await maizzleRenderer(ContactFormsService.config.contactForm.template, {config: getStoreProperty('configs.store'), data: job.data })
     } catch (e) {
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });

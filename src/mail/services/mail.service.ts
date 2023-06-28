@@ -1,6 +1,7 @@
 import { MailgunDriver } from '../drivers/mailgun.driver';
 import { SendEmailFailedException } from '../exceptions/SendEmailFailed.exception';
 import { SmtpDriver } from '../drivers/smtp.driver';
+import { MailjetDriver } from "~root/mail/drivers/mailjet.driver";
 
 export interface IBaseMailMessage {
   from: string;
@@ -18,6 +19,7 @@ export interface IBaseMailServiceDriver {
 export class MailService {
   availableDrivers: { [key: string]: any } = {
     mailgun: MailgunDriver,
+    mailjet: MailjetDriver,
     smtp: SmtpDriver,
   };
 
