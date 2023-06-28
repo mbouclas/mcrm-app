@@ -1,6 +1,5 @@
-import { createDriver } from '~neo4j/neo4j.util';
-
 require('dotenv').config();
+import { createDriver } from '~neo4j/neo4j.util';
 import { Liquid } from 'liquidjs';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -17,8 +16,11 @@ import * as helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { defaultNeo4JConfig } from '~root/neo4j/neo4j.module';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
-import * as process from "process";
+
+
+
 const RedisStore = require("connect-redis").default
+export const projectRoot = resolve(join(__dirname, '../../'));
 const viewsDir = resolve(join(__dirname, '../../', 'views'));
 const publicDir = resolve(join(__dirname, '../../', 'public'));
 const uploadDir = resolve(join(__dirname, '../../', 'upload'));
@@ -145,8 +147,10 @@ async function bootstrap() {
     module.hot.dispose(() => app.close());
   }
 }
+if (process.env.MODE !== 'cli') {
+  createDriver(defaultNeo4JConfig).then(async (driver) => {
+    Neo4jService.driverInstance = driver;
+    await bootstrap();
+  });
+}
 
-createDriver(defaultNeo4JConfig).then(async (driver) => {
-  Neo4jService.driverInstance = driver;
-  await bootstrap();
-});

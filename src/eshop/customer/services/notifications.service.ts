@@ -6,12 +6,14 @@ import { UserService } from "~user/services/user.service";
 import { UserModel } from "~user/models/user.model";
 import { MailQueueEventNames, MailQueueService } from "~root/mail/queues/mail.queue.service";
 import { Job, Queue } from "bullmq";
-import { ViewEngine } from "~root/main";
+import { projectRoot, ViewEngine } from "~root/main";
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 import { MailService } from "~root/mail/services/mail.service";
 import { sprintf } from "sprintf-js";
 import { ExecutorsService } from "~shared/services/executors.service";
 import { McmsDi } from "~helpers/mcms-component.decorator";
+import { maizzleRenderer } from "~helpers/maizzle.renderer";
+
 
 export interface ICustomerJob {
   user: UserModel;
@@ -35,6 +37,9 @@ export class NotificationsService extends BaseNeoService {
   public static queueName = `${MailQueueEventNames.default}:customerEmails`;
   public static queue: Queue;
 
+
+
+
   async onModuleInit() {
 
     NotificationsService.queue = new Queue(NotificationsService.queueName, {
@@ -48,7 +53,7 @@ export class NotificationsService extends BaseNeoService {
   @OnEvent('app.loaded')
   async onAppLoaded() {
     NotificationsService.config = getStoreProperty("configs.store.notifications.email");
-    // const user = await (new UserService()).findOne({email: 'kid@rock.com'});
+    // const user = await (new UserService()).findOne({email: 'mbouclas@gmail.com'});
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'created' } );
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'resetPassword' } );
@@ -76,10 +81,18 @@ export class NotificationsService extends BaseNeoService {
       return ;
     }
 
-    try {
+/*    try {
       html = await ViewEngine.renderFile(NotificationsService.config.user.created.customer.template, storeConfig);
     } catch (e) {
       console.log(e);
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }*/
+
+    try {
+      html = await maizzleRenderer(NotificationsService.config.user.created.customer.template, storeConfig);
+    }
+    catch (e) {
+      console.log(`Error rendering template ${NotificationsService.config.user.created.customer.template}`, e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
 
@@ -106,10 +119,18 @@ export class NotificationsService extends BaseNeoService {
       return ;
     }
 
-    try {
+/*    try {
       html = await ViewEngine.renderFile(NotificationsService.config.user.verified.customer.template, storeConfig);
     } catch (e) {
       console.log(e);
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }*/
+
+    try {
+      html = await maizzleRenderer(NotificationsService.config.user.verified.customer.template, storeConfig);
+    }
+    catch (e) {
+      console.log(`Error rendering template ${NotificationsService.config.user.verified.customer.template}`, e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
 
@@ -141,12 +162,21 @@ export class NotificationsService extends BaseNeoService {
     const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
     const config = NotificationsService.config.user.resetPassword.customer;
 
+
     try {
+      html = await maizzleRenderer(config.template, {storeConfig, user: u, chars: u.forgotPasswordToken.split('')});
+    }
+    catch (e) {
+      console.log(`Error rendering template ${config.template}`, e)
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }
+
+/*    try {
       html = await ViewEngine.renderFile(config.template, { storeConfig, user: u });
     } catch (e) {
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
-    }
+    }*/
 
 
     try {

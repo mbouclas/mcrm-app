@@ -32,13 +32,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
 
   }
 
-  @OnEvent('app.loaded')
-  async onAppLoaded() {
-
-
-
-  }
-
   async onModuleInit() {}
 
   public static displayedColumns = ['title', 'category'];

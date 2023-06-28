@@ -1,5 +1,5 @@
 import { IBaseMailMessage, IBaseMailServiceDriver } from "~root/mail/services/mail.service";
-import Mailjet from "node-mailjet";
+const Mailjet = require('node-mailjet');
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 
 export class MailJetMail implements IBaseMailMessage {
@@ -13,8 +13,8 @@ export class MailJetMail implements IBaseMailMessage {
 }
 
 export class MailjetDriver implements IBaseMailServiceDriver {
-  name = "mailgun";
-  client: Mailjet;
+  name = "mailjet";
+  client: typeof Mailjet;
 
   constructor() {
     this.client = new Mailjet({
@@ -24,8 +24,9 @@ export class MailjetDriver implements IBaseMailServiceDriver {
   }
 
   async send(message: MailJetMail): Promise<boolean> {
+    console.log('About to send', message.to, message.from)
     try {
-      await this.client
+      const res = await this.client
         .post("send", { version: "v3.1" })
         .request({
           Messages: [
@@ -48,6 +49,7 @@ export class MailjetDriver implements IBaseMailServiceDriver {
         });
     }
     catch (e) {
+      console.log(`Mailjet send email failed: ${e}`);
       throw new SendEmailFailedException(`Mailjet send email failed: ${e}`, '850.1');
     }
 

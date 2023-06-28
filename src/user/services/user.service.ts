@@ -85,7 +85,7 @@ export class UserService extends BaseNeoService {
 
   @OnEvent(UserService.updatedEventName)
   async onUpdate(payload: UserModel) {
-    console.log('-==-=-=-=-=-=-=-=-=-=-')
+
   }
 
   @OnEvent(UserService.deletedEventName)

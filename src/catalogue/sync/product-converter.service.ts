@@ -136,6 +136,15 @@ export class ProductConverterService {
       }
     }
 
+    if (Array.isArray(product['tag'])) {
+      result.tags = product['tag'].map((tag) => ({
+        uuid: tag.uuid,
+        name: tag.name,
+        slug: tag.slug,
+        model: tag.model
+      }));
+    }
+
     return result;
   }
 }

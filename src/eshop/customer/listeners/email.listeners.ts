@@ -26,3 +26,4 @@ export class EmailListeners {
     await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'resetPassword' } );
   }
 }
+

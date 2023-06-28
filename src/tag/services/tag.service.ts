@@ -24,12 +24,13 @@ export class TagService extends BaseNeoService {
   }
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    // const s = new TagService();
+    const s = new TagService();
 
-    // const r = await s.quickAddTag('Product', 'shirts');
-    // const r = await s.getModelTags('Product');
+    // const r = await s.quickAddTag('Product', 'T-Shirts');
+    // const r1 = await s.getModelTags('Product');
+    // console.log(r1)
     // const r = await s.getTagsByModel('Product', {slug: 'test'});
-    // const r = await s.addTagToModel('Product', {slug: 'test'}, {slug: 'shirts'})
+    // const r = await s.addTagToModel('Product', {slug: 'poppy'}, {slug: 'shirts'})
 /*    const r = await s.updateModelTags('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
       {slug: 'shoes', uuid: 'e0f6bf03-24ba-4255-a88b-c226c6ceb030', name: 'Shoes', createdAt: new Date(), updatedAt: new Date()}
     ], store.getState().models['Product'].modelConfig as any);*/
