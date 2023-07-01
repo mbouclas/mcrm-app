@@ -41,7 +41,18 @@ export class PropertyValueService extends BaseNeoService {
 
     const res = await this.neo.readWithCleanUp(query);
 
-    console.log(res.map((item) => ({ ...item['pv'], property: item['p'][0] })));
+    return res.map((item) => ({ ...item['pv'], property: item['p'][0] }));
+  }
+
+  async searchValues(name: string): Promise<PropertyValueModel> {
+    const query = `
+    MATCH (p: Property)-[:HAS_VALUE]->(pv: PropertyValue)
+    WHERE pv.name CONTAINS '${name}'
+    RETURN pv, collect(p) as p;
+  `;
+
+    const res = await this.neo.readWithCleanUp(query);
+
     return res.map((item) => ({ ...item['pv'], property: item['p'][0] }));
   }
 

@@ -18,8 +18,14 @@ export class PropertyController {
   }
 
   @Get('/variant/:uuid')
-  async findValueByariant(@Param('uuid') uuid: string) {
+  async findValueByVariant(@Param('uuid') uuid: string) {
     return await new PropertyValueService().findByVariantId(uuid);
+  }
+
+  @Get('/value/search')
+  async searchValue(@Query() queryParams = {}) {
+    const q = queryParams['q'] || '';
+    return await new PropertyValueService().searchValues(q);
   }
 
   @Post('/basic')
