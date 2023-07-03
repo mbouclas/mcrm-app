@@ -5,8 +5,8 @@
     <meta name="x-apple-disable-message-reformatting">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
-    <meta name="color-scheme" content="light ">
-    <meta name="supported-color-schemes" content="light ">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <!--[if mso]>
     <noscript>
         <xml>
@@ -34,14 +34,41 @@
         <each loop="item in Array.from(Array(150))">&#8199;&#65279;&#847; </each>
     </div>
 </if>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <table width="600" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center">
+                        <table class="sm:w-full" align="center">
+                            <tr>
+                                <td class="p-48 sm:py-32 sm:px-24 text-center">
+                                    <a href="{{ config.storeUrl }}">
+                                        <img src="{{ config.storeLogo }}" width="75" alt="{{ config.name }}">
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center"><content /></td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <footer class="mt-8">
+                            <p class="mt-3 text-gray-500 dark:text-gray-400">© {{ config.name }}. All Rights Reserved.</p>
+                            <p class="text-sm text-gray-500 dark:text-blue-400">Powered by <a href="https://m-crm.io">m-crm.io</a></p>
+                        </footer>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
-<div role="article" aria-roledescription="email" aria-label="{{{ page.title || '' }}}" lang="{{ page.language || 'en' }}">
-    <content />
-</div>
 
-<footer class="mt-8">
-    <p class="mt-3 text-gray-500 dark:text-gray-400">© {{ config.name }}. All Rights Reserved.</p>
-    <p class="text-sm text-gray-500 dark:text-blue-400">Powered by <a href="https://m-crm.io">m-crm.io</a></p>
-</footer>
+
+
 </body>
 </html>

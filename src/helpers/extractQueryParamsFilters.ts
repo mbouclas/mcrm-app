@@ -72,7 +72,6 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
       .forEach((field: IQueryBuilderFieldBlueprint) => searchableFields.push(field.varName));
 
     // Look up for q
-
     if (model.filterConfig.filterParamName && typeof params[model.filterConfig.filterParamName] !== 'undefined' && params[model.filterConfig.filterParamName]) {
       toRemove.push(model.filterConfig.filterParamName);
       const paramValue = params[model.filterConfig.filterParamName];
@@ -90,10 +89,11 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
         where.push(tmpValues.join(` OR `));
       }
     }
+
+
     orderBy = (!params.orderBy) ? `${modelAlias}.${model.filterConfig.defaultOrderBy}` : orderBy;
     way = (!params.way) ? model.filterConfig.defaultWay : way;
   }
-
 
 
   for (let key in params) {
@@ -112,12 +112,51 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
       continue;
     }
     // find the filter
-    const idx = findIndex(model.filterFields, { varName: key });
+    const idx = findIndex(model.filterFields, (field: IQueryBuilderFieldBlueprint) => {
+      if (field.isRange) {
+        return field.rangeFromFieldName === key || field.rangeToFieldName === key;
+      }
+
+      return field.varName === key;
+    });
 
     if (idx === -1 || (model.filterFields[idx].model !== model.modelName) || model.filterFields[idx].relName) { continue; }
 
     const filter = model.filterFields[idx];
 
+    if (filter.isRange && (filters[filter.rangeFromFieldName] || filters[filter.rangeToFieldName])) {
+      const rangeTmp = [];
+      if (filters[filter.rangeFromFieldName]) {
+        rangeTmp.push(`${modelAlias}.${filter.varName} >= ${buildWhereValueString(filter.type, filters[filter.rangeFromFieldName])}`);
+      }
+
+      if (filters[filter.rangeToFieldName]) {
+        rangeTmp.push(`${modelAlias}.${filter.varName} <= ${buildWhereValueString(filter.type, filters[filter.rangeToFieldName])}`);
+      }
+
+      // as there's 2 fields in the range, it will run twice, so we need to make sure we don't add the same range twice
+      if (where.indexOf(rangeTmp.join(' AND ')) === -1 && rangeTmp.length > 0) {
+        where.push(rangeTmp.join(' AND '));
+      }
+
+      continue;
+    }
+
+    // Arrays can only use exact type filters, can't match partials in an array
+    if (Array.isArray(filters[key]) && filter.filterType === 'exact') {
+      where.push(`${modelAlias}.${key} IN [${filters[key].map((value: any) => buildWhereValueString(filter.type, value)).join(',')}]`);
+      continue;
+    }
+
+    // For partial matches we need to break down the array and create a query for each value
+    if (Array.isArray(filters[key]) && filter.filterType === 'partial') {
+      const tmp = []
+      filters[key].forEach((value: any) => {
+        tmp.push(`${modelAlias}.${key} =~ '(?i).*${value}.*'`);
+      });
+      where.push(tmp.join(' OR '));
+      continue;
+    }
 
     // Need to check if the filter belongs to another model. In that case we need a secondary filter to be applied to the setupRelationShipsQuery function
 
@@ -183,17 +222,20 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
         // look into relationships
         orderByFound = true;
       }
-
       const fromRel = (relationshipModel.type === 'normal') ? '-' : '<-';
       const toRel = (relationshipModel.type === 'normal') ? '->' : '-';
+
       let whereQuery = '';
       let optionalQuery = 'OPTIONAL';
       /*            if (typeof filters[r] === 'undefined' || !filters[r] || filters[r] === 'undefined') {
                       return;;
                   }*/
+
       if (filters[r]) {
         // get the filterField
+
         const idx = findIndex(model.filterFields, { varName: r });
+
         let filterField = model.filterFields[idx];
 
         if (!filterField) {
@@ -213,7 +255,19 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
         // Only allow for fields that are requested by the searchIn param, if set. Otherwise everything is included
         if (!searchFields || searchFields.length === 0 || searchFields.indexOf(r) !== -1) {
           // Need to add an IN in case the value is an array
-          whereQuery += (filterField.filterType === 'partial') ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'` : `${relationshipModel.modelAlias}.${filterKey} = '${filters[r]}'`;
+          if (Array.isArray(filters[r])) {
+            if (filterField.filterType === 'exact') {
+              whereQuery += `${relationshipModel.modelAlias}.${filterKey} IN [${filters[r].map((value: any) => `'${value}'`).join(',')}]`;
+            } else {
+              whereQuery += filters[r].map((value: any) => `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${value}.*'`).join(' OR ');
+            }
+          }
+          // Non array filter values
+          else {
+            whereQuery += (filterField.filterType === 'partial') ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'` : `${relationshipModel.modelAlias}.${filterKey} = '${filters[r]}'`;
+
+          }
+
           optionalQuery = '';// We can't have a where and an optional together
         }
 
@@ -253,6 +307,10 @@ export function buildWhereQueryFromFilter(filterName: string, filterValue: any, 
 }
 
 export function buildWhereValueString(type: string, value: any) {
+  if (type === 'date') {
+    return `datetime('${value}')`;
+  }
+
   let valueQuery = `'${value}'`;
   // Do not put this value in quotes if of the following type
   if (['boolean', 'number'].indexOf(type) !== -1) {

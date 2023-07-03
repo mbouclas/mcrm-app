@@ -196,7 +196,7 @@ export class OrderService extends BaseNeoService {
     }
 
     if (!record.orderId) {
-      record.orderId = v4();
+      record.orderId = await this.generateOrderId();
     }
 
     record.VAT = OrderService.VAT;
@@ -212,8 +212,8 @@ export class OrderService extends BaseNeoService {
   }
 
   async update(uuid: string, record: OrderModelDto, userId?: string) {
-    if (!OrderService.statuses.map((status) => status.id).includes(record.status)) {
-      throw new InvalidOrderException('ORDER_UPDATE_ERROR', '900.2');
+    if (record.status && !OrderService.statuses.map((status) => status.id).includes(record.status)) {
+      throw new InvalidOrderException('INVALID_ORDER_STATUS', '900.2', );
     }
 
     try {
@@ -383,5 +383,10 @@ export class OrderService extends BaseNeoService {
     });
 
     return items;
+  }
+
+  private async generateOrderId() {
+    return  Math.random().toString(36).substring(2, 10).toUpperCase();
+
   }
 }

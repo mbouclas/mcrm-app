@@ -1,6 +1,7 @@
 module.exports = {
   name: 'MCRM',
   storeUrl: process.env.BASE_URL,
+  storeLogo: '',
   VAT: 19,
   quickCheckout: true,
   guestCheckout: false,

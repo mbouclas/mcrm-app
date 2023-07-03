@@ -24,7 +24,6 @@ export class MailjetDriver implements IBaseMailServiceDriver {
   }
 
   async send(message: MailJetMail): Promise<boolean> {
-    console.log('About to send', message.to, message.from)
     try {
       const res = await this.client
         .post("send", { version: "v3.1" })

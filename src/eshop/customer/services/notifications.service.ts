@@ -57,6 +57,9 @@ export class NotificationsService extends BaseNeoService {
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'created' } );
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
     // await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'resetPassword' } );
+
+
+
   }
 
   async customerWorker(job: Job<ICustomerJob>) {
@@ -159,12 +162,11 @@ export class NotificationsService extends BaseNeoService {
     }
 
     let html;
-    const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
+    const storeConfig = {config: getStoreProperty('configs.store')};
     const config = NotificationsService.config.user.resetPassword.customer;
 
-
     try {
-      html = await maizzleRenderer(config.template, {storeConfig, user: u, chars: u.forgotPasswordToken.split('')});
+      html = await maizzleRenderer(config.template, {...storeConfig, user: u, chars: u.forgotPasswordToken.split('')});
     }
     catch (e) {
       console.log(`Error rendering template ${config.template}`, e)

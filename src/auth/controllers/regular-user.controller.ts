@@ -30,6 +30,9 @@ import { AddressService } from "~eshop/address/services/address.service";
 import { ISessionData } from "~shared/models/session.model";
 import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
 import { ExecutorsService } from "~shared/services/executors.service";
+import { AuthInterceptor } from "~root/auth/interceptors/auth.interceptor";
+import { OrderService } from "~eshop/order/services/order.service";
+import { UserOrderInterceptor } from "~eshop/order/interceptors/user-order.interceptor";
 const crypto = require('crypto');
 
 
@@ -363,5 +366,30 @@ export class RegularUserController {
     }
 
     return {success: true};
+  }
+
+  @Get('orders')
+  @UseInterceptors(AuthInterceptor)
+  @UseInterceptors(UserOrderInterceptor)
+  async getOrders(@Session() session: ISessionData) {
+    try {
+      return await new OrderService().find({userId: session.user.uuid});
+    }
+    catch (e) {
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+  }
+
+  @Get('account')
+  @UseInterceptors(AuthInterceptor)
+  async getAccount(@Session() session: ISessionData) {
+    const userService = new UserService();
+    const user = await userService.findOne({ email: session.user.email }, ["address", "role"]);
+
+    if (!userService.isGuest(user)) {
+      return { success: false, message: "Could not get user details", reason: "500.9.1" };
+    }
+
+    return user;
   }
 }

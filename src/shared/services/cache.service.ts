@@ -47,4 +47,8 @@ export class CacheService {
   async del(key: string) {
     return await this.redis.del(key);
   }
+
+  async quit() {
+    return await this.redis.quit();
+  }
 }

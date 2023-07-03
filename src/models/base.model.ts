@@ -28,6 +28,12 @@ export interface INeo4jModel {
   relationships: IGenericObject<INeo4jModelRelationshipConfig>;
 }
 
+export interface IModelFilters {
+  allowMultiple?: boolean;
+  type?: 'normal'|'inverse';
+  allowedFields?: string[];
+}
+
 export interface INeo4jModelRelationshipConfig {
   alias: string;
   postProcessing?: Function;
@@ -50,6 +56,7 @@ export interface INeo4jModelRelationshipConfig {
   tabs?: string[];
   group?: string;
   fields?: IDynamicFieldConfigBlueprint[];
+  filters?: IModelFilters;
 }
 
 export class BaseModel {
