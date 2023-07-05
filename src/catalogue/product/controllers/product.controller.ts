@@ -33,6 +33,28 @@ export class ProductController {
     return await new ProductService().delete(uuid, userId);
   }
 
+  @Post(':uuid/generate-variants')
+  async generateVariants(@Session() session: SessionData, @Param('uuid') uuid: string, @Query() queryParams = {}) {
+    const userId = session.user && session.user['uuid'];
+    const propertyValues = queryParams['propertyValues'];
+    if (!propertyValues || !propertyValues.length) {
+      return { success: false };
+    }
+
+    try {
+      await new ProductService().generateVariantsFromProperty(uuid, userId);
+      return { success: true };
+    } catch (e) {
+      return {
+        success: false,
+        message: 'Error generating product variants',
+        error: e.getMessage(),
+        errors: e.getErrors(),
+        code: e.getCode(),
+      };
+    }
+  }
+
   @Post('')
   async create(@Body() body: IGenericObject) {
     const product = await new ProductService().store(body);
