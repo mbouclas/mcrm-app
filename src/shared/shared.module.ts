@@ -14,6 +14,10 @@ import { CacheModule } from '@nestjs/cache-manager';
 import type { RedisClientOptions } from 'redis';
 import { AppModule } from "~root/app.module";
 
+export enum SharedEventNames {
+  CONFIG_LOADED = 'config.loaded',
+}
+
 // @ts-ignore
 @Module({
   providers: [

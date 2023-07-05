@@ -199,4 +199,35 @@ export class AddressService extends BaseNeoService {
     const res = await this.neo.readWithCleanUp(q);
     return res;
   }
+
+  async setDefaultAddress(addressId: string, userId: string) {
+    try {
+      await this.neo.write(`
+      MATCH (u:User)-[r:HAS_ADDRESS]->(a:Address) WHERE u.uuid = '${userId}'
+      SET a.default = false
+     return *
+      `);
+    }
+    catch (e) {
+      throw new RecordStoreFailedException('FAILED_TO_RESET_ADDRESSES', '600.3', e);
+    }
+
+    try {
+      return await super.update(addressId, {default: true});
+    }
+    catch (e) {
+      throw new RecordStoreFailedException('FAILED_TO_SET_DEFAULT_ADDRESS', '600.3', e);
+    }
+  }
+
+  async deleteAddress(addressId: string) {
+    try {
+      await this.neo.write(`
+      MATCH (a:Address {uuid: '${addressId}'}) DETACH DELETE a
+      `);
+    }
+    catch (e) {
+      throw new RecordStoreFailedException('FAILED_TO_DELETE_ADDRESS', '600.4', e);
+    }
+  }
 }

@@ -2,6 +2,7 @@ import { resolve } from "path";
 import { readDirFiles } from "~helpers/readDirFiles";
 import { AppStateActions, store } from "~root/state";
 import { existsSync } from "fs";
+import { SharedEventNames, SharedModule } from "~shared/shared.module";
 
 export function loadConfig(name: string, reload = false) {
   if (!reload) {
@@ -23,17 +24,8 @@ export async function loadConfigs(readFrom = './config', merge = false) {
 
     const name = files[i].fileName.replace('.js', '').replace('.json', '');
     AppStateActions.setConfig(name, config, merge);
+    // In case there's any further processing of the config files
+    SharedModule.eventEmitter.emit(SharedEventNames.CONFIG_LOADED, { name, config })
   }
 
-/*  files.forEach(file => {
-    try {
-      const config = require(file.fullFileName);
-      const name = file.fileName.replace('.js', '').replace('.json', '');
-      AppStateActions.setConfig(name, config, merge);
-    }
-    catch (e) {
-      console.log(e)
-    }
-  });
-  */
 }

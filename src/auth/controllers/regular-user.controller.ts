@@ -4,7 +4,7 @@ import {
   Delete,
   Get,
   Inject,
-  Param,
+  Param, Patch,
   Post,
   Query,
   Req,
@@ -391,5 +391,48 @@ export class RegularUserController {
     }
 
     return user;
+  }
+
+  @Patch('address/default/:addressId')
+  async setDefaultAddress(@Param('addressId') addressId: string, @Session() session: ISessionData) {
+    try {
+      await new AddressService().setDefaultAddress(addressId, session.user.uuid);
+    }
+    catch (e) {
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+
+    return {success: true};
+  }
+
+  @Delete('address/:addressId')
+  async deleteAddress(@Param('addressId') addressId: string, @Session() session: ISessionData) {
+    try {
+      await new AddressService().deleteAddress(addressId);
+    }
+    catch (e) {
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+
+    return {success: true};
+  }
+
+  @Post('address')
+  async addAddress(@Body() data: AddressSyncDto, @Session() session: ISessionData) {
+    if (!AddressService.validateAddress(data.address)) {
+      return {success: false, message: "Invalid address"};
+    }
+
+    try {
+      const res = await (new AddressService()).attachAddressToUser(data.address, session.user.uuid);
+      data['uuid'] = res.uuid;
+    }
+    catch (e) {
+      console.log(e)
+      return {success: false, message: e.message, code: e.getCode()};
+    }
+
+
+    return data;
   }
 }

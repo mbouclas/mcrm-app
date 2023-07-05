@@ -53,4 +53,15 @@ export class ProductController {
 
     return response;
   }
+
+  @Patch('/:uuid/productCategories')
+  async updateProductCategories(@Param('uuid') uuid: string, @Body() ids: IGenericObject[]) {
+    try {
+      await new ProductService().updateProductCategories(uuid, ids.map((i) => i['uuid']));
+      return { success: true };
+    }
+    catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
 }

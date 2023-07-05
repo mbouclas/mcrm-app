@@ -119,6 +119,7 @@ export class ProductService extends BaseNeoService {
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
     let item: ProductModel;
+
     try {
       item = (await super.findOne(filter, rels)) as unknown as ProductModel;
     }
@@ -269,5 +270,43 @@ export class ProductService extends BaseNeoService {
     const { key, value } = extractSingleFilterFromObject(filter);
 
     return product['variants'].find((item) => item[key] === value);
+  }
+
+  async updateProductCategories(uuid: string, ids: string[]) {
+    try {
+      await this.neo.write(`
+            MATCH (p:Product {uuid: $uuid})-[r:HAS_CATEGORY]->(c:ProductCategory)
+      DETACH DELETE r
+      return *;
+      `, {
+        uuid,
+      });
+    }
+    catch (e) {
+      console.log(`Error reseting product categories: ${e}`);
+      throw new RecordUpdateFailedException(e);
+    }
+
+    const query = `
+      UNWIND $ids as id
+      MATCH (p:Product {uuid: $uuid})
+      MATCH (c:ProductCategory {uuid: id})
+      MERGE (p)-[r:HAS_CATEGORY]->(c)
+      ON CREATE SET r.createdAt = datetime()
+      ON MATCH SET r.updatedAt = datetime()
+      return *;
+    `;
+
+    try {
+      await this.neo.write(query, {
+        uuid,
+        ids,
+      });
+    } catch (e) {
+      console.log(`Error updating product categories: ${e}`);
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return this;
   }
 }

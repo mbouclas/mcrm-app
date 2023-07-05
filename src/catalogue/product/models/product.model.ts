@@ -307,6 +307,25 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       },
     },
     {
+      varName: 'description_long',
+      label: 'Long Description',
+      placeholder: 'Long Description',
+      type: 'richText',
+      isSortable: false,
+      group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+    {
       varName: 'price',
       label: 'Price',
       placeholder: 'Price',
@@ -419,12 +438,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         ],
       },
     },
-    {
+    /*{
       varName: 'deliverability',
       label: 'Deliverability',
       placeholder: 'Deliverability',
       type: 'nested',
-      group: 'hidden',
+      group: 'extra',
       default: false,
       fields: [
         {
@@ -444,13 +463,13 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
-    },
+    },*/
     {
       varName: 'seo',
       label: 'Seo',
       placeholder: 'Seo',
       type: 'nested',
-      group: 'hidden',
+      group: 'seo',
       default: false,
       fields: [
         {
@@ -504,12 +523,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       ],
     },
 
-    {
+    /*{
       varName: 'measuresAndPackaging',
-      label: 'MeasuresAndPackaging',
-      placeholder: 'MeasuresAndPackaging',
+      label: 'Measures And Packaging',
+      placeholder: 'Measures And Packaging',
       type: 'nested',
-      group: 'hidden',
+      group: 'extra',
       default: false,
       fields: [
         {
@@ -577,7 +596,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           default: false,
         },
       ],
-    },
+    },*/
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
