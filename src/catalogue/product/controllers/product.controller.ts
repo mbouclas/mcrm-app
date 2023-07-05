@@ -7,7 +7,7 @@ import { RecordStoreFailedException } from '~shared/exceptions/record-store-fail
 
 @Controller('api/product')
 export class ProductController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -34,15 +34,15 @@ export class ProductController {
   }
 
   @Post(':uuid/generate-variants')
-  async generateVariants(@Session() session: SessionData, @Param('uuid') uuid: string, @Query() queryParams = {}) {
+  async generateVariants(@Session() session: SessionData, @Param('uuid') uuid: string, @Body() body: IGenericObject) {
     const userId = session.user && session.user['uuid'];
-    const propertyValues = queryParams['propertyValues'];
+    const propertyValues = body['propertyValues'];
     if (!propertyValues || !propertyValues.length) {
       return { success: false };
     }
 
     try {
-      await new ProductService().generateVariantsFromProperty(uuid, userId);
+      await new ProductService().generateVariantsFromProperty(uuid, propertyValues);
       return { success: true };
     } catch (e) {
       return {
