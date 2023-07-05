@@ -19,8 +19,8 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { PermalinkBuilderService } from "~website/menu/permalink-builder.service";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { PermalinkBuilderService } from '~website/menu/permalink-builder.service';
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -83,7 +83,7 @@ export class ProductService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-/*    const s = new ProductService();
+    /*    const s = new ProductService();
     let n;
     try {
       n = await s.findOne({uuid: 'a03f3e4e-f053-4531-b96c-f5e4a3e4d1da'});
@@ -92,8 +92,7 @@ export class ProductService extends BaseNeoService {
       console.log(e);
       console.log(e.getQuery());
     }*/
-
-/*    try {
+    /*    try {
       console.log((new PermalinkBuilderService()).build('Product', n))
     }
     catch (e) {
@@ -122,8 +121,7 @@ export class ProductService extends BaseNeoService {
 
     try {
       item = (await super.findOne(filter, rels)) as unknown as ProductModel;
-    }
-    catch (e) {
+    } catch (e) {
       throw e;
     }
 
@@ -187,7 +185,8 @@ export class ProductService extends BaseNeoService {
       all.push(grouped[key].map((g) => g.name));
     }
 
-    const variants = combine(all as any);
+    console.log(all, combine(all as any));
+    const variants = combine(all as any, ' ::: ', product['sku']);
     for (let idx = 0; variants.length > idx; idx++) {
       await this.generateVariant(product, variants[idx], `${product['sku']}.${idx}`);
     }
@@ -274,15 +273,17 @@ export class ProductService extends BaseNeoService {
 
   async updateProductCategories(uuid: string, ids: string[]) {
     try {
-      await this.neo.write(`
+      await this.neo.write(
+        `
             MATCH (p:Product {uuid: $uuid})-[r:HAS_CATEGORY]->(c:ProductCategory)
       DETACH DELETE r
       return *;
-      `, {
-        uuid,
-      });
-    }
-    catch (e) {
+      `,
+        {
+          uuid,
+        },
+      );
+    } catch (e) {
       console.log(`Error reseting product categories: ${e}`);
       throw new RecordUpdateFailedException(e);
     }
