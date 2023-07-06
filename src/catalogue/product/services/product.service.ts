@@ -19,8 +19,8 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { PermalinkBuilderService } from "~website/menu/permalink-builder.service";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { PermalinkBuilderService } from '~website/menu/permalink-builder.service';
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -83,7 +83,7 @@ export class ProductService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-/*    const s = new ProductService();
+    /*    const s = new ProductService();
     let n;
     try {
       n = await s.findOne({uuid: 'a03f3e4e-f053-4531-b96c-f5e4a3e4d1da'});
@@ -92,8 +92,7 @@ export class ProductService extends BaseNeoService {
       console.log(e);
       console.log(e.getQuery());
     }*/
-
-/*    try {
+    /*    try {
       console.log((new PermalinkBuilderService()).build('Product', n))
     }
     catch (e) {
@@ -122,8 +121,7 @@ export class ProductService extends BaseNeoService {
 
     try {
       item = (await super.findOne(filter, rels)) as unknown as ProductModel;
-    }
-    catch (e) {
+    } catch (e) {
       throw e;
     }
 
@@ -175,7 +173,7 @@ export class ProductService extends BaseNeoService {
    * @param uuid
    * @param propertyValues
    */
-  async generateVariantsFromProperty(uuid: string, propertyValues: string[]) {
+  async generateVariantsFromProperty(uuid: string, propertyValues: string[], duplicateVariants) {
     const product = await this.findOne({ uuid });
     const propertyService = new PropertyService();
     // group propertyValues by properties to create unique arrays to get the permutations
@@ -187,12 +185,42 @@ export class ProductService extends BaseNeoService {
       all.push(grouped[key].map((g) => g.name));
     }
 
-    const variants = combine(all as any);
+    const variants = combine(all as any, ' ::: ', product['sku']);
     for (let idx = 0; variants.length > idx; idx++) {
-      await this.generateVariant(product, variants[idx], `${product['sku']}.${idx}`);
+      const variant = variants[idx];
+
+      if (!duplicateVariants.hasOwnProperty(variant) || duplicateVariants[variant] === false) {
+        await this.generateVariant(product, variant, `${product['sku']}.${idx}`);
+      }
     }
 
     return this;
+  }
+
+  async checkDuplicateVariants(uuid: string, propertyValues: string[]) {
+    const product = await this.findOne({ uuid });
+    const productVariantService = new ProductVariantService();
+    const propertyService = new PropertyService();
+
+    const values = await propertyService.getValues(propertyValues, true);
+    const grouped = groupBy(values, 'property.slug');
+    const all = [];
+    for (const key in grouped) {
+      all.push(grouped[key].map((g) => g.name));
+    }
+
+    const variantNames = combine(all as any, ' ::: ', product['sku']);
+
+    const foundVariants = await productVariantService.getVariantsByNames(variantNames);
+
+    const duplicateVariantNames = foundVariants.map((variant) => variant.name);
+
+    const newVariantNames = variantNames.filter((name) => !duplicateVariantNames.includes(name));
+
+    return {
+      newVariantNames,
+      duplicateVariantNames,
+    };
   }
 
   /**
@@ -274,15 +302,17 @@ export class ProductService extends BaseNeoService {
 
   async updateProductCategories(uuid: string, ids: string[]) {
     try {
-      await this.neo.write(`
+      await this.neo.write(
+        `
             MATCH (p:Product {uuid: $uuid})-[r:HAS_CATEGORY]->(c:ProductCategory)
       DETACH DELETE r
       return *;
-      `, {
-        uuid,
-      });
-    }
-    catch (e) {
+      `,
+        {
+          uuid,
+        },
+      );
+    } catch (e) {
       console.log(`Error reseting product categories: ${e}`);
       throw new RecordUpdateFailedException(e);
     }

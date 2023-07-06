@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseModel, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { PropertyService } from '~catalogue/property/services/property.service';
+import { IQueryBuilderFieldBlueprint } from '~root/shared/models/queryBuilder';
 
 const modelName = 'ProductVariant';
 @McmsDi({
@@ -132,6 +133,20 @@ export class ProductVariantModel extends BaseModel {
       placeholder: 'Active',
       type: 'boolean',
       group: 'main',
+    },
+  ];
+
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'product',
+      filterField: 'uuid',
+      label: 'Product',
+      type: 'string',
+      relName: 'productFilterRel',
+      relType: 'inverse',
+      model: 'Product',
+      filterType: 'exact',
+      isInSimpleQuery: false,
     },
   ];
 }
