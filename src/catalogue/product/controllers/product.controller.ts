@@ -55,6 +55,32 @@ export class ProductController {
     }
   }
 
+  @Post(':uuid/check-duplicate-variants')
+  async checkDuplicateVariants(
+    @Session() session: SessionData,
+    @Param('uuid') uuid: string,
+    @Query() queryParams = {},
+  ) {
+    const propertyValues = queryParams['propertyValues'] ? queryParams['propertyValues'] : [];
+
+    if (!propertyValues || !propertyValues.length) {
+      return { success: false };
+    }
+
+    try {
+      const result = await new ProductService().checkDuplicateVariants(uuid, propertyValues);
+      return { ...result, success: true };
+    } catch (e) {
+      return {
+        success: false,
+        message: 'Error generating product variants',
+        error: e.getMessage(),
+        errors: e.getErrors(),
+        code: e.getCode(),
+      };
+    }
+  }
+
   @Post('')
   async create(@Body() body: IGenericObject) {
     const product = await new ProductService().store(body);
@@ -79,10 +105,12 @@ export class ProductController {
   @Patch('/:uuid/productCategories')
   async updateProductCategories(@Param('uuid') uuid: string, @Body() ids: IGenericObject[]) {
     try {
-      await new ProductService().updateProductCategories(uuid, ids.map((i) => i['uuid']));
+      await new ProductService().updateProductCategories(
+        uuid,
+        ids.map((i) => i['uuid']),
+      );
       return { success: true };
-    }
-    catch (e) {
+    } catch (e) {
       return { success: false, error: e.message };
     }
   }

@@ -185,13 +185,38 @@ export class ProductService extends BaseNeoService {
       all.push(grouped[key].map((g) => g.name));
     }
 
-    console.log(all, combine(all as any));
     const variants = combine(all as any, ' ::: ', product['sku']);
     for (let idx = 0; variants.length > idx; idx++) {
       await this.generateVariant(product, variants[idx], `${product['sku']}.${idx}`);
     }
 
     return this;
+  }
+
+  async checkDuplicateVariants(uuid: string, propertyValues: string[]) {
+    const product = await this.findOne({ uuid });
+    const productVariantService = new ProductVariantService();
+    const propertyService = new PropertyService();
+
+    const values = await propertyService.getValues(propertyValues, true);
+    const grouped = groupBy(values, 'property.slug');
+    const all = [];
+    for (const key in grouped) {
+      all.push(grouped[key].map((g) => g.name));
+    }
+
+    const variantNames = combine(all as any, ' ::: ', product['sku']);
+
+    const foundVariants = await productVariantService.getVariantsByNames(variantNames);
+
+    const foundVariantNames = foundVariants.map((variant) => variant.name);
+
+    const notFoundVariantNames = variantNames.filter((name) => !foundVariantNames.includes(name));
+
+    return {
+      foundVariantsCount: foundVariants.length,
+      notFoundVariants: notFoundVariantNames,
+    };
   }
 
   /**
