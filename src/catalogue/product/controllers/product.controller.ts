@@ -55,7 +55,7 @@ export class ProductController {
     }
   }
 
-  @Post(':uuid/check-duplicate-variants')
+  @Get(':uuid/check-duplicate-variants')
   async checkDuplicateVariants(
     @Session() session: SessionData,
     @Param('uuid') uuid: string,
@@ -71,12 +71,10 @@ export class ProductController {
       const result = await new ProductService().checkDuplicateVariants(uuid, propertyValues);
       return { ...result, success: true };
     } catch (e) {
+      console.log(e);
       return {
         success: false,
         message: 'Error generating product variants',
-        error: e.getMessage(),
-        errors: e.getErrors(),
-        code: e.getCode(),
       };
     }
   }

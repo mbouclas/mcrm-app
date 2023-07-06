@@ -209,13 +209,13 @@ export class ProductService extends BaseNeoService {
 
     const foundVariants = await productVariantService.getVariantsByNames(variantNames);
 
-    const foundVariantNames = foundVariants.map((variant) => variant.name);
+    const duplicateVariantNames = foundVariants.map((variant) => variant.name);
 
-    const notFoundVariantNames = variantNames.filter((name) => !foundVariantNames.includes(name));
+    const newVariantNames = variantNames.filter((name) => !duplicateVariantNames.includes(name));
 
     return {
-      foundVariantsCount: foundVariants.length,
-      notFoundVariants: notFoundVariantNames,
+      newVariantNames,
+      duplicateVariantNames,
     };
   }
 
