@@ -188,7 +188,8 @@ export class ProductService extends BaseNeoService {
     const variants = combine(all as any, ' ::: ', product['sku']);
     for (let idx = 0; variants.length > idx; idx++) {
       const variant = variants[idx];
-      if (duplicateVariants[variant]) {
+
+      if (!duplicateVariants.hasOwnProperty(variant) || duplicateVariants[variant] === false) {
         await this.generateVariant(product, variant, `${product['sku']}.${idx}`);
       }
     }
