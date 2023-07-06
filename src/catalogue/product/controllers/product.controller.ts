@@ -42,7 +42,7 @@ export class ProductController {
     }
 
     try {
-      await new ProductService().generateVariantsFromProperty(uuid, propertyValues);
+      await new ProductService().generateVariantsFromProperty(uuid, propertyValues, body.duplicateVariants || {});
       return { success: true };
     } catch (e) {
       return {

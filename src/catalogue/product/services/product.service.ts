@@ -173,7 +173,7 @@ export class ProductService extends BaseNeoService {
    * @param uuid
    * @param propertyValues
    */
-  async generateVariantsFromProperty(uuid: string, propertyValues: string[]) {
+  async generateVariantsFromProperty(uuid: string, propertyValues: string[], duplicateVariants) {
     const product = await this.findOne({ uuid });
     const propertyService = new PropertyService();
     // group propertyValues by properties to create unique arrays to get the permutations
@@ -187,7 +187,10 @@ export class ProductService extends BaseNeoService {
 
     const variants = combine(all as any, ' ::: ', product['sku']);
     for (let idx = 0; variants.length > idx; idx++) {
-      await this.generateVariant(product, variants[idx], `${product['sku']}.${idx}`);
+      const variant = variants[idx];
+      if (duplicateVariants[variant]) {
+        await this.generateVariant(product, variant, `${product['sku']}.${idx}`);
+      }
     }
 
     return this;
