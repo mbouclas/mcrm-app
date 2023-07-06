@@ -329,7 +329,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'price',
       label: 'Price',
       placeholder: 'Price',
-      type: 'number',
+      type: 'float',
       isSortable: true,
       group: 'right',
       groupIndex: 1,

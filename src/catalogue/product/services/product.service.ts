@@ -149,7 +149,7 @@ export class ProductService extends BaseNeoService {
     const r = await super.update(uuid, record, userId);
     // Handle Categories
     if (Array.isArray(record.categories)) {
-      const productCategoryService = new ProductCategoryService();
+      // const productCategoryService = new ProductCategoryService();
       // await productCategoryService.
     }
 

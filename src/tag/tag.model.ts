@@ -52,7 +52,15 @@ export class TagModel extends BaseModel {
       group: "hidden",
       isSlug: true,
       slugFrom: "name"
-    }
+    },
+    {
+      varName: "model",
+      label: "Model",
+      placeholder: "Model",
+      type: "text",
+      isSortable: false,
+      group: "hidden",
+    },
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
@@ -63,6 +71,14 @@ export class TagModel extends BaseModel {
       model: "Tag",
       filterType: "partial",
       isInSimpleQuery: true
+    },
+    {
+      varName: "model",
+      label: "Model",
+      type: "text",
+      model: "Tag",
+      filterType: "exact",
+      isInSimpleQuery: false
     }
   ];
 

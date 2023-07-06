@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { IBaseFilter } from "~models/general";
-import { McmsDiContainer } from "~helpers/mcms-component.decorator";
+import { McmsDi, McmsDiContainer } from "~helpers/mcms-component.decorator";
 import * as slugify from 'slug';
 import { OnEvent } from "@nestjs/event-emitter";
 import { INeo4jModel } from "~models/base.model";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
+import { store } from "~root/state";
 
 export interface ITag {
   [k: string]: any;
@@ -17,12 +18,21 @@ export interface ITag {
   updatedAt: Date;
 }
 
+@McmsDi({
+  id: 'TagService',
+  type: 'service',
+})
 @Injectable()
 export class TagService extends BaseNeoService {
   constructor() {
     super();
+    this.model = store.getState().models.Tag;
   }
-  @OnEvent('app.loaded')
+  onApplicationBootstrap() {
+
+  }
+
+/*  @OnEvent('app.loaded')
   async onAppLoaded() {
     const s = new TagService();
 
@@ -31,14 +41,14 @@ export class TagService extends BaseNeoService {
     // console.log(r1)
     // const r = await s.getTagsByModel('Product', {slug: 'test'});
     // const r = await s.addTagToModel('Product', {slug: 'poppy'}, {slug: 'shirts'})
-/*    const r = await s.updateModelTags('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
-      {slug: 'shoes', uuid: 'e0f6bf03-24ba-4255-a88b-c226c6ceb030', name: 'Shoes', createdAt: new Date(), updatedAt: new Date()}
-    ], store.getState().models['Product'].modelConfig as any);*/
+    // const r = await s.updateModelTags('e3b39b18-1a7a-4374-8d09-93f1fad349a1', [
+    //   {slug: 'shoes', uuid: 'e0f6bf03-24ba-4255-a88b-c226c6ceb030', name: 'Shoes', createdAt: new Date(), updatedAt: new Date()}
+    // ], store.getState().models['Product'].modelConfig as any);
 
     // console.log(r)
 
     // console.log(r['property'][0])
-  }
+  }*/
 
   async getTagsByModel(model: string, modelFilter?: IBaseFilter, tagFilter?: IBaseFilter) {
     let modelQuery = '';
@@ -115,6 +125,26 @@ export class TagService extends BaseNeoService {
     }
 
     return this;
+  }
+
+  async removeTagFromModel(model: string, modelFilter: IBaseFilter, tag: IBaseFilter) {
+    const filter = extractSingleFilterFromObject(modelFilter);
+    const tagFilter = extractSingleFilterFromObject(tag);
+
+    const query = `
+    MATCH (model:${model} {${filter.key}:'${filter.value}'})-[r:HAS_TAGS]->(tag:Tag {${tagFilter.key}:'${tagFilter.value}'})
+    DETACH DELETE r
+    RETURN *;
+    `;
+
+    try {
+      await this.neo.write(query, {});
+    }
+    catch (e) {
+      console.log(e)
+      throw new RecordUpdateFailedException(e);
+    }
+
   }
 
   /**
