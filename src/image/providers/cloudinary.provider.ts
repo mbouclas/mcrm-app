@@ -1,12 +1,14 @@
 import { IImageProcessingProvider, IImageProcessingProviderConfig } from "~image/models/providers.types";
 import * as cloudinary from 'cloudinary';
-import { UploadApiResponse, CommonTransformationOptions } from 'cloudinary';
+import { CommonTransformationOptions } from 'cloudinary';
 import { ICloudinaryEager, ICloudinaryUploadResponse } from "~image/models/cloudinary.types";
 import { IImageBlueprint, IImageCopyBlueprint, IItemImage } from "~image/models/image.types";
 import { v4 } from "uuid";
 import { CloudinaryUploadFailedException } from "~image/exceptions/CloudinaryUploadFailedException";
 import { IGenericObject } from "~models/general";
 import { McmsDi } from "~helpers/mcms-component.decorator";
+import { ImageModel } from "~image/models/image.model";
+
 
 export interface ICloudinaryProviderConfig extends IImageProcessingProviderConfig{
   use_filename: boolean;
@@ -14,6 +16,8 @@ export interface ICloudinaryProviderConfig extends IImageProcessingProviderConfi
   overwrite: boolean;
   folder?: string;
   asyncUploads?: boolean;
+  metaData?: IGenericObject;
+  cloudinaryMetaData?: IGenericObject;
 }
 
 @McmsDi({
@@ -32,14 +36,14 @@ export class CloudinaryProvider implements IImageProcessingProvider{
     return this;
   }
 
-  async handleLocal(filename: string) {
-    const res = await this.upload(filename);
+  async handleLocal(filename: string, imageId = undefined, transformations = [], settings: ICloudinaryProviderConfig = undefined) {
+    const res = await this.upload(filename, imageId, transformations, settings);
 
     return res.secure_url;
   }
 
-  async handleRemote(url: string) {
-    const res = await this.upload(url);
+  async handleRemote(url: string, imageId = undefined, transformations = [], settings: ICloudinaryProviderConfig = undefined) {
+    const res = await this.upload(url, imageId, transformations, settings);
 
     return res.secure_url;
   }
@@ -49,8 +53,9 @@ export class CloudinaryProvider implements IImageProcessingProvider{
    * @param file
    * @param imageId
    * @param transformations
+   * @param settings
    */
-  async upload(file: string, imageId?: string, transformations: CommonTransformationOptions[] = []): Promise<ICloudinaryUploadResponse> {
+  async upload(file: string, imageId?: string, transformations: CommonTransformationOptions[] = [], settings: ICloudinaryProviderConfig = undefined): Promise<ICloudinaryUploadResponse> {
     let res;
     imageId = (!imageId) ? v4() : imageId;
     if (this.config && this.config.folder) {
@@ -64,7 +69,10 @@ export class CloudinaryProvider implements IImageProcessingProvider{
         async,
         eager_async: true,
         public_id: imageId,
-        use_filename: true,
+        use_filename: settings && settings.use_filename || true,
+        folder: settings && settings.folder || this.config.folder,
+        tags: settings && settings.cloudinaryMetaData && settings.cloudinaryMetaData.tags || [],
+        // metadata: settings && settings.cloudinaryMetaData && settings.cloudinaryMetaData.metaData || undefined,
         notification_url: process.env.CLOUDINARY_NOTIFICATION_URL,
         eager_notification_url: process.env.CLOUDINARY_NOTIFICATION_URL,
         eager,
@@ -114,5 +122,24 @@ export class CloudinaryProvider implements IImageProcessingProvider{
 
   async getResource(id: string) {
     return  await this.service.api.resource(id);
+  }
+
+  // pull image from cloudinary
+  async deleteResource(image: ImageModel) {
+    let res;
+    try {
+      res = await this.service.uploader.destroy(this.extractPublicId(image.url));
+    }
+    catch (e) {
+      console.log(`Failed to delete image ${image.url} from cloudinary`);
+    }
+
+    return res;
+  }
+
+  extractPublicId(url: string) {
+    const regex = /\/v\d+\/([^\.]+)/;
+    const match = url.match(regex);
+    return match[1];
   }
 }

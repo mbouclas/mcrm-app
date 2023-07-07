@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { FileUploaderController } from './file-uploader.controller';
 import { UploaderService } from './uploader.service';
 import { MulterModule } from "@nestjs/platform-express";
-import { join, resolve } from "path";
+import { extname, join, resolve } from "path";
 import { UploaderQueueService } from './uploader-queue.service';
 import { diskStorage } from "multer";
+import { uuid } from "uuidv4";
 const uploadDir = resolve(require('path').resolve('./'), './upload');
 @Module({
   controllers: [FileUploaderController],
@@ -12,13 +13,15 @@ const uploadDir = resolve(require('path').resolve('./'), './upload');
   imports: [
     MulterModule.registerAsync({
       useFactory: () => ({
-        dest: uploadDir,
+        fileFilter: (req, file, cb) => {
+          file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
+          file.filename = `${file.filename}${extname(file.originalname)}`;
+          cb(null, true);
+        },
         storage: diskStorage({
-          destination: (req, file, cb) => {
-            cb(null, uploadDir);
-          },
+          destination: resolve(require("path").resolve("./"), "./upload"),
           filename: (req, file, cb) => {
-            cb(null, file.originalname)
+            cb(null, `${uuid()}${extname(file.originalname)}`);
           }
         })
       }),

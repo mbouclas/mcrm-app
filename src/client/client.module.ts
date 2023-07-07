@@ -33,7 +33,6 @@ import { UserHooks } from "~root/client/hooks/user.hooks";
         storage: diskStorage({
           destination: resolve(require("path").resolve("./"), "./upload"),
           filename: (req, file, cb) => {
-            console.log(file);
             cb(null, `${uuid()}${extname(file.originalname)}`);
           }
         })

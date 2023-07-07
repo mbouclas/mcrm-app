@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UploadedFile, UploadedFiles, UseInterceptors } from "@nestjs/common";
-import { AnyFilesInterceptor, FileInterceptor } from "@nestjs/platform-express";
+import { AnyFilesInterceptor, FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { IFileUploadMetaData, UploaderService } from "~root/upload/uploader.service";
 import { UploaderQueueService } from "~root/upload/uploader-queue.service";
 
@@ -22,7 +22,7 @@ export class FileUploaderController {
   @Post('multiple')
   @UseInterceptors(AnyFilesInterceptor())
   async upload(@UploadedFiles() files: Array<Express.Multer.File>) {
-    await this.service.multiple(files);
+    // await this.service.multiple(files);
 
     return {success: true};
   }
@@ -34,6 +34,14 @@ export class FileUploaderController {
     const job = await UploaderQueueService.queue.add(UploaderService.jobEventName, {type: 'single', file, metaData: body.metaData});
     // will query back using this worker id
     return {success: true, jobId: job.id};
+  }
+
+  @Post('upload')
+  @UseInterceptors(FilesInterceptor('files[]'))
+  async uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>, @Body() body: IFileUploadMetaData) {
+    const res = await this.service.multiple(files, body)
+
+    return res;
   }
 
   @Get('status/:id')

@@ -125,8 +125,8 @@ export class ProductService extends BaseNeoService {
       throw e;
     }
 
-    item['images'] = await this.imageService.getItemImages('Product', item['uuid']);
-    item['thumb'] = item['images'].find((img) => img.type === 'main') || null;
+    const images = await this.imageService.getItemImages('Product', item['uuid']);
+    item['thumb'] = images.find((img) => img.type === 'main') || null;
 
     return item;
   }

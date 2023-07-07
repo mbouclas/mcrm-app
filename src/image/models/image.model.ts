@@ -13,7 +13,9 @@ const modelName = "Image";
 export class ImageModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
-
+  public url: string;
+  public uuid: string;
+  public active: boolean;
   async onModuleInit() {
 
   }

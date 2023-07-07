@@ -10,6 +10,8 @@ export interface IFileUploadMetaData {
   module: string;
   type: 'file'|'image';
   id?: string;
+  itemId?: string;
+  model?: string;
 }
 
 export interface IUploadJobData {
@@ -59,15 +61,22 @@ export class UploaderService {
     }
   }
 
-  async multiple(files: Array<Express.Multer.File>) {
+  async multiple(files: Array<Express.Multer.File>, metaData: IFileUploadMetaData) {
+    const res = [];
     for (let i = 0; files.length > i; i++) {
+      if (isImage(files[i].originalname)) {
+        const r = await this.handleImage(files[i], metaData);
+        const image = await (new ImageService()).findOne({uuid: r.id});
+        res.push({...image, ...{ metaData }});
+        continue;
+      }
       // await this.handle(files[i], {});
     }
 
+    return res;
   }
 
   async singleUploadWorker(file: Express.Multer.File, metaData: IFileUploadMetaData): Promise<IFileUploadHandlerResult> {
-    console.log(file)
     if (metaData && typeof metaData === 'string') {
       metaData = JSON.parse(metaData);
     }
@@ -105,9 +114,9 @@ export class UploaderService {
     }
 
 
-    if (metaData && metaData.id && metaData.module) {
+    if (metaData && metaData.id && metaData.module && res) {
       // Link this to the item
-      await service.linkToObject({uuid: res.id}, metaData.module, metaData.id)
+      await service.linkToObject({uuid: res.id}, metaData.module, metaData.id, metaData.type || 'main')
     }
 
     return res;

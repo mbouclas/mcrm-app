@@ -134,14 +134,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         defaultProperty: 'title',
         postProcessing: async (record: Record<any, any>, model: ProductModel) => {
           // console.log('----', record)
-          if (record.property) {
-            record.property = await new PropertyService().propertiesWithValuesByModel(
-              modelName,
-              record.uuid,
-              record.property.map((p) => p.uuid),
-            );
+          if (!record.property) {
+            return record;
           }
 
+          record.property = await new PropertyService().propertiesWithValuesByModel(
+            modelName,
+            record.uuid,
+            record.property.map((p) => p.uuid),
+          );
           return record;
         },
       },
@@ -171,7 +172,19 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         modelAlias: 'images',
         type: 'normal',
         isCollection: true,
+        addRelationshipData: true,
         defaultProperty: 'name',
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.images || !Array.isArray(record.images) || record.images.length === 0) {
+            return record;
+          }
+
+          record.images = record.images
+            .filter(image => image.relationship.type !== 'main')
+            .map(image => ({...image.model, ...{type: image.relationship.type}}));
+
+          return record;
+        },
       },
       creator: {
         rel: 'HAS_CREATED',
