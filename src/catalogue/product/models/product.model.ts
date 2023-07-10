@@ -6,6 +6,7 @@ import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PropertyService } from '~catalogue/property/services/property.service';
 import { OnEvent } from "@nestjs/event-emitter";
 import { getStoreProperty, store } from "~root/state";
+import { sortBy } from "lodash";
 
 const modelName = 'Product';
 @McmsDi({
@@ -181,8 +182,16 @@ export class ProductModel extends BaseModel implements OnModuleInit {
 
           record.images = record.images
             .filter(image => image.relationship.type !== 'main')
-            .map(image => ({...image.model, ...{type: image.relationship.type}}));
+            .map(image => ({...image.model, ...{
+              type: image.relationship.type,
+                order: image.relationship.order,
+                title: image.relationship.title,
+                description: image.relationship.description,
+                alt: image.relationship.alt,
+                caption: image.relationship.caption,
+            }}));
 
+          record.images = sortBy(record.images, 'order');
           return record;
         },
       },
