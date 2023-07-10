@@ -157,7 +157,14 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
 
     return res.map(record => ({
       ...record.image,
-      ...{ type: record.r["type"] || null }
+      ...{
+        type: record.r["type"] || null,
+        order: record.r.order || null,
+        title: record.r.title || null,
+        description: record.r.description || null,
+        alt: record.r.alt || null,
+        caption: record.r.caption || null,
+      }
     }));
   }
 
