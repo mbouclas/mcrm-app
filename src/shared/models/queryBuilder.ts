@@ -32,11 +32,14 @@ export interface IQueryBuilderFieldBlueprint {
     order?: number;
     relName?: string;
     relType?: 'normal'|'inverse',
+    match?: 'optional'|'exact',
     group?: string;
     itemSelectorConfig?: IDynamicFieldItemSelectorConfig;
     rangeFromFieldName?: string;
     rangeToFieldName?: string;
     isRange?: boolean;
+    doNotReturnValues?: boolean;
+    booleanOrNull?: boolean;
 }
 
 export interface IQueryBuilderConstraintBlueprint {

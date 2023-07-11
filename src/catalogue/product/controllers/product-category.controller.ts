@@ -12,7 +12,7 @@ export class ProductCategoryController {
 
   @Get('tree')
   async tree() {
-    return await (new ProductCategoryService).getRootTree();
+    return await (new ProductCategoryService).toTree();
   }
 
   @Patch(`:id`)

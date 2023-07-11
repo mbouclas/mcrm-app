@@ -172,13 +172,13 @@ export class BaseNeoTreeService extends BaseNeoService {
                          OPTIONAL MATCH (b)<-[:HAS_CHILD*1..5]-(p) where p.slug <> b.slug
                         with b,p
  
-                        return coalesce(b) as category, coalesce(collect(distinct p)) as parents ORDER BY $a.title ${limitQuery}
+                        return coalesce(b) as category, coalesce(collect (distinct b)) as children, coalesce(collect(distinct p)) as parents ORDER BY $a.title ${limitQuery}
                         ',{a:a}) YIELD value
 
           return a, collect(distinct value) as children;`;
 // console.log('=---------', query)
     const res = await this.neo.readWithCleanUp(query, {});
-
+// console.log(JSON.stringify(res))
     return sortBy(
       res.map((r: any) => {
         let category = r.a;
@@ -211,6 +211,37 @@ export class BaseNeoTreeService extends BaseNeoService {
       }),
       'order',
     );
+  }
+
+  async toTree() {
+    //cypher query to collect all top level categories and their children
+
+    const query = `
+    MATCH (a:${this.model.modelName})
+    OPTIONAL MATCH (a)-[r:HAS_CHILD*1..5]->(b:ProductCategory) where a.slug <> b.slug
+    OPTIONAL MATCH (a)<-[r1:HAS_CHILD]-(p) where p.slug <> a.slug
+    
+    return a as category, collect(distinct b) as children, p as parent ORDER BY a.slug
+    `;
+
+    const res = await this.neo.readWithCleanUp(query, {});
+    if (!res || res.length === 0) {
+      return [];
+    }
+
+    const elements = res.map((r: any) => {
+      return {...r.category, ...{children: r.children, parent: r.parent, parentId: r.parent && r.parent.uuid || null}};
+    });
+
+    const nest = (items, id = null) =>
+      items
+        .filter(item => item.parentId === id)
+        .map(item => ({
+          ...item,
+          children: nest(items, item.uuid)
+        }));
+
+    return nest(elements);
   }
 
   async updateTree(tree: BaseTreeModel[]) {

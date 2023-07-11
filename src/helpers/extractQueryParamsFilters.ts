@@ -159,8 +159,26 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
     }
 
     // Need to check if the filter belongs to another model. In that case we need a secondary filter to be applied to the setupRelationShipsQuery function
+    let optionalBooleanQuery = '';
 
-    const whereQuery = (filter.filterType === 'partial') ? `${modelAlias}.${key} =~ '(?i).*${filters[key]}.*'` : `${modelAlias}.${key} = ${buildWhereValueString(filter.type, filters[key])}`;
+
+    if (filter.type === 'boolean' && filter.booleanOrNull && (filters[key] === false || filters[key] === 'false') ) {
+      optionalBooleanQuery = ` OR ${modelAlias}.${key} IS NULL`;
+    }
+    let exactMatchOperator = '=';
+    switch (filter.type) {
+      case ['number', 'text', 'boolean', 'float'].indexOf(filter.type) !== -1:
+        exactMatchOperator = '=';
+        break;
+      case 'isNotNull':
+        exactMatchOperator = 'IS NOT NULL';
+        break;
+      case 'inNull':
+        exactMatchOperator = 'IS NULL';
+        break;
+    }
+
+    const whereQuery = (filter.filterType === 'partial') ? `${modelAlias}.${key} =~ '(?i).*${filters[key]}.*'` : `${modelAlias}.${key} ${exactMatchOperator} ${buildWhereValueString(filter.type, filters[key])} ${optionalBooleanQuery}`;
 
     where.push(whereQuery);
 
@@ -180,7 +198,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
   const modelAlias = modelConfig.as;
   const matches: string[] = [];
   const searchFields: string[] = (params.searchIn) ? params.searchIn : [];
-  let returnVars: string[] = [modelAlias];
+  let returnVars: string[] = [`distinct ${modelAlias}`];
   const returnAliases: string[] = [modelAlias];
   /**
    * params.swapFilterFields = {tag: {filterField: 'slug'}}
@@ -212,6 +230,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
   if (modelRelationships.length > 0) {
     modelRelationships.forEach((r: string) => {
+      let filterField: IQueryBuilderFieldBlueprint;
       if (modelRelationships.indexOf(r) === -1) { return; }
       if (relationships.indexOf(r) === -1 && !params[r]) { return; } // In case we have a query for a relationship, but we don't need the data
       const relationshipModel = model.modelConfig.relationships[r];
@@ -226,7 +245,9 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
       const toRel = (relationshipModel.type === 'normal') ? '->' : '-';
 
       let whereQuery = '';
-      let optionalQuery = 'OPTIONAL';
+
+      let optionalQuery = relationshipModel.match === 'exact' ? '' : 'OPTIONAL';
+
       /*            if (typeof filters[r] === 'undefined' || !filters[r] || filters[r] === 'undefined') {
                       return;;
                   }*/
@@ -236,7 +257,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
         const idx = findIndex(model.filterFields, { varName: r });
 
-        let filterField = model.filterFields[idx];
+        filterField = model.filterFields[idx];
 
         if (!filterField) {
           // Lets check if we can find it in the location model
@@ -264,7 +285,21 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
           }
           // Non array filter values
           else {
-            whereQuery += (filterField.filterType === 'partial') ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'` : `${relationshipModel.modelAlias}.${filterKey} = '${filters[r]}'`;
+            let exactMatchOperator = '=';
+            switch (filterField.type) {
+              case ['number', 'text', 'boolean', 'float'].indexOf(filterField.type) !== -1:
+                exactMatchOperator = '=';
+                break;
+              case 'isNotNull':
+                exactMatchOperator = 'IS NOT NULL';
+                break;
+              case 'inNull':
+                exactMatchOperator = 'IS NULL';
+                break;
+            }
+
+
+            whereQuery += (filterField.filterType === 'partial') ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'` : `${relationshipModel.modelAlias}.${filterKey} ${exactMatchOperator} ${buildWhereValueString(filterField.type, filters[r])}`;
 
           }
 
@@ -273,6 +308,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
       }
       const modelAliasQuery = (relationshipModel.exactAliasQuery) ? `${relationshipModel.modelAlias}:${relationshipModel.model}` : `${relationshipModel.modelAlias}`;
+
       matches.push(`${optionalQuery} MATCH (${modelAlias})${fromRel}[${modelConfig.relationships[r].alias}:${modelConfig.relationships[r].rel}]${toRel}(${modelAliasQuery}) ${whereQuery}`);
       if (relationshipModel.isCount) {
         returnVars.push(`count(distinct ${relationshipModel.modelAlias}) as ${relationshipModel.modelAlias}`);
@@ -283,10 +319,19 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
           : returnVars.push(`collect(distinct ${relationshipModel.modelAlias}) as ${relationshipModel.modelAlias}`);
       }
       else {
-        returnVars.push(relationshipModel.modelAlias);
+        if (filterField && filterField.doNotReturnValues && relationships.indexOf(r) === -1) {
+          // we really don't need to add anything to the array. There's no relationship and we don't need the value
+        }
+         else {
+          returnVars.push(relationshipModel.modelAlias);
+        }
+
       }
 
-      returnAliases.push(relationshipModel.modelAlias);
+
+      returnAliases.push( relationshipModel.modelAlias);
+
+
 
       if (orderByCount) {
         const countFieldName = `${params.orderBy}Count`;
@@ -311,9 +356,13 @@ export function buildWhereValueString(type: string, value: any) {
     return `datetime('${value}')`;
   }
 
+  if (type === 'isNotNull' || type === 'isNull') {
+    return '';
+  }
+
   let valueQuery = `'${value}'`;
   // Do not put this value in quotes if of the following type
-  if (['boolean', 'number'].indexOf(type) !== -1) {
+  if (['number', 'boolean'].indexOf(type) !== -1) {
     valueQuery = value;
   }
 

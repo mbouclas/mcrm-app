@@ -41,6 +41,6 @@ export class ProductsSyncAstroController {
   @Get('categories')
   async categories() {
     const s = new ProductCategoryService();
-    return await s.getRootTree();
+    return await s.toTree();
   }
 }

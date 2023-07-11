@@ -105,11 +105,7 @@ export class UserService extends BaseNeoService {
     return r;
   }
 
-  async find(params: IGenericObject = {}): Promise<IPagination<UserModel>> {
-    const r = await super.find(params);
 
-    return r;
-  }
 
   async store(record: UserModelDto, userId?: string, relationships:IBaseNeoServiceRelationships[] = []) {
     if (!record.type) {record.type = 'user';}

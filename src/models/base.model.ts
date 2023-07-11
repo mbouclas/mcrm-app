@@ -57,6 +57,7 @@ export interface INeo4jModelRelationshipConfig {
   group?: string;
   fields?: IDynamicFieldConfigBlueprint[];
   filters?: IModelFilters;
+  match?: 'exact'|'optional'
 }
 
 export class BaseModel {

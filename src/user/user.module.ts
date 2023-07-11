@@ -6,10 +6,12 @@ import { PersonService } from '~crm/services/person.service';
 import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
 import { GateModule } from './gate/gate.module';
+import { UserController } from './controllers/user.controller';
 
 @Module({
   providers: [UserModel, UserService],
   imports: [SharedModule, RoleModule, PermissionModule, GateModule],
+  controllers: [UserController],
 })
 export class UserModule implements OnModuleInit, OnApplicationBootstrap {
   constructor() {}
