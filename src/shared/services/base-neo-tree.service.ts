@@ -321,6 +321,7 @@ export class BaseNeoTreeService extends BaseNeoService {
   async moveNode(filter: IBaseFilter, parentFilter?: IBaseFilter) {
     const f = extractSingleFilterFromObject(filter);
     const p = parentFilter ? extractSingleFilterFromObject(parentFilter) : null;
+    console.log(p, parentFilter);
 
     const session = this.neo.getDriver().session();
 

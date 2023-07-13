@@ -17,13 +17,13 @@ export class ProductCategoryController {
   @Patch(`:id/move`)
   async move(@Param('id') uuid: string, @Body() body: IGenericObject) {
     try {
+      const parentFilter = body.newParentUuid ? { uuid: body.newParentUuid } : null;
+
       await new ProductCategoryService().moveNode(
         {
           uuid,
         },
-        {
-          uuid: body.newParentUuid,
-        },
+        parentFilter,
       );
 
       return true;
