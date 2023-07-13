@@ -26,7 +26,7 @@ export class ProductCategoryController {
         parentFilter,
       );
 
-      return true;
+      return await new ProductCategoryService().toTree();
     } catch (e) {
       console.log(e);
       return false;
