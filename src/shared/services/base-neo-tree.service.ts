@@ -328,19 +328,19 @@ export class BaseNeoTreeService extends BaseNeoService {
       const tx = session.beginTransaction();
 
       const removeOldRelationshipsQuery = `
-      MATCH (node:${this.model.modelName})-[r:HAS_CHILD]->()
-      WHERE node.${f.key} =~ $filterValue
-      DELETE r
-    `;
+    MATCH (parent)-[r:HAS_CHILD]->(node:${this.model.modelName})
+    WHERE node.${f.key} =~ $filterValue
+    DELETE r
+  `;
 
       await tx.run(removeOldRelationshipsQuery, { filterValue: f.value });
 
       if (p) {
         const addNewRelationshipQuery = `
-        MATCH (node:${this.model.modelName}), (parent:${this.model.modelName})
-        WHERE node.${f.key} =~ $filterValue AND parent.${p.key} =~ $parentFilterValue
-        CREATE (parent)-[:HAS_CHILD]->(node)
-      `;
+      MATCH (node:${this.model.modelName}), (newParent:${this.model.modelName})
+      WHERE node.${f.key} =~ $filterValue AND newParent.${p.key} =~ $parentFilterValue
+      CREATE (newParent)-[:HAS_CHILD]->(node)
+    `;
 
         await tx.run(addNewRelationshipQuery, { filterValue: f.value, parentFilterValue: p.value });
       }

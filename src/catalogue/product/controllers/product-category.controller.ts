@@ -15,7 +15,7 @@ export class ProductCategoryController {
   async update(@Param('id') uuid: string, body: IGenericObject) {}
 
   @Patch(`:id/move`)
-  async move(@Param('id') uuid: string, body: IGenericObject) {
+  async move(@Param('id') uuid: string, @Body() body: IGenericObject) {
     try {
       await new ProductCategoryService().moveNode(
         {
@@ -28,6 +28,7 @@ export class ProductCategoryController {
 
       return true;
     } catch (e) {
+      console.log(e);
       return false;
     }
   }
