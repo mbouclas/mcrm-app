@@ -9,7 +9,7 @@ import { BaseTreeModel } from '~models/generic.model';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
 import { BaseModel } from '../../models/base.model';
 import { store } from '~root/state';
-import { fromRecordToModel } from "~helpers/fromRecordToModel";
+import { fromRecordToModel } from '~helpers/fromRecordToModel';
 
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
@@ -98,16 +98,13 @@ export class BaseNeoTreeService extends BaseNeoService {
         WITH parent, [(x)<-[:HAS_CHILD*]-(parent) | x] as descendants
         return parent, descendants`;
 
-    let res = await this.neo.readWithCleanUp(query, { uuid });
+    const res = await this.neo.readWithCleanUp(query, { uuid });
     try {
       res[0].parent = fromRecordToModel(res[0].parent, this.model);
-    }
-    catch (e) {
+    } catch (e) {}
 
-    }
-
-    let descendants = res[0].descendants;
-    let parent = res[0].parent;
+    const descendants = res[0].descendants;
+    const parent = res[0].parent;
 
     if (!descendants.length || descendants.length === 0) {
       parent.children = [];
@@ -124,7 +121,7 @@ export class BaseNeoTreeService extends BaseNeoService {
     const extrasResult = await this.neo.readWithCleanUp(extraQuery, { uuids });
     const extras = sortBy(
       extrasResult.map((r: any) => {
-        let category = r.a;
+        const category = r.a;
         return category;
       }),
       'order',
@@ -176,12 +173,12 @@ export class BaseNeoTreeService extends BaseNeoService {
                         ',{a:a}) YIELD value
 
           return a, collect(distinct value) as children;`;
-// console.log('=---------', query)
+    // console.log('=---------', query)
     const res = await this.neo.readWithCleanUp(query, {});
-// console.log(JSON.stringify(res))
+    // console.log(JSON.stringify(res))
     return sortBy(
       res.map((r: any) => {
-        let category = r.a;
+        const category = r.a;
 
         const children = r['children'];
 
@@ -194,11 +191,8 @@ export class BaseNeoTreeService extends BaseNeoService {
           return category;
         }
 
-
-
         category.children = sortBy(
           children.map((child) => {
-
             return {
               ...child.category,
               ...{ parents: child.parents },
@@ -230,15 +224,18 @@ export class BaseNeoTreeService extends BaseNeoService {
     }
 
     const elements = res.map((r: any) => {
-      return {...r.category, ...{children: r.children, parent: r.parent, parentId: r.parent && r.parent.uuid || null}};
+      return {
+        ...r.category,
+        ...{ children: r.children, parent: r.parent, parentId: (r.parent && r.parent.uuid) || null },
+      };
     });
 
     const nest = (items, id = null) =>
       items
-        .filter(item => item.parentId === id)
-        .map(item => ({
+        .filter((item) => item.parentId === id)
+        .map((item) => ({
           ...item,
-          children: nest(items, item.uuid)
+          children: nest(items, item.uuid),
         }));
 
     return nest(elements);
@@ -322,8 +319,44 @@ export class BaseNeoTreeService extends BaseNeoService {
   }
 
   async moveNode(filter: IBaseFilter, parentFilter?: IBaseFilter) {
-    // locate the node and delete the old relationship to either parent or child
-    // Add the node to the new parent, can be root if no parent is given
+    const f = extractSingleFilterFromObject(filter);
+    const p = parentFilter ? extractSingleFilterFromObject(parentFilter) : null;
+
+    const session = this.neo.getDriver().session();
+
+    try {
+      const tx = session.beginTransaction();
+
+      const removeOldRelationshipsQuery = `
+      MATCH (node:${this.model.modelName})-[r:HAS_CHILD]->()
+      WHERE node.${f.key} =~ $filterValue
+      DELETE r
+    `;
+
+      await tx.run(removeOldRelationshipsQuery, { filterValue: f.value });
+
+      if (p) {
+        const addNewRelationshipQuery = `
+        MATCH (node:${this.model.modelName}), (parent:${this.model.modelName})
+        WHERE node.${f.key} =~ $filterValue AND parent.${p.key} =~ $parentFilterValue
+        CREATE (parent)-[:HAS_CHILD]->(node)
+      `;
+
+        await tx.run(addNewRelationshipQuery, { filterValue: f.value, parentFilterValue: p.value });
+      }
+
+      // commit transaction
+      await tx.commit();
+    } catch (error) {
+      console.error(`Something went wrong: ${error}`);
+      // in case of an error
+      await session.close();
+      throw error;
+    }
+
+    // close session
+    await session.close();
+    return;
   }
 
   flattenTree(array: any[]) {
