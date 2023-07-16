@@ -12,8 +12,9 @@ import { store } from '~root/state';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
 
 export enum DeleteType {
-  DELETE_WITH_CHILDREN = 'DELETE_WITH_CHILDREN',
-  DELETE_ONLY_SELF = 'DELETE_ONLY_SELF',
+  DELETE_CHILDREN = 'DELETE_CHILDREN',
+  MOVE_CHILDREN_TO_PARENT = 'MOVE_CHILDREN_TO_PARENT',
+  MOVE_CHILDREN_TO_ROOT = 'MOVE_CHILDREN_TO_ROOT',
 }
 
 @Injectable()
@@ -376,30 +377,42 @@ export class BaseNeoTreeService extends BaseNeoService {
     return result;
   }
 
-  async deleteNode(uuid: string, deleteType: DeleteType = DeleteType.DELETE_WITH_CHILDREN) {
+  async deleteNode(uuid: string, deleteType: DeleteType = DeleteType.DELETE_CHILDREN) {
     // In case of deleting node with its children
-    if (deleteType === DeleteType.DELETE_WITH_CHILDREN) {
+    //
+
+    if (deleteType === DeleteType.DELETE_CHILDREN) {
       const query = `
-        MATCH (n:${this.model.modelName} {uuid: $uuid})
-        OPTIONAL MATCH (n)-[:HAS_CHILD*]->(child)
-        DETACH DELETE n, child
-      `;
+      MATCH (n:${this.model.modelName} {uuid: $uuid})
+      OPTIONAL MATCH (n)-[:HAS_CHILD*]->(child)
+      DETACH DELETE n, child
+    `;
 
       await this.neo.write(query, { uuid });
       return;
     }
 
-    // In case of deleting only the node and keeping its children
-    if (deleteType === DeleteType.DELETE_ONLY_SELF) {
+    if (deleteType === DeleteType.MOVE_CHILDREN_TO_PARENT) {
       const query = `
-        MATCH (n:${this.model.modelName} {uuid: $uuid})
-        OPTIONAL MATCH (n)-[:HAS_CHILD]->(child)
-        WITH collect(child) as children
-        DETACH DELETE n
-        WITH children
-        MATCH (p:${this.model.modelName})-[:HAS_CHILD]->(n) WHERE n.uuid = $uuid
-        FOREACH (child in children | CREATE (p)-[:HAS_CHILD]->(child))
-      `;
+    MATCH (n:${this.model.modelName} {uuid: $uuid})
+    OPTIONAL MATCH (n)-[:HAS_CHILD]->(child)
+    WITH n, collect(child) as children
+    OPTIONAL MATCH (p:${this.model.modelName})-[:HAS_CHILD]->(n)
+    DETACH DELETE n
+    WITH children, p
+    WHERE p IS NOT NULL
+    FOREACH (child in children | MERGE (p)-[:HAS_CHILD]->(child))
+  `;
+
+      await this.neo.write(query, { uuid });
+      return;
+    }
+
+    if (deleteType === DeleteType.MOVE_CHILDREN_TO_ROOT) {
+      const query = `
+      MATCH (n:${this.model.modelName} {uuid: $uuid})
+      DETACH DELETE n
+    `;
 
       await this.neo.write(query, { uuid });
       return;

@@ -40,8 +40,7 @@ export class ProductCategoryController {
   @Delete(':id')
   async delete(@Param('id') uuid: string, @Query() queryParams) {
     try {
-      const deleteType =
-        DeleteType[queryParams.deleteType as keyof typeof DeleteType] || DeleteType.DELETE_WITH_CHILDREN;
+      const deleteType = DeleteType[queryParams.deleteType as keyof typeof DeleteType];
 
       await new ProductCategoryService().deleteNode(uuid, deleteType);
 
