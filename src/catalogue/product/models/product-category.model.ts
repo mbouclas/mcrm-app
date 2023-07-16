@@ -52,9 +52,7 @@ export class ProductCategoryModel extends BaseModel {
       label: 'Title',
       placeholder: 'Title',
       type: 'text',
-      translatable: true,
       required: true,
-      setDefaultTranslationInModel: true,
       isSlug: true,
       group: 'main',
     },
@@ -63,7 +61,6 @@ export class ProductCategoryModel extends BaseModel {
       label: 'Description',
       placeholder: 'Description',
       type: 'text',
-      translatable: true,
       group: 'main',
     },
     {
@@ -71,7 +68,6 @@ export class ProductCategoryModel extends BaseModel {
       label: 'Thumb',
       placeholder: 'Thumb',
       type: 'image',
-      translatable: true,
       group: 'main',
     },
     {
@@ -79,7 +75,6 @@ export class ProductCategoryModel extends BaseModel {
       label: 'Meta Data',
       placeholder: 'Meta Data',
       type: 'json',
-      translatable: false,
       group: 'main',
     },
   ];
