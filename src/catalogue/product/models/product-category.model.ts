@@ -3,7 +3,7 @@ import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
-import { getStoreProperty } from "~root/state";
+import { getStoreProperty } from '~root/state';
 
 const modelName = 'ProductCategory';
 @McmsDi({
@@ -21,7 +21,6 @@ export class ProductCategoryModel extends BaseModel {
     super();
 
     this.loadModelSettingsFromConfig();
-
   }
 
   public static modelConfig: INeo4jModel = {
@@ -35,6 +34,14 @@ export class ProductCategoryModel extends BaseModel {
         modelAlias: 'product',
         type: 'inverse',
         isCollection: true,
+      },
+      parent: {
+        rel: 'HAS_CHILD',
+        alias: 'productCategoryParentRelationship',
+        model: 'ProductCategory',
+        modelAlias: 'productCategory',
+        type: 'inverse',
+        isCollection: false,
       },
     },
   };

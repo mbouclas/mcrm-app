@@ -5,7 +5,7 @@ import { DeleteType } from '~root/shared/services/base-neo-tree.service';
 
 @Controller('api/product-category')
 export class ProductCategoryController {
-  constructor() {}
+  constructor() { }
 
   @Get('tree')
   async tree() {
@@ -13,7 +13,7 @@ export class ProductCategoryController {
   }
 
   @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) {}
+  async update(@Param('id') uuid: string, body: IGenericObject) { }
 
   @Patch(`:id/move`)
   async move(@Param('id') uuid: string, @Body() body: IGenericObject) {
@@ -35,7 +35,16 @@ export class ProductCategoryController {
   }
 
   @Post()
-  async store(@Body() data: IGenericObject) {}
+  async create(@Body() body: IGenericObject) {
+    await new ProductCategoryService().store(body, null, [
+      {
+        id: body.parentUuid,
+        name: 'parent',
+      },
+    ]);
+
+    return await new ProductCategoryService().toTree();
+  }
 
   @Delete(':id')
   async delete(@Param('id') uuid: string, @Query() queryParams) {
