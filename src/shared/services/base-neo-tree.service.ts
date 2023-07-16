@@ -11,6 +11,11 @@ import { BaseModel } from '../../models/base.model';
 import { store } from '~root/state';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
 
+export enum DeleteType {
+  DELETE_WITH_CHILDREN = 'DELETE_WITH_CHILDREN',
+  DELETE_ONLY_SELF = 'DELETE_ONLY_SELF',
+}
+
 @Injectable()
 export class BaseNeoTreeService extends BaseNeoService {
   async cleanTree() {
@@ -369,5 +374,37 @@ export class BaseNeoTreeService extends BaseNeoService {
       }
     });
     return result;
+  }
+
+  async deleteNode(uuid: string, deleteType: DeleteType = DeleteType.DELETE_WITH_CHILDREN) {
+    // In case of deleting node with its children
+    if (deleteType === DeleteType.DELETE_WITH_CHILDREN) {
+      const query = `
+        MATCH (n:${this.model.modelName} {uuid: $uuid})
+        OPTIONAL MATCH (n)-[:HAS_CHILD*]->(child)
+        DETACH DELETE n, child
+      `;
+
+      await this.neo.write(query, { uuid });
+      return;
+    }
+
+    // In case of deleting only the node and keeping its children
+    if (deleteType === DeleteType.DELETE_ONLY_SELF) {
+      const query = `
+        MATCH (n:${this.model.modelName} {uuid: $uuid})
+        OPTIONAL MATCH (n)-[:HAS_CHILD]->(child)
+        WITH collect(child) as children
+        DETACH DELETE n
+        WITH children
+        MATCH (p:${this.model.modelName})-[:HAS_CHILD]->(n) WHERE n.uuid = $uuid
+        FOREACH (child in children | CREATE (p)-[:HAS_CHILD]->(child))
+      `;
+
+      await this.neo.write(query, { uuid });
+      return;
+    }
+
+    throw new Error(`Invalid delete type: ${deleteType}`);
   }
 }

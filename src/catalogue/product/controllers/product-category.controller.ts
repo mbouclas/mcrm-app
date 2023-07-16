@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
+import { DeleteType } from '~root/shared/services/base-neo-tree.service';
 
 @Controller('api/product-category')
 export class ProductCategoryController {
@@ -36,6 +37,17 @@ export class ProductCategoryController {
   @Post()
   async store(@Body() data: IGenericObject) {}
 
-  @Delete()
-  async delete(@Param('id') uuid: string) {}
+  @Delete(':id')
+  async delete(@Param('id') uuid: string, @Query() queryParams) {
+    try {
+      const deleteType =
+        DeleteType[queryParams.deleteType as keyof typeof DeleteType] || DeleteType.DELETE_WITH_CHILDREN;
+
+      await new ProductCategoryService().deleteNode(uuid, deleteType);
+
+      return await new ProductCategoryService().toTree();
+    } catch (e) {
+      return false;
+    }
+  }
 }
