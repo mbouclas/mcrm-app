@@ -36,12 +36,17 @@ export class ProductCategoryController {
 
   @Post()
   async create(@Body() body: IGenericObject) {
-    await new ProductCategoryService().store(body, null, [
-      {
-        id: body.parentUuid,
-        name: 'parent',
-      },
-    ]);
+    let rels = [];
+
+    if (body.parentUuid) {
+      rels = [
+        {
+          id: body.parentUuid,
+          name: 'parent',
+        },
+      ];
+    }
+    await new ProductCategoryService().store(body, null, rels);
 
     return await new ProductCategoryService().toTree();
   }
