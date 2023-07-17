@@ -63,13 +63,37 @@ export class ProductCategoryModel extends BaseModel {
       type: 'text',
       group: 'main',
     },
+
     {
       varName: 'thumb',
-      label: 'Thumb',
-      placeholder: 'Thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
       type: 'image',
-      group: 'main',
+      imageSettings: {
+        multiple: true,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        fileLimit: 5,
+        quality: 70,
+      },
+      group: 'right',
+      groupIndex: 3,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
     },
+
     {
       varName: 'metaData',
       label: 'Meta Data',

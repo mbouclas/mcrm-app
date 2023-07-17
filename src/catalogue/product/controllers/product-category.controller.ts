@@ -12,9 +12,6 @@ export class ProductCategoryController {
     return await new ProductCategoryService().toTree();
   }
 
-  @Patch(`:id`)
-  async update(@Param('id') uuid: string, body: IGenericObject) { }
-
   @Patch(`:id/move`)
   async move(@Param('id') uuid: string, @Body() body: IGenericObject) {
     try {
@@ -47,6 +44,13 @@ export class ProductCategoryController {
       ];
     }
     await new ProductCategoryService().store(body, null, rels);
+
+    return await new ProductCategoryService().toTree();
+  }
+
+  @Patch(':id')
+  async update(@Param('id') uuid: string, @Body() body: IGenericObject) {
+    await new ProductCategoryService().update(uuid, body, null);
 
     return await new ProductCategoryService().toTree();
   }
