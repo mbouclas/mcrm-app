@@ -1,13 +1,9 @@
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { McmsDi } from '../../helpers/mcms-component.decorator';
 import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
-import { IAddress } from "~eshop/models/checkout";
+import { IAddress } from '~eshop/models/checkout';
 
 const modelName = 'User';
 @McmsDi({
@@ -61,6 +57,7 @@ export class UserModel extends BaseModel {
       isCustomer: {
         model: 'Order',
         modelAlias: 'order',
+        exactAliasQuery: true,
         alias: 'customerRelationship',
         type: 'normal',
         match: 'exact',

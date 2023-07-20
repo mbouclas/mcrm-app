@@ -7,9 +7,8 @@ import { GuestInterceptor } from '~root/auth/interceptors/guest.interceptor';
 export class CustomerController {
   @Get('')
   async find(@Query() queryParams = {}) {
-    const u = await new UserService().find(queryParams, ['isCustomer']);
+    const u = await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
     console.log(u);
-
     return u;
   }
 }
