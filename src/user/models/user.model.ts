@@ -64,6 +64,16 @@ export class UserModel extends BaseModel {
         isCollection: false,
         rel: 'HAS_CREATED',
       },
+      orderCount: {
+        rel: 'HAS_CREATED',
+        alias: 'orderCountRelationship',
+        exactAliasQuery: true,
+        model: 'Order',
+        modelAlias: 'orderCount',
+        type: 'normal',
+        isCollection: false,
+        isCount: true,
+      },
     },
   };
 
