@@ -41,6 +41,7 @@ export class UserModel extends BaseModel {
       address: {
         model: 'Address',
         modelAlias: 'address',
+        exactAliasQuery: true,
         alias: 'addressRelationship',
         type: 'normal',
         isCollection: true,
@@ -49,6 +50,7 @@ export class UserModel extends BaseModel {
       orders: {
         model: 'Order',
         modelAlias: 'order',
+        exactAliasQuery: true,
         alias: 'orderRelationship',
         type: 'normal',
         isCollection: true,
@@ -56,7 +58,7 @@ export class UserModel extends BaseModel {
       },
       isCustomer: {
         model: 'Order',
-        modelAlias: 'order',
+        modelAlias: 'isCustomer',
         exactAliasQuery: true,
         alias: 'customerRelationship',
         type: 'normal',
