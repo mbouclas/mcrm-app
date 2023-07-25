@@ -7,10 +7,20 @@ import { DeleteType } from '~root/shared/services/base-neo-tree.service';
 export class ProductCategoryController {
   constructor() { }
 
+
   @Get('tree')
   async tree() {
     return await new ProductCategoryService().toTree();
   }
+
+
+  @Get(':uuid')
+  async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
+    const rels = queryParams['with'] ? queryParams['with'] : [];
+
+    return await new ProductCategoryService().findOne({ uuid }, rels);;
+  }
+
 
   @Patch(`:id/move`)
   async move(@Param('id') uuid: string, @Body() body: IGenericObject) {

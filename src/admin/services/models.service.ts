@@ -149,6 +149,11 @@ export class ModelsService extends BaseNeoService {
       fileModel['filterFields'] = unionBy(dbModel['filterFields'], fileModel['filterFields'], 'varName')
     }
 
+    if (typeof dbModel['relationships'] === 'object' && Object.keys(dbModel['relationships']).length > 0) {
+      fileModel['modelConfig']['relationships'] = Object.assign({}, dbModel['relationships'], fileModel['modelConfig']['relationships']);
+    }
+
+
     // Merge some properties
     this.jsonStringProperties.forEach(prop => {
       if (!dbModel[prop]) {return;}

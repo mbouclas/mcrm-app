@@ -827,4 +827,8 @@ MATCH(n1: ${sourceModelName} { ${sourceFilterQuery.key}: '${sourceFilterQuery.va
   public notify(eventName: string, payload: any) {
     this.eventEmitter.emit(eventName, payload);
   }
+
+  public emit(eventName: string, payload: any) {
+    this.eventEmitter.emit(eventName, payload);
+  }
 }

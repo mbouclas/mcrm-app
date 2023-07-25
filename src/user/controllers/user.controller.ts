@@ -6,6 +6,6 @@ export class UserController {
   @Get('')
   async find(@Query() queryParams = {}) {
 
-    return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);;
+    return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 }

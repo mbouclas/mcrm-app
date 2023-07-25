@@ -95,7 +95,7 @@ export class StoreController {
         shippingMethod: body.shippingMethod.uuid,
         paymentMethod: body.paymentMethod.uuid,
         notes: body.notes,
-        metaData: {...body.orderMetaData, ...{ip, cart: cart.toObject()}},
+        metaData: {...body.orderMetaData, ...{ip, cart: cart.toObject(), billingInformation: body.billingInformation, shippingInformation: body.shippingInformation}},
       };
     // Write the order first
     try {
@@ -158,7 +158,7 @@ export class StoreController {
 
     // Attach the addresses to the order
     try {
-      const addressAttachmentResult = await orderService.attachAddressesToOrder(order.uuid, [{...body.billingInformation, ...{type: 'BILLING'}}, {...body.shippingInformation, ...{type: 'SHIPPING'}}]);
+      let addressAttachmentResult = await orderService.attachAddressesToOrder(order.uuid, [{...body.billingInformation, ...{type: 'BILLING'}}, {...body.shippingInformation, ...{type: 'SHIPPING'}}]);
       if (addressAttachmentResult.unsavedAddresses.length > 0) {
         // Save the addresses
         const addressService = new OrderService(),
@@ -167,7 +167,7 @@ export class StoreController {
           fixedAddresses.push(await (new AddressService()).attachAddressToUser(addressAttachmentResult.unsavedAddresses[idx], session.user.uuid, addressAttachmentResult.unsavedAddresses[idx].type));
         }
         // go again
-        await orderService.attachAddressesToOrder(order.uuid, fixedAddresses);
+        addressAttachmentResult = await orderService.attachAddressesToOrder(order.uuid, fixedAddresses);
       }
     }
     catch (e) {
@@ -175,14 +175,7 @@ export class StoreController {
       return {success: false, message: 'ERROR_ATTACHING_ADDRESS', error: e.message};
     }
 
-    // Attach the cart to the order
-/*    try {
-      await (new CartService()).attachModelToCart(OrderModel, {uuid: order.uuid}, cart.id);
-    }
-    catch (e) {
-      console.log('Error attaching cart', e.message, e);
-      return {success: false, message: 'ERROR_ATTACHING_CART', error: e.message};
-    }*/
+
 
     (new OrderService).notify(OrderEventNames.orderAttachedToNodes, order);
 

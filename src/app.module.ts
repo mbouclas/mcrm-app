@@ -57,7 +57,6 @@ export let Test = { token: null };
     LoggerModule,
     MailModule,
     // Neo4jModule,
-    SharedModule,
     UserModule,
     CrmModule,
     CmsModule,

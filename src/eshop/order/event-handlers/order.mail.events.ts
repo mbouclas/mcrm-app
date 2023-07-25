@@ -54,6 +54,11 @@ export class OrderMailEvents implements OnModuleInit {
     }
   }
 
+  @OnEvent(OrderEventNames.orderStatusChanged)
+  async orderStatusChanged({uuid, status}: {uuid: string, status: number}) {
+    console.log('--------------------', uuid, status);
+  }
+
   @OnEvent(OrderEventNames.orderCreated)
   async onOrderCreated() {
 

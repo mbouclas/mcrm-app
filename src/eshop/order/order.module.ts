@@ -5,6 +5,7 @@ import { OrderModel } from './models/order.model';
 import { OrderController } from './controllers/order.controller';
 import { OrderService } from './services/order.service';
 import { OrderMailEvents } from "~eshop/order/event-handlers/order.mail.events";
+import { OrderListeners } from "~eshop/order/listeners/order.listeners";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { OrderMailEvents } from "~eshop/order/event-handlers/order.mail.events";
     OrderModel,
     OrderService,
     OrderMailEvents,
+    OrderListeners,
   ],
   controllers: [OrderController]
 })

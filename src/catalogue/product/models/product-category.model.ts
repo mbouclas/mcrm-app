@@ -39,7 +39,7 @@ export class ProductCategoryModel extends BaseModel {
         rel: 'HAS_CHILD',
         alias: 'productCategoryParentRelationship',
         model: 'ProductCategory',
-        modelAlias: 'productCategory',
+        modelAlias: 'productCategoryParent',
         type: 'inverse',
         isCollection: false,
       },
@@ -60,7 +60,7 @@ export class ProductCategoryModel extends BaseModel {
       varName: 'description',
       label: 'Description',
       placeholder: 'Description',
-      type: 'text',
+      type: 'richText',
       group: 'main',
     },
 

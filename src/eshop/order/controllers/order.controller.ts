@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Session } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
-import { OrderService } from '~eshop/order/services/order.service';
+import { OrderEventNames, OrderService } from "~eshop/order/services/order.service";
 import { CustomerService } from '~eshop/customer/services/customer.service';
 import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
 import { AddressService } from '~eshop/address/services/address.service';
@@ -308,5 +308,13 @@ export class OrderController {
     });
 
     return order;
+  }
+
+  @Patch(`:uuid/status`)
+  async updateStatus(@Body() body: {status: number}, @Param('uuid') uuid: string) {
+    const service = new OrderService();
+    await service.update(uuid, {status: body.status});
+    service.emit(OrderEventNames.orderStatusChanged, {uuid, status: body.status});
+    return {success: true};
   }
 }

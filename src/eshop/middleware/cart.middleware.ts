@@ -22,7 +22,7 @@ export class CartMiddleware implements NestMiddleware {
     if (req.headers['x-sess-id'] && req.headers['x-sess-id'] !== 'null') {
       session = await this.cache.get(`sess:${req.headers['x-sess-id']}`);
       sessionId = req.headers['x-sess-id'];
-      if (req.headers['x-sess-id'] !== session.userSessionId) {
+      if (!session || !session.userSessionId || req.headers['x-sess-id'] !== session.userSessionId) {
         await this.cache.del(`sess:${req.session.id}`);// clear the old session
       }
     }

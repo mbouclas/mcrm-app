@@ -218,7 +218,7 @@ export class OrderService extends BaseNeoService {
 
     try {
       const r = await super.update(uuid, record, userId);
-
+      this.eventEmitter.emit(OrderEventNames.orderUpdated, r);
       return r;
     } catch (e) {
       throw new InvalidOrderException('ORDER_UPDATE_ERROR', '900.1', e.getErrors());

@@ -3,11 +3,12 @@ import { BaseNeoTreeService } from "~shared/services/base-neo-tree.service";
 import { OnEvent } from "@nestjs/event-emitter";
 import { ChangeLogService } from "~change-log/change-log.service";
 import { store } from "~root/state";
-import { IBaseFilter } from "~models/general";
+import { IBaseFilter, IGenericObject } from "~models/general";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import { findIndex } from "lodash";
 import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
 import { McmsDi } from "~helpers/mcms-component.decorator";
+import { ImageService } from "~image/image.service";
 @McmsDi({
   id: 'ProductCategoryService',
   type: 'service',
@@ -18,11 +19,13 @@ export class ProductCategoryService extends BaseNeoTreeService {
   static updatedEventName = 'productCategory.model.updated';
   static createdEventName = 'productCategory.model.created';
   static deletedEventName = 'productCategory.model.deleted';
+  protected imageService: ImageService;
 
   constructor() {
     super();
     this.model = store.getState().models.ProductCategory;
     this.changeLog = new ChangeLogService();
+    this.imageService = new ImageService();
   }
 
   @OnEvent('app.loaded')
@@ -35,6 +38,20 @@ export class ProductCategoryService extends BaseNeoTreeService {
     // const r = await s.getCategoriesByModel('Product', {slug: 'test'})
     // const r = await s.addChildToParent({slug: 'winter'}, {slug: 'test'})
     // console.log(r)
+  }
+
+  async findOne(filter: IGenericObject, rels = []): Promise<ProductCategoryModel> {
+    let item: ProductCategoryModel;
+    try {
+      item = (await super.findOne(filter, rels)) as unknown as ProductCategoryModel;
+    } catch (e) {
+      throw e;
+    }
+
+    const images = await this.imageService.getItemImages('ProductCategory', item['uuid']);
+    item['thumb'] = images.find((img) => img.type === 'main') || null;
+
+    return item;
   }
 
   // Need to use this.model

@@ -166,6 +166,38 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
       },
+      thumb: {
+        rel: 'HAS_IMAGE',
+        alias: 'thumbRelationship',
+        model: 'Image',
+        modelAlias: 'thumb',
+        type: 'normal',
+        isCollection: true,
+        addRelationshipData: true,
+        defaultProperty: 'name',
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
+            return record;
+          }
+
+          record.thumb = record.thumb
+            .filter(image => image.relationship && image.relationship.type === 'main')
+            .map(image => ({...image.model, ...{
+                type: image.relationship.type,
+                order: image.relationship.order,
+                title: image.relationship.title,
+                description: image.relationship.description,
+                alt: image.relationship.alt,
+                caption: image.relationship.caption,
+              }}));
+
+          if (record.thumb.length === 0) {
+            record.thumb = record.thumb[0];
+          }
+
+          return record;
+        },
+      },
       images: {
         rel: 'HAS_IMAGE',
         alias: 'imagesRelationship',
@@ -181,7 +213,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           }
 
           record.images = record.images
-            .filter(image => image.relationship.type !== 'main')
+            .filter(image => image.relationship && image.relationship.type !== 'main')
             .map(image => ({...image.model, ...{
               type: image.relationship.type,
                 order: image.relationship.order,
@@ -631,16 +663,34 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isInSimpleQuery: true,
     },
     {
-      varName: 'categoryFilter',
-      label: 'Category',
-      placeholder: 'Category',
-      type: 'tree-selector',
-
-      relName: 'businessType',
+      varName: 'active',
+      label: 'Active',
+      type: 'boolean',
+      model: 'Product',
+      filterType: 'exact',
       isInSimpleQuery: false,
-      model: 'BusinessType',
+    },
+    {
+      varName: 'price',
+      label: 'Price',
+      type: 'number',
+      model: 'Product',
+      isRange: true,
+      rangeFromFieldName: 'priceFrom',
+      rangeToFieldName: 'priceTo',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+    {
+      varName: 'category',
       filterField: 'uuid',
-      order: 2,
+      label: 'Category',
+      type: 'string',
+      relName: 'categoriesFilterRel',
+      relType: 'inverse',
+      model: 'ProductCategory',
+      filterType: 'exact',
+      isInSimpleQuery: false,
     },
   ];
 

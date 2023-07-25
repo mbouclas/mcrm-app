@@ -14,7 +14,7 @@ import { tokenGenerator } from '~helpers/tokenGenerator';
 import { ProductVariantModel } from '~catalogue/product/models/product-variant.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
-import { IBaseFilter, IGenericObject } from '~models/general';
+import { IBaseFilter, IGenericObject, IPagination } from "~models/general";
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
@@ -129,6 +129,20 @@ export class ProductService extends BaseNeoService {
     item['thumb'] = images.find((img) => img.type === 'main') || null;
 
     return item;
+  }
+
+  async find(params: IGenericObject = {}, rels: string[] = []): Promise<IPagination<ProductModel>> {
+    let res;
+    try {
+      res = await super.find(params, rels);
+    }
+    catch (e) {
+      throw e;
+    }
+
+
+
+    return res;
   }
 
   async store(record: ProductModelDto, userId?: string) {

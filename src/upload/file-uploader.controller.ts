@@ -2,12 +2,13 @@ import { Body, Controller, Get, Param, Post, UploadedFile, UploadedFiles, UseInt
 import { AnyFilesInterceptor, FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { IFileUploadMetaData, UploaderService } from "~root/upload/uploader.service";
 import { UploaderQueueService } from "~root/upload/uploader-queue.service";
+import { ImageService } from "~image/image.service";
 
 class LinkUploadToItemDto {
   itemId: string;
   model: string;
-  uploadItemId: string;
-  uploadItemType: 'image'|'file';
+  imageId: string;
+  imageType: 'image'|'file';
 }
 
 
@@ -44,6 +45,7 @@ export class FileUploaderController {
     return res;
   }
 
+
   @Get('status/:id')
   async getUploadStatus(@Param('id') jobId: string) {
     const res = await this.service.getProcessFileFromResult(parseInt(jobId));
@@ -53,7 +55,7 @@ export class FileUploaderController {
 
   @Post('link')
   async linkUploadToItem(@Body() payload: LinkUploadToItemDto) {
-
+    await (new ImageService).linkToObject({uuid: payload.imageId}, payload.model, payload.itemId, payload.imageType || 'main')
   }
 
 }
