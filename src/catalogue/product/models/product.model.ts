@@ -4,9 +4,9 @@ import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.mod
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PropertyService } from '~catalogue/property/services/property.service';
-import { OnEvent } from "@nestjs/event-emitter";
-import { getStoreProperty, store } from "~root/state";
-import { sortBy } from "lodash";
+import { OnEvent } from '@nestjs/event-emitter';
+import { getStoreProperty, store } from '~root/state';
+import { sortBy } from 'lodash';
 
 const modelName = 'Product';
 @McmsDi({
@@ -25,15 +25,13 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public sku;
   public uuid: string;
 
-
   constructor() {
     super();
 
     this.loadModelSettingsFromConfig();
-
   }
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = ['title', 'category'];
 
@@ -181,15 +179,18 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           }
 
           record.thumb = record.thumb
-            .filter(image => image.relationship && image.relationship.type === 'main')
-            .map(image => ({...image.model, ...{
+            .filter((image) => image.relationship && image.relationship.type === 'main')
+            .map((image) => ({
+              ...image.model,
+              ...{
                 type: image.relationship.type,
                 order: image.relationship.order,
                 title: image.relationship.title,
                 description: image.relationship.description,
                 alt: image.relationship.alt,
                 caption: image.relationship.caption,
-              }}));
+              },
+            }));
 
           if (record.thumb.length === 0) {
             record.thumb = record.thumb[0];
@@ -213,15 +214,18 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           }
 
           record.images = record.images
-            .filter(image => image.relationship && image.relationship.type !== 'main')
-            .map(image => ({...image.model, ...{
-              type: image.relationship.type,
+            .filter((image) => image.relationship && image.relationship.type !== 'main')
+            .map((image) => ({
+              ...image.model,
+              ...{
+                type: image.relationship.type,
                 order: image.relationship.order,
                 title: image.relationship.title,
                 description: image.relationship.description,
                 alt: image.relationship.alt,
                 caption: image.relationship.caption,
-            }}));
+              },
+            }));
 
           record.images = sortBy(record.images, 'order');
           return record;
@@ -690,6 +694,17 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       relType: 'inverse',
       model: 'ProductCategory',
       filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+    {
+      varName: 'createdAt',
+      label: 'Created At',
+      type: 'date',
+      model: 'Product',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'createdAtFrom',
+      rangeToFieldName: 'createdAtTo',
       isInSimpleQuery: false,
     },
   ];
