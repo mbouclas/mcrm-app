@@ -15,26 +15,38 @@ export class AddressPostDto {
 
 @Controller('api/address')
 export class AddressController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Session() session: SessionData, @Query() queryParams = {}) {
-    const userId = session.user && session.user['uuid'];
-    const rels = queryParams['with'] ? queryParams['with'] : [];
+    try {
+      const userId = session.user && session.user['uuid'];
+      const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new AddressService().find({ userId }, rels);
+      return await new AddressService().find({ userId }, rels);
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
   }
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
-    const rels = queryParams['with'] ? queryParams['with'] : [];
+    try {
+      const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new AddressService().findOne({ uuid }, rels);
+      return await new AddressService().findOne({ uuid }, rels);
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
   }
 
   @Patch(`:uuid`)
   async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    return await new AddressService().update(uuid, { ...body });
+    try {
+      return await new AddressService().update(uuid, { ...body });
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
   }
 
   @Post()
@@ -47,7 +59,6 @@ export class AddressController {
       const res = await new AddressService().attachAddressToUser(data.address, data.userId);
       data['uuid'] = res.uuid;
     } catch (e) {
-      console.log(e);
       return { success: false, message: e.message, code: e.getCode() };
     }
 
@@ -56,6 +67,10 @@ export class AddressController {
 
   @Delete(`:uuid`)
   async delete(@Param('uuid') uuid: string) {
-    return await new AddressService().delete(uuid);
+    try {
+      return await new AddressService().delete(uuid);
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
   }
 }
