@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { IAddress } from '~eshop/models/checkout';
+import { IGate } from "~admin/models/gates";
 
 const modelName = 'User';
 @McmsDi({
@@ -25,6 +26,7 @@ export class UserModel extends BaseModel {
   public uuid?: string;
   public type?: 'user' | 'guest';
   public address?: IAddress[] = [];
+  public gates?: IGate[] = [];
 
   public static modelConfig: INeo4jModel = {
     select: 'user:User',

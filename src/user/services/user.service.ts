@@ -295,6 +295,18 @@ export class UserService extends BaseNeoService {
   }
 
   static userMaxRole(user: UserModel) {
+    const maxLevel = UserService.userMaxLevel(user);
+
+    return user['role'].find((role) => role.level === maxLevel);
+  }
+
+  static userMinRole(user: UserModel) {
+    const minLevel = UserService.userMinLevel(user);
+
+    return user['role'].find((role) => role.level === minLevel);
+  }
+
+  static userMaxLevel(user: UserModel) {
     if (!user['role'] || !Array.isArray(user['role'])) {
       return 0;
     }
@@ -302,5 +314,40 @@ export class UserService extends BaseNeoService {
     return user['role'].reduce((max, role) => {
       return role.level > max ? role.level : max;
     }, 0);
+  }
+
+  static userMinLevel(user: UserModel) {
+    if (!user['role'] || !Array.isArray(user['role'])) {
+      return 0;
+    }
+
+    return user['role'].reduce((min, role) => {
+      return role.level < min ? role.level : min;
+    });
+  }
+
+  static userHasRole(user: UserModel, role: string) {
+    if (!user['role'] || !Array.isArray(user['role'])) {
+      return false;
+    }
+
+    return user['role'].find((r) => r.name === role);
+  }
+
+  static inGates(user: UserModel, gates: string[]) {
+    if (!user['role'] || !Array.isArray(user['role'])) {
+      return false;
+    }
+
+    const foundGates = [];
+    user.gates.forEach(gate => {
+      if (gates.indexOf(gate.gate) !== -1) {
+        foundGates.push(gate);
+        return;
+      }
+    });
+
+
+    return foundGates.length > 0;
   }
 }

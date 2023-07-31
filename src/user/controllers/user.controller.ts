@@ -1,13 +1,22 @@
-import { Controller, Get, Query, Param, Patch, Body, Delete, Session } from "@nestjs/common";
+import { Controller, Get, Query, Param, Patch, Body, Delete, Session, SetMetadata, UseGuards } from "@nestjs/common";
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from "~shared/models/session.model";
+import { GateGuard } from "~user/guards/gate.guard";
+import { RoleGuard } from "~user/guards/role.guard";
+import { LevelGuard } from "~user/guards/level.guard";
 
 @Controller('api/user')
 export class UserController {
   @Get('')
+  // @SetMetadata('gates', ['users.menu.roles'])
+  // @SetMetadata('roles', {roles: ['admin'], match : 'min'})
+  // @SetMetadata('level', {level: 30, match : 'min'})
+  // @UseGuards(RoleGuard)
+  // @UseGuards(LevelGuard)
+  // @UseGuards(GateGuard)
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
-    queryParams['level'] = `::${UserService.userMaxRole(session.user)}`
+    queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`
     return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
