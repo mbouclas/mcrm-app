@@ -283,6 +283,17 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
               whereQuery += filters[r].map((value: any) => `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${value}.*'`).join(' OR ');
             }
           }
+          else if (filterField.isRange) {
+            const rangeTmp = [];
+            const parts = filters[r].split('::');
+            if (parts[0]) {
+              rangeTmp.push(`${relationshipModel.modelAlias}.${filterField.filterField} >= ${buildWhereValueString(filterField.type, parts[0])}`);
+            }
+            if (parts[1]) {
+              rangeTmp.push(`${relationshipModel.modelAlias}.${filterField.filterField} <= ${buildWhereValueString(filterField.type, parts[1])}`);
+            }
+            whereQuery += rangeTmp.join(' AND ');
+          }
           // Non array filter values
           else {
             let exactMatchOperator = '=';

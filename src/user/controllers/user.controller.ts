@@ -1,16 +1,19 @@
-import { Controller, Get, Query, Param, Patch, Body, Delete } from '@nestjs/common';
+import { Controller, Get, Query, Param, Patch, Body, Delete, Session } from "@nestjs/common";
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
+import { ISessionData } from "~shared/models/session.model";
 
 @Controller('api/user')
 export class UserController {
   @Get('')
-  async find(@Query() queryParams = {}) {
+  async find(@Query() queryParams = {}, @Session() session: ISessionData) {
+    queryParams['level'] = `::${UserService.userMaxRole(session.user)}`
     return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
   @Get(':uuid')
-  async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
+  async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}, @Session() session: ISessionData) {
+    queryParams['level'] = `::${UserService.userMaxRole(session.user)}`
     try {
       return new UserService().findOne({ uuid }, queryParams['with'] || []);
     } catch (e) {

@@ -293,4 +293,14 @@ export class UserService extends BaseNeoService {
     }
 
   }
+
+  static userMaxRole(user: UserModel) {
+    if (!user['role'] || !Array.isArray(user['role'])) {
+      return 0;
+    }
+
+    return user['role'].reduce((max, role) => {
+      return role.level > max ? role.level : max;
+    }, 0);
+  }
 }
