@@ -1,10 +1,25 @@
-import { Post, Controller, Get, Query, Param, Patch, Body, Delete, Session } from '@nestjs/common';
+import {
+  Post,
+  Controller,
+  Get,
+  Query,
+  Param,
+  Patch,
+  Body,
+  Delete,
+  Session,
+  SetMetadata,
+  UseGuards,
+} from '@nestjs/common';
 import { RoleService } from '../services/role.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
+import { GateGuard } from '~user/guards/gate.guard';
 
 @Controller('api/role')
 export class RoleController {
+  @SetMetadata('gates', ['users.menu.roles'])
+  @UseGuards(GateGuard)
   @Get('')
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
     return await new RoleService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
