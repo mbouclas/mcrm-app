@@ -62,32 +62,36 @@ export class UserController {
 
   @Post(':uuid/manage-role')
   async manageRole(@Body() body: IGenericObject, @Param('uuid') uuid: string, @Session() session: ISessionData) {
-    try {
-      const userLevel = UserService.userMaxLevel(session.user);
+    const userLevel = UserService.userMaxLevel(session.user);
 
-      const targetUser = await new UserService().findOne({ uuid }, ['role']);
-      const targetUserLevel = UserService.userMaxLevel(targetUser);
+    const targetUser = await new UserService().findOne({ uuid }, ['role']);
+    const targetUserLevel = UserService.userMaxLevel(targetUser);
 
-      if (userLevel < targetUserLevel) {
-        return { success: false, message: 'unathorized', code: 'unauthorized' };
-      }
-      const userGate = UserService.inGates(session.user, ['users.menu.roles']);
-
-      if (!userGate) {
-        return { success: false, message: 'unathorized', code: 'unauthorized' };
-      }
-
-      if (body.type === 'ASSIGN') {
-        await new UserService().attachToModelById(targetUser.uuid, body.roleUuid, 'role');
-      }
-
-      if (body.type === 'UNASSIGN') {
-        await new UserService().detachFromModelById(targetUser.uuid, body.roleUuid, 'role');
-      }
-
-      return { success: true };
-    } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+    if (userLevel < targetUserLevel) {
+      return { success: false, message: 'Unauthorized', code: '500.3' };
     }
+    const userGate = UserService.inGates(session.user, ['users.menu.roles']);
+
+    if (!userGate) {
+      return { success: false, message: 'Unauthorized', code: '500.3' };
+    }
+
+    if (body.type === 'ASSIGN') {
+      try {
+        await new UserService().attachToModelById(targetUser.uuid, body.roleUuid, 'role');
+      } catch (e) {
+        return { success: false, message: e.message, code: e.getCode() };
+      }
+    }
+
+    if (body.type === 'UNASSIGN') {
+      try {
+        await new UserService().detachFromModelById(targetUser.uuid, body.roleUuid, 'role');
+      } catch (e) {
+        return { success: false, message: e.message, code: e.getCode() };
+      }
+    }
+
+    return { success: true };
   }
 }
