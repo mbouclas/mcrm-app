@@ -77,12 +77,12 @@ export class UserController {
         return { success: false, message: 'unathorized', code: 'unauthorized' };
       }
 
-      if ((body.type = 'ASSIGN')) {
-        await new UserService().attachToModelById(targetUser.uuid, body.uuid, 'role');
+      if (body.type === 'ASSIGN') {
+        await new UserService().attachToModelById(targetUser.uuid, body.roleUuid, 'role');
       }
 
       if (body.type === 'UNASSIGN') {
-        await new UserService().detachFromModelById(targetUser.uuid, body.uuid, 'role');
+        await new UserService().detachFromModelById(targetUser.uuid, body.roleUuid, 'role');
       }
 
       return { success: true };
