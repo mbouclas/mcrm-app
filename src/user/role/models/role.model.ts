@@ -1,8 +1,4 @@
-import {
-  BaseModel,
-  IBaseModelFilterConfig,
-  INeo4jModel,
-} from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { McmsDi } from '../../../helpers/mcms-component.decorator';
 import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
@@ -55,7 +51,20 @@ export class RoleModel extends BaseModel {
     },
   ];
 
-  public static filterFields: IQueryBuilderFieldBlueprint[] = [];
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'name',
+      placeholder: 'Name',
+      label: 'Name',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
+      filterType: 'partial',
+      model: 'Role',
+      filterField: '',
+      order: 0,
+    },
+  ];
 
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
