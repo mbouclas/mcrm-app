@@ -21,7 +21,7 @@ import { store } from '~root/state';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
 import { range } from 'lodash';
-import { AppModule } from "~root/app.module";
+import { AppModule } from '~root/app.module';
 
 const debug = require('debug')('mcms:neo:query');
 
@@ -131,9 +131,8 @@ export class BaseNeoService {
     const records = await this.neo.readWithCleanUp(query, {});
     let result = this.neo.mergeRelationshipsToParent(records[0], this.model);
 
-
     if (!result || (Array.isArray(result) && result.length === 0)) {
-      throw new RecordNotFoundException(`RECORD_NOT_FOUND`, '001.1', {filter, rels, query});
+      throw new RecordNotFoundException(`RECORD_NOT_FOUND`, '001.1', { filter, rels, query });
     }
 
     result = await modelPostProcessing(result, this.model);
@@ -583,7 +582,7 @@ export class BaseNeoService {
     return { success: true };
   }
 
-  relationshipQuery(relationshipProps, relSelector: string = 'r') {
+  relationshipQuery(relationshipProps, relSelector = 'r') {
     const createSetRelationship = relationshipProps
       ? ', '.concat(
           Object.keys(relationshipProps)
@@ -671,6 +670,28 @@ export class BaseNeoService {
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime() ${createSetRelationship}
     ON MATCH SET r.updatedAt = datetime()
     RETURN *;
+    `;
+
+    try {
+      const res = await this.neo.write(query, {});
+      if (!res?.records[0]) {
+        return { success: false };
+      }
+    } catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async detachFromModelById(sourceId: string, destinationId: string, relationshipName: string) {
+    const relationship = this.model.modelConfig.relationships[relationshipName];
+
+    const query = `
+    MATCH (n1 { uuid:'${sourceId}'})${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
+      relationship.type === 'normal' ? '->' : '-'
+    }(n2 { uuid: '${destinationId}')
+    DETACH DELETE r;
     `;
 
     try {
