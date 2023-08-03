@@ -14,6 +14,8 @@ import {
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
+import { AuthService, hashPassword } from '~root/auth/auth.service';
+
 import { GateGuard } from '~user/guards/gate.guard';
 import { RoleGuard } from '~user/guards/role.guard';
 import { LevelGuard } from '~user/guards/level.guard';
@@ -90,6 +92,42 @@ export class UserController {
       } catch (e) {
         return { success: false, message: e.message, code: e.getCode() };
       }
+    }
+
+    return { success: true };
+  }
+
+  @Post(':uuid/change-password')
+  async changePassword(@Body() body: IGenericObject, @Param('uuid') uuid: string, @Session() session: ISessionData) {
+    const userLevel = UserService.userMaxLevel(session.user);
+
+    const targetUser = await new UserService().findOne({ uuid }, ['role']);
+    const targetUserLevel = UserService.userMaxLevel(targetUser);
+
+    if (userLevel < targetUserLevel) {
+      return { success: false, message: 'Unauthorized', code: '500.3' };
+    }
+    const userGate = UserService.inGates(session.user, ['mcms.user.password.update']);
+
+    if (!userGate) {
+      return { success: false, message: 'Unauthorized', code: '500.3' };
+    }
+
+    const authService = new AuthService();
+    const hashedPassword = await authService.hasher.hashPassword(body.password);
+
+    try {
+      console.log(uuid);
+      console.log(uuid);
+      console.log(uuid);
+      console.log(uuid);
+      console.log(uuid);
+      console.log(uuid);
+      await new UserService().update(uuid, {
+        password: hashedPassword,
+      });
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
     }
 
     return { success: true };
