@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { IAddress } from '~eshop/models/checkout';
-import { IGate } from "~admin/models/gates";
+import { IGate } from '~admin/models/gates';
 
 const modelName = 'User';
 @McmsDi({
@@ -74,7 +74,6 @@ export class UserModel extends BaseModel {
         exactAliasQuery: true,
         alias: 'customerRelationship',
         type: 'normal',
-        match: 'exact',
         isCollection: false,
         rel: 'HAS_CREATED',
       },

@@ -117,12 +117,6 @@ export class UserController {
     const hashedPassword = await authService.hasher.hashPassword(body.password);
 
     try {
-      console.log(uuid);
-      console.log(uuid);
-      console.log(uuid);
-      console.log(uuid);
-      console.log(uuid);
-      console.log(uuid);
       await new UserService().update(uuid, {
         password: hashedPassword,
       });
