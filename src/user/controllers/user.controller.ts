@@ -53,6 +53,8 @@ export class UserController {
     }
   }
 
+  @SetMetadata('gates', ['users.delete'])
+  @UseGuards(GateGuard)
   @Delete(`:uuid`)
   async delete(@Param('uuid') uuid: string) {
     try {
