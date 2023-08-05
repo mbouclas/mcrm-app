@@ -128,4 +128,23 @@ export class UserController {
 
     return { success: true };
   }
+
+  @SetMetadata('gates', ['users.add'])
+  @UseGuards(GateGuard)
+  @Post(':/add')
+  async addUser(@Body() body: IGenericObject) {
+    const authService = new AuthService();
+    const hashedPassword = await authService.hasher.hashPassword(body.password);
+
+    try {
+      await new UserService().store({
+        ...body,
+        password: hashedPassword,
+      });
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
+
+    return { success: true };
+  }
 }
