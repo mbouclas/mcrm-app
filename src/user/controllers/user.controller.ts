@@ -19,6 +19,8 @@ import { AuthService, hashPassword } from '~root/auth/auth.service';
 import { GateGuard } from '~user/guards/gate.guard';
 import { RoleGuard } from '~user/guards/role.guard';
 import { LevelGuard } from '~user/guards/level.guard';
+import { RoleService } from '../role/services/role.service';
+import { RoleModel } from '../role/models/role.model';
 
 @Controller('api/user')
 export class UserController {
@@ -131,20 +133,28 @@ export class UserController {
 
   @SetMetadata('gates', ['users.add'])
   @UseGuards(GateGuard)
-  @Post(':/add')
-  async addUser(@Body() body: IGenericObject) {
+  @Post('create')
+  async createUser(@Body() body: IGenericObject) {
     const authService = new AuthService();
     const hashedPassword = await authService.hasher.hashPassword(body.password);
 
+    const userRole: RoleModel = await new RoleService().findOne({
+      name: 'user',
+    });
+
+    let user = null;
     try {
-      await new UserService().store({
+      user = await new UserService().store({
         ...body,
+        active: true,
         password: hashedPassword,
       });
+
+      await new UserService().attachToModelById(user.uuid, userRole.uuid, 'role');
     } catch (e) {
       return { success: false, message: e.message, code: e.getCode() };
     }
 
-    return { success: true };
+    return user;
   }
 }
