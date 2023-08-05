@@ -21,6 +21,7 @@ import { RoleGuard } from '~user/guards/role.guard';
 import { LevelGuard } from '~user/guards/level.guard';
 import { RoleService } from '../role/services/role.service';
 import { RoleModel } from '../role/models/role.model';
+import { RecordNotFoundException } from '~root/shared/exceptions/record-not-found.exception';
 
 @Controller('api/user')
 export class UserController {
@@ -138,9 +139,29 @@ export class UserController {
     const authService = new AuthService();
     const hashedPassword = await authService.hasher.hashPassword(body.password);
 
-    const userRole: RoleModel = await new RoleService().findOne({
-      name: 'user',
-    });
+    let userRole: RoleModel = null;
+    try {
+      userRole = await new RoleService().findOne({
+        name: 'user',
+      });
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
+
+    try {
+      const existingUser = await new UserService().findOne({
+        email: body.email,
+      });
+
+      if (existingUser) {
+        return { success: false, message: 'USER_EXISTS', reason: '100.10' };
+      }
+    } catch (e) {
+      const isRecordNotFoundError = e instanceof RecordNotFoundException;
+      if (!isRecordNotFoundError) {
+        return { success: false, message: e.message };
+      }
+    }
 
     let user = null;
     try {
