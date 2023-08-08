@@ -22,6 +22,7 @@ import { LevelGuard } from '~user/guards/level.guard';
 import { RoleService } from '../role/services/role.service';
 import { RoleModel } from '../role/models/role.model';
 import { RecordNotFoundException } from '~root/shared/exceptions/record-not-found.exception';
+import BaseHttpException from '~root/shared/exceptions/base-http-exception';
 
 @Controller('api/user')
 export class UserController {
@@ -145,7 +146,7 @@ export class UserController {
         name: 'user',
       });
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      return { message: e.message, code: e.getCode() };
     }
 
     try {
@@ -154,9 +155,25 @@ export class UserController {
       });
 
       if (existingUser) {
-        return { success: false, message: 'USER_EXISTS', reason: '100.10' };
+        throw new BaseHttpException({
+          error: 'USER_EXISTS',
+          reason: 'User email already exists',
+          code: '100.10',
+          statusCode: 400,
+          validationErrors: [
+            {
+              field: 'email',
+              code: '400.25',
+            },
+          ],
+        });
       }
     } catch (e) {
+      const isBaseHttp = e instanceof BaseHttpException;
+      if (isBaseHttp) {
+        throw e;
+      }
+
       const isRecordNotFoundError = e instanceof RecordNotFoundException;
       if (!isRecordNotFoundError) {
         return { success: false, message: e.message };
