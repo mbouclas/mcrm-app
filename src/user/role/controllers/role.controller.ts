@@ -15,6 +15,7 @@ import { RoleService } from '../services/role.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
 import { GateGuard } from '~user/guards/gate.guard';
+import * as slugify from 'slug';
 
 @Controller('api/role')
 export class RoleController {
@@ -43,6 +44,26 @@ export class RoleController {
     }
   }
 
+  @SetMetadata('gates', ['mcms.admin.role.create'])
+  @UseGuards(GateGuard)
+  @Post()
+  async create(@Body() body: IGenericObject) {
+    try {
+      const roleData = {
+        name: slugify(body.name, { lower: true }),
+        level: body.level,
+        description: body.description,
+        displayName: body.name,
+      };
+
+      return await new RoleService().store(roleData);
+    } catch (e) {
+      return { success: false, message: e.message, code: e.getCode() };
+    }
+  }
+
+  @SetMetadata('gates', ['mcms.admin.role.delete'])
+  @UseGuards(GateGuard)
   @Delete(`:uuid`)
   async delete(@Param('uuid') uuid: string) {
     try {
