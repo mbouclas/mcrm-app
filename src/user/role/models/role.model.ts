@@ -76,6 +76,18 @@ export class RoleModel extends BaseModel {
       rangeToFieldName: 'levelMax',
       isInSimpleQuery: false,
     },
+
+    {
+      varName: 'createdAt',
+      label: 'Created At',
+      type: 'date',
+      model: 'Order',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'createdAtFrom',
+      rangeToFieldName: 'createdAtTo',
+      isInSimpleQuery: false,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {
