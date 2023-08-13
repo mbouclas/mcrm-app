@@ -16,38 +16,14 @@ import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
 import { GateGuard } from '~user/guards/gate.guard';
 import * as slugify from 'slug';
-
+import { validateData } from '~helpers/validateData';
 import * as yup from 'yup';
-import BaseHttpException from '~root/shared/exceptions/base-http-exception';
 
 const roleSchema = yup.object().shape({
   name: yup.string().required('400.56'),
   level: yup.number().required('400.55').min(1, '400.55').max(99, '400.55'),
   description: yup.string().required('400.57'),
 });
-
-export const validateRole = async (body: IGenericObject) => {
-  try {
-    await roleSchema.validate(body, { abortEarly: false });
-  } catch (e) {
-    if (e instanceof yup.ValidationError && e.inner.length) {
-      const validationErrors = e.inner.map((err) => ({
-        field: err.path,
-        code: err.message,
-      }));
-
-      throw new BaseHttpException({
-        error: 'VALIDATION_FAILED',
-        reason: 'Validation failed',
-        code: '100.10',
-        statusCode: 400,
-        validationErrors: validationErrors,
-      });
-    }
-
-    throw e;
-  }
-};
 
 @Controller('api/role')
 export class RoleController {
@@ -71,7 +47,7 @@ export class RoleController {
 
   @Patch(':uuid')
   async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
-    await validateRole(body);
+    await validateData(body, roleSchema);
 
     try {
       const roleData = {
