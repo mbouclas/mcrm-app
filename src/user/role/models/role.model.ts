@@ -64,6 +64,18 @@ export class RoleModel extends BaseModel {
       filterField: '',
       order: 0,
     },
+
+    {
+      varName: 'level',
+      label: 'Level',
+      type: 'number',
+      model: 'Role',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'levelMin',
+      rangeToFieldName: 'levelMax',
+      isInSimpleQuery: false,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {
