@@ -26,6 +26,8 @@ export class RoleController {
     return await new RoleService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
+  @SetMetadata('gates', ['users.menu.roles'])
+  @UseGuards(GateGuard)
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}, @Session() session: ISessionData) {
     try {
@@ -38,7 +40,14 @@ export class RoleController {
   @Patch(':uuid')
   async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     try {
-      return await new RoleService().update(uuid, body);
+      const roleData = {
+        name: slugify(body.name, { lower: true }),
+        level: body.level,
+        description: body.description,
+        displayName: body.name,
+      };
+
+      return await new RoleService().update(uuid, roleData);
     } catch (e) {
       return { success: false, message: e.message, code: e.getCode() };
     }
