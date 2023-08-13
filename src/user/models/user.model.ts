@@ -273,6 +273,18 @@ export class UserModel extends BaseModel {
       isInSimpleQuery: false,
       doNotReturnValues: true,
     },
+
+    {
+      varName: 'createdAt',
+      label: 'Created At',
+      type: 'date',
+      model: 'Order',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'createdAtFrom',
+      rangeToFieldName: 'createdAtTo',
+      isInSimpleQuery: false,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {
