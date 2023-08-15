@@ -67,6 +67,8 @@ export class RoleController {
   @UseGuards(GateGuard)
   @Post()
   async create(@Body() body: IGenericObject) {
+    await validateData(body, roleSchema);
+
     try {
       const roleData = {
         name: slugify(body.name, { lower: true }),
