@@ -22,16 +22,21 @@ import * as yup from 'yup';
 const gateSchema = yup.object().shape({
   name: yup.string().required('400.56'),
   level: yup.number().required('400.55').min(1, '400.55').max(99, '400.55'),
-  description: yup.string().required('400.57'),
+  provider: yup.string().required('400.57'),
+  gate: yup.string().required('400.57'),
 });
 
 @Controller('api/gate')
 export class GateController {
+  @SetMetadata('gates', ['users.menu.gates'])
+  @UseGuards(GateGuard)
   @Get('')
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
     return await new GateService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
+  @SetMetadata('gates', ['users.menu.gates'])
+  @UseGuards(GateGuard)
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}, @Session() session: ISessionData) {
     try {
@@ -59,16 +64,18 @@ export class GateController {
     }
   }
 
+  @SetMetadata('gates', ['mcms.admin.gate.create'])
+  @UseGuards(GateGuard)
   @Post()
   async create(@Body() body: IGenericObject) {
     await validateData(body, gateSchema);
 
     try {
       const gateData = {
-        name: slugify(body.name, { lower: true }),
+        name: body.name,
         level: body.level,
-        description: body.description,
-        displayName: body.name,
+        gate: body.gate,
+        provider: body.provider,
       };
 
       return await new GateService().store(gateData);
@@ -77,6 +84,8 @@ export class GateController {
     }
   }
 
+  @SetMetadata('gates', ['mcms.admin.gate.delete'])
+  @UseGuards(GateGuard)
   @Delete(`:uuid`)
   async delete(@Param('uuid') uuid: string) {
     try {
