@@ -1,21 +1,21 @@
 import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
-import { McmsDi } from '../../../helpers/mcms-component.decorator';
+import { McmsDi } from '~helpers/mcms-component.decorator';
 import { Injectable } from '@nestjs/common';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
-const modelName = 'Role';
+const modelName = 'Gate';
 @McmsDi({
   id: modelName,
   type: 'model',
 })
 @Injectable()
-export class RoleModel extends BaseModel {
+export class GateModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
   public uuid?: string;
   public static modelConfig: INeo4jModel = {
-    select: 'role:Role',
+    select: 'role:Gate',
     as: 'role',
     relationships: {},
   };
@@ -28,17 +28,18 @@ export class RoleModel extends BaseModel {
       type: 'string',
       group: 'main',
     },
+
     {
-      varName: 'displayName',
-      label: 'DisplayName',
-      placeholder: 'DisplayName',
+      varName: 'provider',
+      label: 'Provider',
+      placeholder: 'Provider',
       type: 'string',
       group: 'main',
     },
     {
-      varName: 'description',
-      label: 'Description',
-      placeholder: 'Description',
+      varName: 'gate',
+      label: 'Gate',
+      placeholder: 'Gate',
       type: 'string',
       group: 'main',
     },
@@ -60,7 +61,33 @@ export class RoleModel extends BaseModel {
       relName: '',
       isInSimpleQuery: true,
       filterType: 'partial',
-      model: 'Role',
+      model: 'Gate',
+      filterField: '',
+      order: 0,
+    },
+
+    {
+      varName: 'provider',
+      placeholder: 'Provider',
+      label: 'Provider',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
+      filterType: 'partial',
+      model: 'Gate',
+      filterField: '',
+      order: 0,
+    },
+
+    {
+      varName: 'gate',
+      placeholder: 'Gate',
+      label: 'Gate',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: true,
+      filterType: 'partial',
+      model: 'Gate',
       filterField: '',
       order: 0,
     },
@@ -69,7 +96,7 @@ export class RoleModel extends BaseModel {
       varName: 'level',
       label: 'Level',
       type: 'number',
-      model: 'Role',
+      model: 'Gate',
       filterType: 'exact',
       isRange: true,
       rangeFromFieldName: 'levelMin',
@@ -81,7 +108,7 @@ export class RoleModel extends BaseModel {
       varName: 'createdAt',
       label: 'Created At',
       type: 'date',
-      model: 'Role',
+      model: 'Gate',
       filterType: 'exact',
       isRange: true,
       rangeFromFieldName: 'createdAtFrom',

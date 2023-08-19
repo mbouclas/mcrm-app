@@ -34,7 +34,7 @@ import { ChangeLogModule } from '~change-log/change-log.module';
 import { TagModule } from '~tag/tag.module';
 import { CartMiddleware } from '~eshop/middleware/cart.middleware';
 import { UploadModule } from './upload/upload.module';
-import { ImageModule } from "~image/image.module";
+import { ImageModule } from '~image/image.module';
 import { loadConfigs } from '~helpers/load-config';
 import { SyncModule } from './sync/sync.module';
 import { ClientModule } from './client/client.module';
@@ -42,7 +42,7 @@ import { ObjectStorageModule } from './object-storage/object-storage.module';
 import { FilesModule } from './files/files.module';
 const Lang = require('mcms-node-localization');
 export let Translate;
-export let Test = { token: null };
+export const Test = { token: null };
 
 @Module({
   imports: [
@@ -91,18 +91,14 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes({ path: 'api*', method: RequestMethod.ALL });
+    consumer.apply(AuthMiddleware).forRoutes({ path: 'api*', method: RequestMethod.ALL });
 
-    consumer
-      .apply(CartMiddleware)
-      .forRoutes(
-        { path: 'cart*', method: RequestMethod.ALL },
-        // { path: 'api/order*', method: RequestMethod.ALL },
-        { path: 'store*', method: RequestMethod.ALL },
-        { path: 'user*', method: RequestMethod.ALL },
-      );
+    consumer.apply(CartMiddleware).forRoutes(
+      { path: 'cart*', method: RequestMethod.ALL },
+      // { path: 'api/order*', method: RequestMethod.ALL },
+      { path: 'store*', method: RequestMethod.ALL },
+      { path: 'user*', method: RequestMethod.ALL },
+    );
   }
 
   /**
@@ -118,19 +114,19 @@ export class AppModule implements OnModuleInit, OnApplicationBootstrap {
     /**
      * It should not load during the cli mode cause it will include the main file which boots the server
      */
-  if (!process.env.MODE || process.env.MODE !== 'cli') {
-    const ViewEngine = require('./main').ViewEngine;
-    ViewEngine.options.globals = {
-      ...ViewEngine.options.globals,
-      ...{
-        SITE_NAME: process.env.SITE_TITLE,
-        CURRENT_DATE: new Date(),
-        CURRENT_YEAR: new Date().getFullYear(),
-        isInProduction: process.env.NODE_ENV === 'production',
-      },
-    };
-  }
-/*    */
+    if (!process.env.MODE || process.env.MODE !== 'cli') {
+      const ViewEngine = require('./main').ViewEngine;
+      ViewEngine.options.globals = {
+        ...ViewEngine.options.globals,
+        ...{
+          SITE_NAME: process.env.SITE_TITLE,
+          CURRENT_DATE: new Date(),
+          CURRENT_YEAR: new Date().getFullYear(),
+          isInProduction: process.env.NODE_ENV === 'production',
+        },
+      };
+    }
+    /*    */
 
     Translate = new Lang({
       directory: resolve(__dirname, '../../', 'lang'),
