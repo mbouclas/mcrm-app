@@ -1,29 +1,22 @@
-import {
-  Post,
-  Controller,
-  Get,
-  Query,
-  Param,
-  Patch,
-  Body,
-  Delete,
-  Session,
-  SetMetadata,
-  UseGuards,
-} from '@nestjs/common';
+import { Post, Controller, Get, Query, Param, Patch, Body, Delete, SetMetadata, UseGuards } from '@nestjs/common';
 import { GateService } from '../services/gate.service';
 import { IGenericObject } from '~root/models/general';
-import { ISessionData } from '~shared/models/session.model';
 import { GateGuard } from '~user/guards/gate.guard';
-import * as slugify from 'slug';
+import slugify from 'slug';
 import { validateData } from '~helpers/validateData';
 import * as yup from 'yup';
+import { FailedUpdate, FailedDelete, FailedCreate, NotFound } from '../exceptions';
+import errors from '../exceptions/errors';
 
 const gateSchema = yup.object().shape({
-  name: yup.string().required('400.56'),
-  level: yup.number().required('400.55').min(1, '400.55').max(99, '400.55'),
-  provider: yup.string().required('400.57'),
-  gate: yup.string().required('400.57'),
+  name: yup.string().required(errors.NAME_REQUIRED.code),
+  level: yup
+    .number()
+    .required(errors.LEVEL_REQUIRED.code)
+    .min(1, errors.LEVEL_MINIMUM.code)
+    .max(99, errors.LEVEL_MAXIMUM.code),
+  provider: yup.string().required(errors.PROVIDER_REQUIRED.code),
+  gate: yup.string().required(errors.GATE_REQUIRED.code),
 });
 
 @Controller('api/gate')
@@ -31,18 +24,18 @@ export class GateController {
   @SetMetadata('gates', ['users.menu.gates'])
   @UseGuards(GateGuard)
   @Get('')
-  async find(@Query() queryParams = {}, @Session() session: ISessionData) {
+  async find(@Query() queryParams = {}) {
     return await new GateService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
   @SetMetadata('gates', ['users.menu.gates'])
   @UseGuards(GateGuard)
   @Get(':uuid')
-  async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}, @Session() session: ISessionData) {
+  async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     try {
       return new GateService().findOne({ uuid }, queryParams['with'] || []);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new NotFound();
     }
   }
 
@@ -60,7 +53,7 @@ export class GateController {
 
       return await new GateService().update(uuid, gateData);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedUpdate();
     }
   }
 
@@ -80,7 +73,7 @@ export class GateController {
 
       return await new GateService().store(gateData);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedCreate();
     }
   }
 
@@ -91,7 +84,7 @@ export class GateController {
     try {
       return await new GateService().delete(uuid);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedDelete();
     }
   }
 }
