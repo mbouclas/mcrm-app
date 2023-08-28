@@ -14,15 +14,15 @@ import {
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
-import { AuthService, hashPassword } from '~root/auth/auth.service';
+import { AuthService } from '~root/auth/auth.service';
 
 import { GateGuard } from '~user/guards/gate.guard';
-import { RoleGuard } from '~user/guards/role.guard';
-import { LevelGuard } from '~user/guards/level.guard';
 import { RoleService } from '../role/services/role.service';
 import { RoleModel } from '../role/models/role.model';
 import { RecordNotFoundException } from '~root/shared/exceptions/record-not-found.exception';
 import BaseHttpException from '~root/shared/exceptions/base-http-exception';
+import { FailedUpdate, FailedDelete, FailedCreate, NotFound } from '../exceptions';
+import errors from '../exceptions/errors';
 
 @Controller('api/user')
 export class UserController {
@@ -34,8 +34,12 @@ export class UserController {
   // @UseGuards(LevelGuard)
   // @UseGuards(GateGuard)
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
-    queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`;
-    return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
+    try {
+      queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`;
+      return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
+    } catch (e) {
+      throw new NotFound();
+    }
   }
 
   @Get(':uuid')
@@ -44,7 +48,7 @@ export class UserController {
     try {
       return new UserService().findOne({ uuid }, queryParams['with'] || []);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new NotFound();
     }
   }
 
@@ -53,7 +57,7 @@ export class UserController {
     try {
       return await new UserService().update(uuid, body);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedUpdate();
     }
   }
 
@@ -64,7 +68,7 @@ export class UserController {
     try {
       return await new UserService().delete(uuid);
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedDelete();
     }
   }
 
@@ -190,7 +194,7 @@ export class UserController {
 
       await new UserService().attachToModelById(user.uuid, userRole.uuid, 'role');
     } catch (e) {
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedCreate();
     }
 
     return user;

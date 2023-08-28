@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
+import { FailedUpdate, NotFound } from '../exceptions';
 
 @Controller('api/customer')
 export class CustomerController {
@@ -9,8 +10,7 @@ export class CustomerController {
     try {
       return await new UserService().find(queryParams, queryParams['with'] || []);
     } catch (e) {
-      console.log(e);
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new NotFound();
     }
   }
 
@@ -19,8 +19,7 @@ export class CustomerController {
     try {
       return new UserService().findOne({ uuid }, queryParams['with'] || []);
     } catch (e) {
-      console.log(e);
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new NotFound();
     }
   }
 
@@ -29,8 +28,7 @@ export class CustomerController {
     try {
       return await new UserService().update(uuid, body);
     } catch (e) {
-      console.log(e);
-      return { success: false, message: e.message, code: e.getCode() };
+      throw new FailedUpdate();
     }
   }
 }

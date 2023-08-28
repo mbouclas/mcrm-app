@@ -12,15 +12,3 @@ export class FailedUpdate extends BaseHttpException {
     super(errors.FAILED_UPDATE);
   }
 }
-
-export class FailedCreate extends BaseHttpException {
-  constructor() {
-    super(errors.FAILED_CREATE);
-  }
-}
-
-export class FailedDelete extends BaseHttpException {
-  constructor() {
-    super(errors.FAILED_DELETE);
-  }
-}
