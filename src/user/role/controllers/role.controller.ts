@@ -4,18 +4,14 @@ import { IGenericObject } from '~root/models/general';
 import { GateGuard } from '~user/guards/gate.guard';
 import slugify from 'slug';
 import { validateData } from '~helpers/validateData';
-import * as yup from 'yup';
 import errors from '../exceptions/errors';
 import { FailedUpdate, FailedDelete, FailedCreate, NotFound } from '../exceptions';
+import { z } from 'zod';
 
-const roleSchema = yup.object().shape({
-  name: yup.string().required(errors.NAME_REQUIRED.code),
-  level: yup
-    .number()
-    .required(errors.LEVEL_REQUIRED.code)
-    .min(1, errors.LEVEL_MINIMUM.code)
-    .max(99, errors.LEVEL_MAXIMUM.code),
-  description: yup.string(),
+const roleSchema = z.object({
+  name: z.string().min(1, errors.NAME_REQUIRED.code),
+  level: z.number().min(1, errors.LEVEL_MINIMUM.code).max(99, errors.LEVEL_MINIMUM.code),
+  description: z.string().min(1, errors.DESCRIPTION_REQUIRED.code),
 });
 
 @Controller('api/role')

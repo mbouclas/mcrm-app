@@ -1,23 +1,33 @@
-import BaseHttpException from '~root/shared/exceptions/base-http-exception';
-import * as yup from 'yup';
+import BaseHttpException, { ValidationError } from '~root/shared/exceptions/base-http-exception';
 import { IGenericObject } from '~root/models/general';
+import { z } from 'zod';
+
+export const transformErrors = (zodError: z.ZodError): ValidationError[] => {
+  const customErrors = [];
+
+  zodError.issues.forEach((issue) => {
+    const field = issue.path.join('.');
+    const code = issue.message;
+
+    if (!customErrors.some((customError) => customError.field === field && customError.code === code)) {
+      customErrors.push({ field, code });
+    }
+  });
+
+  return customErrors;
+};
 
 export const validateData = async (data: IGenericObject, schema) => {
   try {
-    await schema.validate(data, { abortEarly: false });
+    await schema.parse(data);
   } catch (e) {
-    if (e instanceof yup.ValidationError && e.inner.length) {
-      const validationErrors = e.inner.map((err) => ({
-        field: err.path,
-        code: err.message,
-      }));
-
+    if (e instanceof z.ZodError) {
       throw new BaseHttpException({
-        error: 'VALIDATION_FAILED',
+        error: null,
         reason: 'Validation failed',
-        code: '100.10',
-        statusCode: 400,
-        validationErrors: validationErrors,
+        code: null,
+        statusCode: null,
+        validationErrors: transformErrors(e),
       });
     }
 

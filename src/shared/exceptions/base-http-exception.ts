@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-interface ValidationError {
+export interface ValidationError {
   field: string;
   code: string;
 }
 
-interface BaseHttpErrorInput {
+export interface BaseHttpErrorInput {
   error: string;
   reason: string;
   code: string;

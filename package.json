@@ -113,6 +113,7 @@
     "uuid": "^8.3.2",
     "uuidv4": "^6.2.12",
     "yup": "^1.2.0",
+    "zod": "^3.22.2",
     "zustand": "^3.6.7"
   },
   "devDependencies": {

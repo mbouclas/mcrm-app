@@ -35,9 +35,9 @@ export default {
     code: 'ROLE.006',
     statusCode: 400,
   },
-  PROVIDER_REQUIRED: {
-    error: 'PROVIDER_REQUIRED',
-    reason: 'Provider required',
+  DESCRIPTION_REQUIRED: {
+    error: 'DESCRIPTION_REQUIRED',
+    reason: 'Rescription required',
     code: 'ROLE.007',
     statusCode: 400,
   },
