@@ -120,13 +120,15 @@ export class ProductController {
   @Post('/manage-relate')
   async relateProduct(@Body() body: IGenericObject) {
     try {
-      await new ProductService().findOne({ uuid: body.sourceUuid });
-      await new ProductService().findOne({ uuid: body.destinationUuid });
+      for (const destinationUuid of body.destinationUuids) {
+        await new ProductService().findOne({ uuid: body.sourceUuid });
+        await new ProductService().findOne({ uuid: destinationUuid });
 
-      if (body.type === 'relate') {
-        await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'related');
-      } else {
-        await new ProductService().detachFromModelById(body.sourceUuid, body.destinationUuid, 'related');
+        if (body.type === 'relate') {
+          await new ProductService().attachToModelById(body.sourceUuid, destinationUuid, 'related');
+        } else {
+          await new ProductService().detachFromModelById(body.sourceUuid, destinationUuid, 'related');
+        }
       }
 
       return { success: true };
