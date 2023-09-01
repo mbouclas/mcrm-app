@@ -4,7 +4,16 @@ import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { store } from '~root/state';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
-import { FailedToRelate } from '../exceptions';
+import {
+  FailedCreate,
+  FailedDelete,
+  FailedToAttach,
+  FailedToCheckDuplicateVariants,
+  FailedToGenerateVariants,
+  FailedToRelate,
+  FailedToUpdateProductCategories,
+  NotFound,
+} from '../exceptions';
 
 @Controller('api/product')
 export class ProductController {
@@ -22,49 +31,43 @@ export class ProductController {
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
-    const rels = queryParams['with'] ? queryParams['with'] : [];
+    try {
+      const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    const a = await new ProductService().findOne({ uuid }, ['related']);
-
-    console.log(a);
-    return a;
+      return await new ProductService().findOne({ uuid }, rels);
+    } catch (e) {
+      throw new NotFound();
+    }
   }
 
   @Delete(':uuid')
   async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
-    const userId = session.user && session.user['uuid'];
+    try {
+      const userId = session.user && session.user['uuid'];
 
-    return await new ProductService().delete(uuid, userId);
+      return await new ProductService().delete(uuid, userId);
+    } catch (e) {
+      throw new FailedDelete();
+    }
   }
 
   @Post(':uuid/generate-variants')
-  async generateVariants(@Session() session: SessionData, @Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    const userId = session.user && session.user['uuid'];
+  async generateVariants(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
     const propertyValues = body['propertyValues'];
     if (!propertyValues || !propertyValues.length) {
-      return { success: false };
+      throw new FailedToGenerateVariants();
     }
 
     try {
       await new ProductService().generateVariantsFromProperty(uuid, propertyValues, body.duplicateVariants || {});
       return { success: true };
     } catch (e) {
-      return {
-        success: false,
-        message: 'Error generating product variants',
-        error: e.getMessage(),
-        errors: e.getErrors(),
-        code: e.getCode(),
-      };
+      throw new FailedToGenerateVariants();
     }
   }
 
   @Get(':uuid/check-duplicate-variants')
-  async checkDuplicateVariants(
-    @Session() session: SessionData,
-    @Param('uuid') uuid: string,
-    @Query() queryParams = {},
-  ) {
+  async checkDuplicateVariants(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const propertyValues = queryParams['propertyValues'] ? queryParams['propertyValues'] : [];
 
     if (!propertyValues || !propertyValues.length) {
@@ -75,33 +78,37 @@ export class ProductController {
       const result = await new ProductService().checkDuplicateVariants(uuid, propertyValues);
       return { ...result, success: true };
     } catch (e) {
-      console.log(e);
-      return {
-        success: false,
-        message: 'Error generating product variants',
-      };
+      throw new FailedToCheckDuplicateVariants();
     }
   }
 
   @Post('')
   async create(@Body() body: IGenericObject) {
-    const product = await new ProductService().store(body);
+    try {
+      await new ProductService().store(body);
 
-    return { success: true };
+      return { success: true };
+    } catch (e) {
+      throw new FailedCreate();
+    }
   }
 
   @Post(':uuid/attach')
   async addToProduct(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    const relationships = store.getState().models['Product'].modelConfig.relationships;
+    try {
+      const relationships = store.getState().models['Product'].modelConfig.relationships;
 
-    const targetRelationship = relationships[body.targetModel];
-    if (!targetRelationship) {
-      throw new RecordStoreFailedException('Invalid target model');
+      const targetRelationship = relationships[body.targetModel];
+      if (!targetRelationship) {
+        throw new RecordStoreFailedException('Invalid target model');
+      }
+
+      const response = await new ProductService().attachToModelById(uuid, body.targetId, targetRelationship.modelAlias);
+
+      return response;
+    } catch (e) {
+      throw new FailedToAttach();
     }
-
-    const response = await new ProductService().attachToModelById(uuid, body.targetId, targetRelationship.modelAlias);
-
-    return response;
   }
 
   @Patch('/:uuid/productCategories')
@@ -113,7 +120,7 @@ export class ProductController {
       );
       return { success: true };
     } catch (e) {
-      return { success: false, error: e.message };
+      throw new FailedToUpdateProductCategories();
     }
   }
 

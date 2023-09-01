@@ -30,3 +30,27 @@ export class FailedToRelate extends BaseHttpException {
     super(errors.FAILED_TO_RELATE);
   }
 }
+
+export class FailedToGenerateVariants extends BaseHttpException {
+  constructor() {
+    super(errors.FAILED_TO_GENERATE_VARIANTS);
+  }
+}
+
+export class FailedToCheckDuplicateVariants extends BaseHttpException {
+  constructor() {
+    super(errors.FAILED_TO_CHECK_DUPLICATE_VARIANTS);
+  }
+}
+
+export class FailedToUpdateProductCategories extends BaseHttpException {
+  constructor() {
+    super(errors.FAILED_TO_UPDATE_PRODUCT_CATEGORIES);
+  }
+}
+
+export class FailedToAttach extends BaseHttpException {
+  constructor() {
+    super(errors.FAILED_TO_ATTACH);
+  }
+}
