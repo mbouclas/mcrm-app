@@ -4,6 +4,7 @@ import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { store } from '~root/state';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
+import { FailedToRelate } from '../exceptions';
 
 @Controller('api/product')
 export class ProductController {
@@ -110,6 +111,20 @@ export class ProductController {
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
+    }
+  }
+
+  @Post('/relate')
+  async relateProduct(@Body() body: IGenericObject) {
+    try {
+      await new ProductService().findOne({ uuid: body.sourceUuid });
+      await new ProductService().findOne({ uuid: body.destinationUuid });
+
+      await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'related');
+
+      return { success: true };
+    } catch (e) {
+      throw new FailedToRelate();
     }
   }
 }
