@@ -2,25 +2,37 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { IGenericObject } from '~models/general';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
 import { DeleteType } from '~root/shared/services/base-neo-tree.service';
+import {
+  NotFound,
+  FailedCreate,
+  FailedDelete,
+  FailedMove,
+  FailedUpdate,
+} from '../exceptions/productCategoryExceptions';
 
 @Controller('api/product-category')
 export class ProductCategoryController {
   constructor() { }
 
-
   @Get('tree')
   async tree() {
-    return await new ProductCategoryService().toTree();
+    try {
+      return await new ProductCategoryService().toTree();
+    } catch (e) {
+      throw new NotFound();
+    }
   }
-
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
-    const rels = queryParams['with'] ? queryParams['with'] : [];
+    try {
+      const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new ProductCategoryService().findOne({ uuid }, rels);;
+      return await new ProductCategoryService().findOne({ uuid }, rels);
+    } catch (e) {
+      throw new NotFound();
+    }
   }
-
 
   @Patch(`:id/move`)
   async move(@Param('id') uuid: string, @Body() body: IGenericObject) {
@@ -36,33 +48,40 @@ export class ProductCategoryController {
 
       return await new ProductCategoryService().toTree();
     } catch (e) {
-      console.log(e);
-      return false;
+      throw new FailedMove();
     }
   }
 
   @Post()
   async create(@Body() body: IGenericObject) {
-    let rels = [];
+    try {
+      let rels = [];
 
-    if (body.parentUuid) {
-      rels = [
-        {
-          id: body.parentUuid,
-          name: 'parent',
-        },
-      ];
+      if (body.parentUuid) {
+        rels = [
+          {
+            id: body.parentUuid,
+            name: 'parent',
+          },
+        ];
+      }
+      await new ProductCategoryService().store(body, null, rels);
+
+      return await new ProductCategoryService().toTree();
+    } catch (e) {
+      throw new FailedCreate();
     }
-    await new ProductCategoryService().store(body, null, rels);
-
-    return await new ProductCategoryService().toTree();
   }
 
   @Patch(':id')
   async update(@Param('id') uuid: string, @Body() body: IGenericObject) {
-    await new ProductCategoryService().update(uuid, body, null);
+    try {
+      await new ProductCategoryService().update(uuid, body, null);
 
-    return await new ProductCategoryService().toTree();
+      return await new ProductCategoryService().toTree();
+    } catch (e) {
+      throw new FailedUpdate();
+    }
   }
 
   @Delete(':id')
@@ -74,7 +93,7 @@ export class ProductCategoryController {
 
       return await new ProductCategoryService().toTree();
     } catch (e) {
-      return false;
+      throw new FailedDelete();
     }
   }
 }
