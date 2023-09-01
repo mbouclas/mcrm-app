@@ -282,7 +282,10 @@ export class Neo4jService implements OnApplicationShutdown {
             obj[key] = record[key].map((r) => fromRecordToModel(r, relModel));
           } else {
             // If this is a count relationship or something like that, it will be a number, so we don't want to try to convert it to an object
-            obj[key] = (['number', 'boolean', 'string'].indexOf(typeof record[key]) === -1) ? fromRecordToModel(record[key], relModel) : record[key];
+            obj[key] =
+              ['number', 'boolean', 'string'].indexOf(typeof record[key]) === -1
+                ? fromRecordToModel(record[key], relModel)
+                : record[key];
           }
         }
       }

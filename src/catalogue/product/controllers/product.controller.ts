@@ -24,7 +24,10 @@ export class ProductController {
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new ProductService().findOne({ uuid }, rels);
+    const a = await new ProductService().findOne({ uuid }, ['related']);
+
+    console.log(a);
+    return a;
   }
 
   @Delete(':uuid')
@@ -114,13 +117,17 @@ export class ProductController {
     }
   }
 
-  @Post('/relate')
+  @Post('/manage-relate')
   async relateProduct(@Body() body: IGenericObject) {
     try {
       await new ProductService().findOne({ uuid: body.sourceUuid });
       await new ProductService().findOne({ uuid: body.destinationUuid });
 
-      await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'related');
+      if (body.type === 'relate') {
+        await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'related');
+      } else {
+        await new ProductService().detachFromModelById(body.sourceUuid, body.destinationUuid, 'related');
+      }
 
       return { success: true };
     } catch (e) {

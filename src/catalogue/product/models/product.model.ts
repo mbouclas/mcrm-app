@@ -115,7 +115,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       related: {
         rel: 'IS_RELATED_TO',
         alias: 'relatedRelationship',
-        model: 'product',
+        model: 'Product',
         modelAlias: 'related',
         type: 'normal',
         isCollection: true,
