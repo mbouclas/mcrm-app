@@ -1,20 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
-
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { BaseModel, INeo4jModel } from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 
 const modelName = 'PageCategory';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
 export class PageCategoryModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
   public children: PageCategoryModel[] = [];
+  public parents: PageCategoryModel[] = [];
+
+  constructor() {
+    super();
+
+    this.loadModelSettingsFromConfig();
+  }
 
   public static modelConfig: INeo4jModel = {
     select: 'pageCategory:PageCategory',
@@ -28,16 +33,15 @@ export class PageCategoryModel extends BaseModel {
         type: 'inverse',
         isCollection: true,
       },
-      related: {
-        rel: 'IS_RELATED_TO',
-        alias: 'relatedRelationship',
-        model: 'pageCategory',
-        modelAlias: 'related',
-        type: 'normal',
-        isCollection: true,
-        defaultProperty: 'title',
+      parent: {
+        rel: 'HAS_CHILD',
+        alias: 'pageCategoryParentRelationship',
+        model: 'PageCategory',
+        modelAlias: 'pageCategoryParent',
+        type: 'inverse',
+        isCollection: false,
       },
-    }
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -46,27 +50,54 @@ export class PageCategoryModel extends BaseModel {
       label: 'Title',
       placeholder: 'Title',
       type: 'text',
-      translatable: true,
       required: true,
-      setDefaultTranslationInModel: true,
-      group: 'main'
-    },
-    {
-      varName: 'slug',
-      label: 'Slug',
-      placeholder: 'Slug',
-      type: 'text',
-      group: 'hidden',
       isSlug: true,
-      slugFrom: 'title'
+      group: 'main',
     },
     {
       varName: 'description',
       label: 'Description',
       placeholder: 'Description',
-      type: 'text',
-      translatable: true,
-      group: 'main'
+      type: 'richText',
+      group: 'main',
+    },
+
+    {
+      varName: 'thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
+      type: 'image',
+      imageSettings: {
+        multiple: true,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        fileLimit: 5,
+        quality: 70,
+      },
+      group: 'right',
+      groupIndex: 3,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+
+    {
+      varName: 'metaData',
+      label: 'Meta Data',
+      placeholder: 'Meta Data',
+      type: 'json',
+      group: 'main',
     },
   ];
 }
