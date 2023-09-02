@@ -1,28 +1,25 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
-import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
+import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 
 const modelName = 'Page';
 @McmsDi({
   id: modelName,
-  type: 'model'
+  type: 'model',
 })
 @Injectable()
-export class PageModel extends BaseModel implements OnModuleInit
-{
+export class PageModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public title: string;
   public slug;
 
-  async onModuleInit() {
+  async onModuleInit() {}
 
-  }
-
-  public static displayedColumns =  ['title','category'];
+  public static displayedColumns = ['title', 'category'];
 
   public static modelConfig: INeo4jModel = {
     select: 'page:Page',
@@ -34,7 +31,7 @@ export class PageModel extends BaseModel implements OnModuleInit
         alias: 'pageCategoryRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_CATEGORY'
+        rel: 'HAS_CATEGORY',
       },
       image: {
         model: 'Image',
@@ -42,7 +39,7 @@ export class PageModel extends BaseModel implements OnModuleInit
         alias: 'imageRelationship',
         type: 'normal',
         isCollection: true,
-        rel: 'HAS_IMAGE'
+        rel: 'HAS_IMAGE',
       },
       categoryFilter: {
         rel: 'HAS_CATEGORY',
@@ -126,8 +123,8 @@ export class PageModel extends BaseModel implements OnModuleInit
         isCollection: true,
         defaultProperty: 'firstName.lastName',
         addRelationshipData: true,
-      }
-    }
+      },
+    },
   };
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
@@ -157,7 +154,7 @@ export class PageModel extends BaseModel implements OnModuleInit
       type: 'text',
       group: 'hidden',
       isSlug: true,
-      slugFrom: 'title'
+      slugFrom: 'title',
     },
     {
       varName: 'description',
@@ -213,7 +210,7 @@ export class PageModel extends BaseModel implements OnModuleInit
       varName: 'title',
       label: 'Title',
       type: 'text',
-      model: 'Product',
+      model: 'Page',
       filterType: 'partial',
       isInSimpleQuery: true,
     },
@@ -222,6 +219,6 @@ export class PageModel extends BaseModel implements OnModuleInit
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',
     defaultOrderBy: 'createdAt',
-    defaultWay: 'DESC'
+    defaultWay: 'DESC',
   };
 }
