@@ -101,19 +101,11 @@ export class PageController {
         }
       }
 
-      await new PageService().update(
-        uuid,
-        {
-          ...body,
-          thumb: JSON.stringify(body.thumb),
-        },
-        null,
-        rels,
-        { clearExistingRelationships: true },
-      );
+      await new PageService().update(uuid, body, null, rels, { clearExistingRelationships: true });
 
       return { success: true };
     } catch (e) {
+      console.log(e);
       throw new FailedUpdate();
     }
   }

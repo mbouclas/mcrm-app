@@ -34,14 +34,14 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
       }
     }
 
-    if (fieldType === 'json') {
+    if (fieldType === 'json' || fieldType == 'image') {
       if (!resItem[modelFieldName]) {
         continue;
       }
       newResItem[modelFieldName] = JSON.parse(resItem[modelFieldName]);
     }
 
-    if (fieldType !== 'nested' && fieldType !== 'json') {
+    if (fieldType !== 'nested' && fieldType !== 'json' && fieldType !== 'image') {
       newResItem[modelFieldName] = resItem[modelFieldName];
     }
   }

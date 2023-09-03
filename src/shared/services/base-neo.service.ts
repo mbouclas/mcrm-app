@@ -369,7 +369,7 @@ export class BaseNeoService {
       const field = this.model.fields.find((field) => field.varName === key);
       if (field && field.type === 'nested') {
         flattenObj(processedRecord, key, value);
-      } else if (field && field.type === 'json') {
+      } else if (field && (field.type === 'json' || field.type === 'image')) {
         processedRecord[key] = JSON.stringify(value);
       } else {
         processedRecord[key] = value;
@@ -491,7 +491,7 @@ export class BaseNeoService {
       const field = this.model.fields.find((field) => field.varName === key);
       if (field && field.type === 'nested') {
         flattenObj(processedRecord, key, value);
-      } else if (field && field.type === 'json') {
+      } else if (field && (field.type === 'json' || field.type === 'image')) {
         processedRecord[key] = JSON.stringify(value);
       } else {
         processedRecord[key] = value;
