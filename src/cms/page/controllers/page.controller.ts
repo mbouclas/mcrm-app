@@ -63,14 +63,7 @@ export class PageController {
         }
       }
 
-      const page = await new PageService().store(
-        {
-          ...body,
-          thumb: JSON.stringify(body.thumb),
-        },
-        null,
-        rels,
-      );
+      const page = await new PageService().store(body, null, rels);
 
       return page;
     } catch (e) {
