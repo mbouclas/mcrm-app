@@ -60,26 +60,6 @@ export class PageService extends BaseNeoService {
     return r;
   }
 
-  async update(uuid: string, record: PageModelDto, userId?: string) {
-    const r = await super.update(uuid, record, userId);
-    // Handle Categories
-    if (Array.isArray(record.categories)) {
-      const pageCategoryService = new PageCategoryService();
-      // await pageCategoryService.
-    }
-
-    // Handle Tags
-    if (Array.isArray(record.tags)) {
-      // await
-      const tagService = new TagService();
-      await tagService.updateModelTags(uuid, record.tags, this.model.modelConfig);
-    }
-
-    // Handle images
-
-    return r;
-  }
-
   async addRelated(sourceFilter: IBaseFilter, destinationFilter: IBaseFilter) {
     try {
       await this.attachToModel(sourceFilter, destinationFilter, 'related');

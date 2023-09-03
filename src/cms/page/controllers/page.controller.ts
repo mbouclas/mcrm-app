@@ -2,9 +2,7 @@ import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } fro
 import { PageService } from '~cms/page/services/page.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
-import { store } from '~root/state';
-import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
-import { FailedCreate, FailedDelete, NotFound, FailedToRelate } from '../exceptions';
+import { FailedCreate, FailedUpdate, FailedDelete, NotFound, FailedToRelate } from '../exceptions';
 
 @Controller('api/page')
 export class PageController {
@@ -77,6 +75,46 @@ export class PageController {
       return page;
     } catch (e) {
       throw new FailedCreate();
+    }
+  }
+
+  @Patch(':uuid')
+  async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
+    try {
+      const rels = [];
+
+      if (body.pageCategory) {
+        for (const category of body.pageCategory) {
+          rels.push({
+            id: category.uuid,
+            name: 'pageCategory',
+          });
+        }
+      }
+
+      if (body.tag) {
+        for (const tag of body.tag) {
+          rels.push({
+            id: tag.uuid,
+            name: 'tag',
+          });
+        }
+      }
+
+      await new PageService().update(
+        uuid,
+        {
+          ...body,
+          thumb: JSON.stringify(body.thumb),
+        },
+        null,
+        rels,
+        { clearExistingRelationships: true },
+      );
+
+      return { success: true };
+    } catch (e) {
+      throw new FailedUpdate();
     }
   }
 

@@ -411,6 +411,7 @@ export class BaseNeoService {
       name: string;
       relationshipProps?: IGenericObject;
     }>,
+    options?: IGenericObject,
   ): Promise<any> {
     let firstTimeQuery = '';
     const addressStr = '';
@@ -439,14 +440,25 @@ export class BaseNeoService {
 
         */
 
+    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+
     let query = `MATCH (${this.model.modelConfig.select} {uuid:$uuid})
         SET ${toUpdateQuery}
         ${firstTimeQuery}
-        WITH ${this.model.modelConfig.as}
-        ${translatableFieldsQuery}
-        `;
+        WITH ${withPropagate}`;
 
-    let withPropagate = `${this.model.modelConfig.as} ${translatableFieldsQuery}`;
+    if (options.clearExistingRelationships) {
+      const uniqueRels = [...new Set(relationships.map((item) => item.name))];
+      uniqueRels.forEach((rel) => {
+        const relationship = this.model.modelConfig.relationships[rel];
+
+        query += `
+      OPTIONAL MATCH (${this.model.modelConfig.as})-[r:${relationship.rel}]-()
+      DETACH DELETE r
+      WITH ${withPropagate}
+    `;
+      });
+    }
 
     if (relationships && relationships.length) {
       relationships.forEach((destination, index) => {
@@ -690,7 +702,6 @@ export class BaseNeoService {
     `;
 
     try {
-      console.log(query);
       const res = await this.neo.write(query, {});
       if (!res?.records[0]) {
         return { success: false };

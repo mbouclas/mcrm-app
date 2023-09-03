@@ -266,7 +266,7 @@ export class Neo4jService implements OnApplicationShutdown {
       return record;
     }
     for (const key in record) {
-      if (key === parentKey) {
+      if (key === parentKey || !aliasKeyMap[key]) {
         continue;
       }
 
