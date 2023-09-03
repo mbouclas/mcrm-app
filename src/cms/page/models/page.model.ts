@@ -3,6 +3,7 @@ import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { sortBy } from 'lodash';
 
 const modelName = 'Page';
 @McmsDi({
@@ -17,7 +18,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
   public title: string;
   public slug;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = ['title', 'category'];
 
@@ -33,13 +34,72 @@ export class PageModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         rel: 'HAS_CATEGORY',
       },
-      image: {
+      thumb: {
+        rel: 'HAS_IMAGE',
+        alias: 'thumbRelationship',
         model: 'Image',
-        modelAlias: 'image',
-        alias: 'imageRelationship',
+        modelAlias: 'thumb',
         type: 'normal',
         isCollection: true,
+        addRelationshipData: true,
+        defaultProperty: 'name',
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
+            return record;
+          }
+
+          record.thumb = record.thumb
+            .filter((image) => image.relationship && image.relationship.type === 'main')
+            .map((image) => ({
+              ...image.model,
+              ...{
+                type: image.relationship.type,
+                order: image.relationship.order,
+                title: image.relationship.title,
+                description: image.relationship.description,
+                alt: image.relationship.alt,
+                caption: image.relationship.caption,
+              },
+            }));
+
+          if (record.thumb.length === 0) {
+            record.thumb = record.thumb[0];
+          }
+
+          return record;
+        },
+      },
+      images: {
         rel: 'HAS_IMAGE',
+        alias: 'imagesRelationship',
+        model: 'Image',
+        modelAlias: 'images',
+        type: 'normal',
+        isCollection: true,
+        addRelationshipData: true,
+        defaultProperty: 'name',
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.images || !Array.isArray(record.images) || record.images.length === 0) {
+            return record;
+          }
+
+          record.images = record.images
+            .filter((image) => image.relationship && image.relationship.type !== 'main')
+            .map((image) => ({
+              ...image.model,
+              ...{
+                type: image.relationship.type,
+                order: image.relationship.order,
+                title: image.relationship.title,
+                description: image.relationship.description,
+                alt: image.relationship.alt,
+                caption: image.relationship.caption,
+              },
+            }));
+
+          record.images = sortBy(record.images, 'order');
+          return record;
+        },
       },
       categoryFilter: {
         rel: 'HAS_CATEGORY',
@@ -167,6 +227,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
         isAutoCompleteField: true,
       },
     },
+
     {
       varName: 'thumb',
       label: 'Thumbnail',
@@ -186,6 +247,15 @@ export class PageModel extends BaseModel implements OnModuleInit {
         quality: 70,
       },
       group: 'right',
+      groupIndex: 3,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
     },
     {
       varName: 'updatedAt',
