@@ -1,6 +1,7 @@
 import { IGenericObject } from '~models/general';
 import { BaseModel } from '~models/base.model';
 import { capitalizeFirstLetter } from './capitalizeFirstLetter';
+import { safeParseJSON } from './safeParseJSON';
 
 export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseModel): any => {
   const newResItem = resItem;
@@ -34,11 +35,11 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
       }
     }
 
-    if (fieldType === 'json' || fieldType == 'image') {
+    if (fieldType === 'json' || fieldType === 'image') {
       if (!resItem[modelFieldName]) {
         continue;
       }
-      newResItem[modelFieldName] = JSON.parse(resItem[modelFieldName]);
+      newResItem[modelFieldName] = safeParseJSON(resItem[modelFieldName]);
     }
 
     if (fieldType !== 'nested' && fieldType !== 'json' && fieldType !== 'image') {
