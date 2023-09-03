@@ -8,7 +8,7 @@ import { FailedCreate, FailedDelete, NotFound, FailedToRelate } from '../excepti
 
 @Controller('api/page')
 export class PageController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -45,7 +45,9 @@ export class PageController {
   @Post('')
   async create(@Body() body: IGenericObject) {
     try {
-      await new PageService().store(body);
+      console.log(body);
+      const { thumb, ...rest } = body;
+      await new PageService().store(rest);
 
       return { success: true };
     } catch (e) {
