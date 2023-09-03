@@ -151,7 +151,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
       related: {
         rel: 'IS_RELATED_TO',
         alias: 'relatedRelationship',
-        model: 'page',
+        model: 'Product',
         modelAlias: 'related',
         type: 'normal',
         isCollection: true,
