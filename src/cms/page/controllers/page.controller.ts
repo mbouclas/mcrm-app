@@ -45,11 +45,36 @@ export class PageController {
   @Post('')
   async create(@Body() body: IGenericObject) {
     try {
-      console.log(body);
-      const { thumb, ...rest } = body;
-      await new PageService().store(rest);
+      const rels = [];
 
-      return { success: true };
+      if (body.pageCategory) {
+        for (const category of body.pageCategory) {
+          rels.push({
+            id: category.uuid,
+            name: 'pageCategory',
+          });
+        }
+      }
+
+      if (body.tag) {
+        for (const tag of body.tag) {
+          rels.push({
+            id: tag.uuid,
+            name: 'tag',
+          });
+        }
+      }
+
+      const page = await new PageService().store(
+        {
+          ...body,
+          thumb: JSON.stringify(body.thumb),
+        },
+        null,
+        rels,
+      );
+
+      return page;
     } catch (e) {
       throw new FailedCreate();
     }

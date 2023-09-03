@@ -26,7 +26,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
     select: 'page:Page',
     as: 'page',
     relationships: {
-      category: {
+      pageCategory: {
         model: 'PageCategory',
         modelAlias: 'pageCategory',
         alias: 'pageCategoryRelationship',
