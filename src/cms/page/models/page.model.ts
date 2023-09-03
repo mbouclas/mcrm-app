@@ -43,7 +43,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         addRelationshipData: true,
         defaultProperty: 'name',
-        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+        postProcessing: async (record: Record<any, any>, model: PageModel) => {
           if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
             return record;
           }
@@ -78,7 +78,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         addRelationshipData: true,
         defaultProperty: 'name',
-        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+        postProcessing: async (record: Record<any, any>, model: PageModel) => {
           if (!record.images || !Array.isArray(record.images) || record.images.length === 0) {
             return record;
           }
@@ -347,7 +347,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
       varName: 'active',
       label: 'Active',
       type: 'boolean',
-      model: 'Product',
+      model: 'Page',
       filterType: 'exact',
       isInSimpleQuery: false,
     },
@@ -366,7 +366,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
       varName: 'createdAt',
       label: 'Created At',
       type: 'date',
-      model: 'Product',
+      model: 'Page',
       filterType: 'exact',
       isRange: true,
       rangeFromFieldName: 'createdAtFrom',
