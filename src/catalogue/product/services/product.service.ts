@@ -12,9 +12,9 @@ import { groupBy } from 'lodash';
 import { combine } from '~helpers/array-permutations';
 import { tokenGenerator } from '~helpers/tokenGenerator';
 import { ProductVariantModel } from '~catalogue/product/models/product-variant.model';
-import { BaseNeoService } from '~shared/services/base-neo.service';
+import { BaseNeoService, IBaseNeoServiceRelationships } from '~shared/services/base-neo.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
-import { IBaseFilter, IGenericObject, IPagination } from "~models/general";
+import { IBaseFilter, IGenericObject, IPagination } from '~models/general';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
@@ -135,23 +135,20 @@ export class ProductService extends BaseNeoService {
     let res;
     try {
       res = await super.find(params, rels);
-    }
-    catch (e) {
+    } catch (e) {
       throw e;
     }
-
-
 
     return res;
   }
 
-  async store(record: ProductModelDto, userId?: string) {
+  async store(record: ProductModelDto, userId?: string, relationships: IBaseNeoServiceRelationships[] = []) {
     // Handle SKU
     if (!record.sku) {
       record.sku = tokenGenerator(6);
     }
 
-    const r = await super.store(record, userId);
+    const r = await super.store(record, userId, relationships);
     // Add changelog?
 
     return r;

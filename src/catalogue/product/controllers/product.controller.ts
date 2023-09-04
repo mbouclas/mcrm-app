@@ -24,11 +24,6 @@ export class ProductController {
     return await new ProductService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
-  @Patch('/basic')
-  async storeBasic(@Body() body: IGenericObject) {
-    return await new ProductService().store(body);
-  }
-
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     try {
@@ -85,11 +80,62 @@ export class ProductController {
   @Post('')
   async create(@Body() body: IGenericObject) {
     try {
-      await new ProductService().store(body);
+      const rels = [];
+
+      if (body.pageCategory) {
+        for (const category of body.pageCategory) {
+          rels.push({
+            id: category.uuid,
+            name: 'pageCategory',
+          });
+        }
+      }
+
+      if (body.tag) {
+        for (const tag of body.tag) {
+          rels.push({
+            id: tag.uuid,
+            name: 'tag',
+          });
+        }
+      }
+
+      const page = await new ProductService().store(body, null, rels);
+
+      return page;
+    } catch (e) {
+      throw new FailedCreate();
+    }
+  }
+
+  @Patch(':uuid')
+  async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
+    try {
+      const rels = [];
+
+      if (body.pageCategory) {
+        for (const category of body.pageCategory) {
+          rels.push({
+            id: category.uuid,
+            name: 'pageCategory',
+          });
+        }
+      }
+
+      if (body.tag) {
+        for (const tag of body.tag) {
+          rels.push({
+            id: tag.uuid,
+            name: 'tag',
+          });
+        }
+      }
+
+      await new PageService().update(uuid, body, null, rels, { clearExistingRelationships: true });
 
       return { success: true };
     } catch (e) {
-      throw new FailedCreate();
+      throw new FailedUpdate();
     }
   }
 

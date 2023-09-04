@@ -98,7 +98,6 @@ export class PageController {
 
       return { success: true };
     } catch (e) {
-      console.log(e);
       throw new FailedUpdate();
     }
   }
