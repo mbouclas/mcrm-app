@@ -83,8 +83,8 @@ export class ProductController {
     try {
       const rels = [];
 
-      if (body.pageCategory) {
-        for (const category of body.pageCategory) {
+      if (body.productCategory) {
+        for (const category of body.productCategory) {
           rels.push({
             id: category.uuid,
             name: 'productCategory',
