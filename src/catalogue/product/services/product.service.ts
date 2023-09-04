@@ -154,27 +154,6 @@ export class ProductService extends BaseNeoService {
     return r;
   }
 
-  async update(uuid: string, record: ProductModelDto, userId?: string) {
-    const r = await super.update(uuid, record, userId);
-    // Handle Categories
-    if (Array.isArray(record.categories)) {
-      // const productCategoryService = new ProductCategoryService();
-      // await productCategoryService.
-    }
-
-    // Handle Tags
-    if (Array.isArray(record.tags)) {
-      // await
-      const tagService = new TagService();
-      await tagService.updateModelTags(uuid, record.tags, this.model.modelConfig);
-    }
-
-    // Handle properties
-
-    // Handle images
-    return r;
-  }
-
   /**
    * Given a property and it's values, generate product variants.
    * For example, generate variants for the colors blue and black.

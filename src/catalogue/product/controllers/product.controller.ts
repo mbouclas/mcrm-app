@@ -8,6 +8,7 @@ import {
   FailedCreate,
   FailedDelete,
   FailedToAttach,
+  FailedUpdate,
   FailedToCheckDuplicateVariants,
   FailedToGenerateVariants,
   FailedToRelate,
@@ -131,7 +132,7 @@ export class ProductController {
         }
       }
 
-      await new PageService().update(uuid, body, null, rels, { clearExistingRelationships: true });
+      await new ProductService().update(uuid, body, null, rels, { clearExistingRelationships: true });
 
       return { success: true };
     } catch (e) {
