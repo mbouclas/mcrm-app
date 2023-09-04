@@ -23,7 +23,7 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
         const nestedFieldName = modelField.fields[nestedFieldKey].varName;
         const resNestedKeyName = `${modelFieldName}${capitalizeFirstLetter(nestedFieldName)}`;
 
-        if (resItem[resNestedKeyName]) {
+        if (resItem[resNestedKeyName] !== undefined) {
           newResItem[modelFieldName][nestedFieldName] = resItem[resNestedKeyName];
 
           delete resItem[resNestedKeyName];
