@@ -216,6 +216,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
       isSlug: true,
       slugFrom: 'title',
     },
+
     {
       varName: 'description',
       label: 'Description',
@@ -225,6 +226,33 @@ export class PageModel extends BaseModel implements OnModuleInit {
       group: 'main',
       searchIndexSettings: {
         isAutoCompleteField: true,
+      },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+    {
+      varName: 'description_long',
+      label: 'Long Description',
+      placeholder: 'Long Description',
+      type: 'richText',
+      isSortable: false,
+      group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
       },
     },
 
