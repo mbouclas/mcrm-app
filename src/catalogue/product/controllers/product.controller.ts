@@ -87,7 +87,7 @@ export class ProductController {
         for (const category of body.pageCategory) {
           rels.push({
             id: category.uuid,
-            name: 'pageCategory',
+            name: 'productCategory',
           });
         }
       }
@@ -118,7 +118,7 @@ export class ProductController {
         for (const category of body.pageCategory) {
           rels.push({
             id: category.uuid,
-            name: 'pageCategory',
+            name: 'productCategory',
           });
         }
       }

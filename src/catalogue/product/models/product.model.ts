@@ -56,7 +56,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         isCollection: true,
         rel: 'HAS_VARIANTS',
       },
-      category: {
+      productCategory: {
         model: 'ProductCategory',
         modelAlias: 'productCategory',
         alias: 'productCategoryRelationship',
