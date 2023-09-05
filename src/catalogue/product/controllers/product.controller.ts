@@ -18,7 +18,7 @@ import {
 
 @Controller('api/product')
 export class ProductController {
-  constructor() { }
+  constructor() {}
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -83,6 +83,13 @@ export class ProductController {
     try {
       const rels = [];
 
+      if (body.manufacturer) {
+        rels.push({
+          id: body.manufacturer.uuid,
+          name: 'manufacturer',
+        });
+      }
+
       if (body.productCategory) {
         for (const category of body.productCategory) {
           rels.push({
@@ -113,6 +120,13 @@ export class ProductController {
   async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     try {
       const rels = [];
+
+      if (body.manufacturer) {
+        rels.push({
+          id: body.manufacturer.uuid,
+          name: 'manufacturer',
+        });
+      }
 
       if (body.pageCategory) {
         for (const category of body.pageCategory) {

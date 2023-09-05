@@ -31,7 +31,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     this.loadModelSettingsFromConfig();
   }
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = ['title', 'category'];
 
@@ -265,7 +265,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         model: 'Manufacturer',
         modelAlias: 'manufacturer',
         type: 'normal',
-        isCollection: true,
+        isCollection: false,
         defaultProperty: 'id',
       },
     },
