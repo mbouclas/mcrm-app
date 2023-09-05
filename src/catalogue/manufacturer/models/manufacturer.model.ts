@@ -93,6 +93,37 @@ export class ManufacturerModel extends BaseModel {
         isAutoCompleteField: true,
       },
     },
+
+    {
+      varName: 'thumb',
+      label: 'Thumbnail',
+      placeholder: 'Thumbnail',
+      type: 'image',
+      imageSettings: {
+        multiple: true,
+        accept: 'image/*',
+        addFromUrl: true,
+        selectFromMediaLibrary: true,
+        showPreview: true,
+        width: 250,
+        height: 250,
+        defaultCopy: 'thumb',
+        maxFileSize: 5000,
+        fileLimit: 5,
+        quality: 70,
+      },
+      group: 'right',
+      groupIndex: 3,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+
     {
       varName: 'slug',
       label: 'Slug',
