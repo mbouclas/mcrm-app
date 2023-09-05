@@ -66,6 +66,23 @@ export class ManufacturerModel extends BaseModel {
 
   public static fields: IDynamicFieldConfigBlueprint[] = [
     {
+      varName: 'active',
+      label: 'Active',
+      placeholder: 'Active',
+      type: 'boolean',
+      isSortable: true,
+      group: 'main',
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+
+    {
       varName: 'title',
       label: 'Title',
       placeholder: 'Title',
@@ -104,6 +121,26 @@ export class ManufacturerModel extends BaseModel {
         ],
       },
     },
+    {
+      varName: 'description_long',
+      label: 'Long Description',
+      placeholder: 'Long Description',
+      type: 'richText',
+      isSortable: false,
+      group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+
     {
       varName: 'seo',
       label: 'Seo',
