@@ -1,51 +1,61 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { IGenericObject } from '~models/general';
+import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
 import { ManufacturerService } from '~catalogue/manufacturer/services/manufacturer.service';
-import { store } from '~root/state';
-import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
-import { ProductService } from '~catalogue/product/services/product.service';
+import { IGenericObject } from '~models/general';
+import { SessionData } from 'express-session';
+import { FailedCreate, FailedDelete, FailedToAttach, FailedUpdate, NotFound } from '../exceptions';
 
 @Controller('api/manufacturer')
 export class ManufacturerController {
   constructor() {}
 
+  @Get('')
+  async find(@Query() queryParams = {}) {
+    return await new ManufacturerService().find(
+      queryParams,
+      Array.isArray(queryParams['with']) ? queryParams['with'] : [],
+    );
+  }
+
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
-    const rels = queryParams['with'] ? queryParams['with'] : [];
+    try {
+      const rels = queryParams['with'] ? queryParams['with'] : [];
 
-    return await new ManufacturerService().findOne({ uuid }, rels);
-  }
-
-  @Patch(`:uuid`)
-  async update(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    return await new ManufacturerService().update(uuid, body);
-  }
-
-  @Post()
-  async store(@Body() body: IGenericObject) {
-    return await new ManufacturerService().store(body);
-  }
-
-  @Delete()
-  async delete(@Param('id') uuid: string) {
-    return await new ManufacturerService().delete(uuid);
-  }
-
-  @Post(':uuid/attach')
-  async addToProduct(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
-    const relationships = store.getState().models['Manufacturer'].modelConfig.relationships;
-
-    const targetRelationship = relationships[body.targetModel];
-    if (!targetRelationship) {
-      throw new RecordStoreFailedException('Invalid target model');
+      return await new ManufacturerService().findOne({ uuid }, rels);
+    } catch (e) {
+      throw new NotFound();
     }
+  }
 
-    const response = await new ManufacturerService().attachToModelById(
-      uuid,
-      body.targetId,
-      targetRelationship.modelAlias,
-    );
+  @Delete(':uuid')
+  async delete(@Session() session: SessionData, @Param('uuid') uuid: string) {
+    try {
+      const userId = session.user && session.user['uuid'];
 
-    return response;
+      return await new ManufacturerService().delete(uuid, userId);
+    } catch (e) {
+      throw new FailedDelete();
+    }
+  }
+  @Post('')
+  async create(@Body() body: IGenericObject) {
+    try {
+      const manufacturer = await new ManufacturerService().store(body, null);
+
+      return manufacturer;
+    } catch (e) {
+      throw new FailedCreate();
+    }
+  }
+
+  @Patch(':uuid')
+  async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
+    try {
+      await new ManufacturerService().update(uuid, body, null);
+
+      return { success: true };
+    } catch (e) {
+      throw new FailedUpdate();
+    }
   }
 }

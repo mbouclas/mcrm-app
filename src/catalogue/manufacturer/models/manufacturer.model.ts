@@ -26,6 +26,41 @@ export class ManufacturerModel extends BaseModel {
         isCollection: true,
         defaultProperty: 'id',
       },
+      thumb: {
+        rel: 'HAS_IMAGE',
+        alias: 'thumbRelationship',
+        model: 'Image',
+        modelAlias: 'thumb',
+        type: 'normal',
+        isCollection: true,
+        addRelationshipData: true,
+        defaultProperty: 'name',
+        postProcessing: async (record: Record<any, any>, model: ManufacturerModel) => {
+          if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
+            return record;
+          }
+
+          record.thumb = record.thumb
+            .filter((image) => image.relationship && image.relationship.type === 'main')
+            .map((image) => ({
+              ...image.model,
+              ...{
+                type: image.relationship.type,
+                order: image.relationship.order,
+                title: image.relationship.title,
+                description: image.relationship.description,
+                alt: image.relationship.alt,
+                caption: image.relationship.caption,
+              },
+            }));
+
+          if (record.thumb.length === 0) {
+            record.thumb = record.thumb[0];
+          }
+
+          return record;
+        },
+      },
     },
   };
 
@@ -51,12 +86,81 @@ export class ManufacturerModel extends BaseModel {
       slugFrom: 'title',
     },
     {
-      varName: 'logo',
-      label: 'Logo',
-      placeholder: 'Logo',
-      type: 'text',
-      isSortable: true,
+      varName: 'description',
+      label: 'Description',
+      placeholder: 'Description',
+      type: 'richText',
+      isSortable: false,
       group: 'main',
+      searchIndexSettings: {
+        isAutoCompleteField: true,
+      },
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: '2',
+          },
+        ],
+      },
+    },
+    {
+      varName: 'seo',
+      label: 'Seo',
+      placeholder: 'Seo',
+      type: 'nested',
+      group: 'seo',
+      default: false,
+      fields: [
+        {
+          varName: 'title',
+          label: 'Title',
+          placeholder: 'Title',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'description',
+          label: 'Description',
+          placeholder: 'Description',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'keywords',
+          label: 'Keywords',
+          placeholder: 'Keywords',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'og_title',
+          label: 'Og:Title',
+          placeholder: 'Oh:Title',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'og_image',
+          label: 'Og:Image',
+          placeholder: 'Og:Image',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+        {
+          varName: 'og_description',
+          label: 'Og:Description',
+          placeholder: 'Og:Description',
+          type: 'string',
+          group: 'hidden',
+          default: false,
+        },
+      ],
     },
   ];
 }
