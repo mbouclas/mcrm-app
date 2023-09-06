@@ -207,6 +207,7 @@ export class PageModel extends BaseModel implements OnModuleInit {
         isAutoCompleteField: true,
       },
     },
+
     {
       varName: 'slug',
       label: 'Slug',

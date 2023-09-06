@@ -63,6 +63,16 @@ export class PageCategoryModel extends BaseModel {
     },
 
     {
+      varName: 'slug',
+      label: 'Slug',
+      placeholder: 'Slug',
+      type: 'text',
+      group: 'hidden',
+      isSlug: true,
+      slugFrom: 'title',
+    },
+
+    {
       varName: 'thumb',
       label: 'Thumbnail',
       placeholder: 'Thumbnail',
