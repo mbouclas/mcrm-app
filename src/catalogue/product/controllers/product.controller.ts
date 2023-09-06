@@ -15,10 +15,28 @@ import {
   FailedToUpdateProductCategories,
   NotFound,
 } from '../exceptions';
+import errors from '../exceptions/errors';
+import { z } from 'zod';
+import { validateData } from '~helpers/validateData';
+
+const productSchema = z.object({
+  title: z
+    .string({ required_error: errors.TITLE_REQUIRED.code, invalid_type_error: errors.TITLE_REQUIRED.code })
+    .min(1, errors.TITLE_REQUIRED.code),
+  sku: z
+    .string({ required_error: errors.SKU_REQUIRED.code, invalid_type_error: errors.SKU_REQUIRED.code })
+    .min(1, errors.SKU_REQUIRED.code),
+  price: z
+    .string({ required_error: errors.PRICE_REQUIRED.code, invalid_type_error: errors.PRICE_REQUIRED.code })
+    .min(1, errors.PRICE_REQUIRED.code),
+  description: z
+    .string({ required_error: errors.DESCRIPTION_REQUIRED.code, invalid_type_error: errors.DESCRIPTION_REQUIRED.code })
+    .min(1, errors.DESCRIPTION_REQUIRED.code),
+});
 
 @Controller('api/product')
 export class ProductController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -80,6 +98,8 @@ export class ProductController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
+    await validateData(body, productSchema);
+
     try {
       const rels = [];
 
@@ -118,6 +138,8 @@ export class ProductController {
 
   @Patch(':uuid')
   async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
+    await validateData(body, productSchema);
+
     try {
       const rels = [];
 

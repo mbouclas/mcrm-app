@@ -54,4 +54,31 @@ export default {
     code: 'PRODUCT.009',
     statusCode: 400,
   },
+
+  TITLE_REQUIRED: {
+    error: 'TITLE_REQUIRED',
+    reason: 'Titile required',
+    code: 'PRODUCT.010',
+    statusCode: 400,
+  },
+
+  SKU_REQUIRED: {
+    error: 'SKU_REQUIRED',
+    reason: 'Sku required',
+    code: 'PRODUCT.011',
+    statusCode: 400,
+  },
+
+  PRICE_REQUIRED: {
+    error: 'PRICE_REQUIRED',
+    reason: 'Price required',
+    code: 'PRODUCT.012',
+    statusCode: 400,
+  },
+  DESCRIPTION_REQUIRED: {
+    error: 'DESCRIPTION_REQUIRED',
+    reason: 'Description required',
+    code: 'PRODUCT.013',
+    statusCode: 400,
+  },
 };
