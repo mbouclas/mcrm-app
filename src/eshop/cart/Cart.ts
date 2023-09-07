@@ -42,6 +42,7 @@ export class Cart implements OnModuleInit, ICart {
   public vatRate = 0;
   public items: CartItem[] = [];
   public metaData = {};
+  public numberOfItems = 0;
   public appliedConditions: Condition[] = [];
   public couponApplied: ICoupon = {};
   public cartService: CartService;
@@ -96,6 +97,7 @@ export class Cart implements OnModuleInit, ICart {
 
     if (!found) {
       this.items.push(new CartItem({ ...item, uuid: v4() }));
+      this.count();
       this.updateTotals();
 
       return this;
@@ -104,6 +106,7 @@ export class Cart implements OnModuleInit, ICart {
     if (item.quantity === 0) {
       this.remove({ productId: item.productId });
       this.updateTotals();
+      this.count();
 
       this.eventEmitter.emit(Cart.itemAddedEventName, {
         item,
@@ -120,9 +123,10 @@ export class Cart implements OnModuleInit, ICart {
       found.quantity = item.quantity;
     }
 
-
+    console.log(333333333)
 
     this.updateTotals();
+    this.count();
 
     this.eventEmitter.emit(Cart.itemAddedEventName, {
       item,
@@ -202,7 +206,8 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public count() {
-    return this.items.map((item) => item.quantity).reduce((pre, curr) => pre + curr, 0);
+    this.numberOfItems = this.items.map((item) => item.quantity).reduce((pre, curr) => pre + curr, 0);
+    return this.numberOfItems;
   }
 
   public async initialize(id?: string, userId?: string) {
@@ -316,6 +321,14 @@ export class Cart implements OnModuleInit, ICart {
     let process = 0;
 
     conditions.forEach((cond) => {
+      if (cond.hasRules()) {
+        const valid = cond.validateCartRules(this);
+
+        if (!valid) {
+          return;
+        }
+      }
+
       // if this is the first iteration, the toBeCalculated
       // should be the sum as initial point of value.
       let toBeCalculated = (process > 0) ? newTotal : this.sum();
@@ -359,8 +372,18 @@ export class Cart implements OnModuleInit, ICart {
     }
 
     conditions.forEach((cond) => {
+      // validate any rules that are attached to this condition
+      if (cond.hasRules()) {
+        const valid = cond.validateCartRules(this);
+
+        if (!valid) {
+          return;
+        }
+      }
+
       let toBeCalculated = (process > 0) ? newTotal : subTotal;
       newTotal = cond.applyCondition(toBeCalculated);
+
       this.addAppliedCondition(cond);
       process++;
     });

@@ -1,5 +1,6 @@
 import { Condition } from "~eshop/cart/Condition";
 import { Cart } from "~eshop/cart/Cart";
+import { ConditionRule } from "~eshop/cart/ConditionRule";
 
 
 const cartItem = {
@@ -58,6 +59,13 @@ export class ConditionSpec {
 
     try {
       await this.itShouldGetItemProperties();
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    try {
+      await this.itShouldAddConditionsToSubtotalAndTotal();
     }
     catch (e) {
       console.log(e)
@@ -254,6 +262,68 @@ export class ConditionSpec {
 
     console.log('Subtotal with conditions',cart.subTotal);
     // console.log(cart.toJSON())
+  }
+
+  async itShouldAddConditionsToSubtotalAndTotal() {
+    const cart = await createCart();
+    cart.condition(new Condition({
+      name: 'Express Shipping $15',
+      type: 'shipping',
+      target: 'total',
+      value: '+15',
+      order: 1,
+    }));
+
+    cart.condition(new Condition({
+      name: 'test',
+      type: 'tax',
+      target: 'subtotal',
+      value: '+10',
+      rules: [
+        new ConditionRule({
+          name: 'Cart Quantity more than 2',
+          // field: (cart) => cart.getTotalQuantity(),
+          field: 'numberOfItems',
+          operator: '>',
+          value: 2,
+        }),
+        new ConditionRule({
+          name: 'Cart total value more than 20',
+          field: 'total',
+          operator: '>',
+          value: 20,
+        }),
+        ],
+    }));
+
+    cart.condition(new Condition({
+      name: 'test',
+      type: 'tax',
+      target: 'total',
+      value: '-50%',
+      rules: [
+        new ConditionRule({
+          name: 'Super duper discount',
+          field: 'numberOfItems',
+          operator: '==',
+          value: 3,
+        }),
+      ],
+    }));
+
+    cart.add({...cloneObject(cartItem), ...{quantity: 3}});
+
+    console.log('Number of items: ',cart.numberOfItems);
+    console.log('Subtotal with conditions: ',cart.subTotal);
+    console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
+    console.log('Total with conditions: ',cart.total);
+
+
+    if (cart.subTotal !== 40 && cart.total !== 55) {
+      throw new Error('Conditions failed to apply');
+    }
+
+    console.log('*** Test itShouldAddConditionsToSubtotalAndTotal passed! ***')
   }
 }
 

@@ -3,6 +3,9 @@ import { Injectable } from "@nestjs/common";
 import { z } from 'zod';
 import {Helpers} from "~eshop/cart/helpers/helpers";
 import { IGenericObject } from "~models/general";
+import { ConditionRule } from "~eshop/cart/ConditionRule";
+import { Cart } from "~eshop/cart/Cart";
+import { CartItem } from "~eshop/cart/CartItem";
 
 export interface IConditionRules {
 
@@ -35,6 +38,7 @@ export interface IConditionArgsConfig {
   value: string;
   order?: number;
   attributes?: IGenericObject;
+  rules?: ConditionRule[];
 }
 
 @McmsDi({
@@ -49,6 +53,7 @@ export class Condition {
   public target: string;
   public value: string;
   public order: number;
+  public rules: ConditionRule[] = [];
   public attributes: IGenericObject = {};
 
   constructor(protected args: IConditionArgsConfig) {
@@ -85,6 +90,29 @@ export class Condition {
 
   applyCondition(totalOrSubTotalOrPrice: number): number {
     return this.apply(totalOrSubTotalOrPrice, this.getValue());
+  }
+
+  public hasRules() {
+    return (Array.isArray(this.rules) && this.rules.length > 0);
+  }
+
+  public validateCartRules(cart: Cart) {
+    let isValid = true;
+
+    for (let i = 0; i < this.rules.length; i++) {
+      const rule = this.rules[i];
+      // if the rule is valid
+
+      if (!rule.validate(typeof rule.field === 'function' ? rule.field(cart) : cart[rule.field])) {
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  }
+
+  public validateItemRules(item: CartItem) {
+
   }
 
   protected apply(totalOrSubTotalOrPrice: number, conditionValue: any): number {
