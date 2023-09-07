@@ -7,34 +7,10 @@ import { ConditionRule } from "~eshop/cart/ConditionRule";
 import { Cart } from "~eshop/cart/Cart";
 import { CartItem } from "~eshop/cart/CartItem";
 
-export interface IConditionRules {
-
-}
-
-export interface IConditionAction {
-  value: string;
-  inclusive: boolean;
-}
-
-export interface IConditionCollection2 {
-  rules?: IConditionRules[];
-  actions?: IConditionAction[];
-  result?: number;
-  subtotal?: number;
-}
-
-export interface IConditionCollection {
-  name: string;
-  type: 'tax'|'shipping'
-  target: 'subtotal'|'price'|'total'|'promo'|'mix';
-  value: string;
-  order?: number;
-}
-
 export interface IConditionArgsConfig {
   name: string;
-  type: 'tax'|'shipping';
-  target: 'subtotal'|'price'|'total'|'promo'|'mix'|'item';
+  type: 'tax'|'shipping'|'coupon';
+  target: 'subtotal'|'price'|'total'|'quantity'|'numberOfItems'|'item';
   value: string;
   order?: number;
   attributes?: IGenericObject;
@@ -112,6 +88,21 @@ export class Condition {
   }
 
   public validateItemRules(item: CartItem) {
+    let isValid = true;
+
+    for (let i = 0; i < this.rules.length; i++) {
+      const rule = this.rules[i];
+      // if the rule is valid
+
+      if (!rule.validate(typeof rule.field === 'function' ? rule.field(item) : item[rule.field])) {
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  }
+
+  public isValid() {
 
   }
 

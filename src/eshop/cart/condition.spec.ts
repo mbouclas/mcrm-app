@@ -70,6 +70,27 @@ export class ConditionSpec {
     catch (e) {
       console.log(e)
     }
+
+    try {
+      await this.itShouldUseRulesOnTheCartItem();
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    try {
+      await this.itShouldAddACouponToAProduct();
+    }
+    catch (e) {
+      console.log(e)
+    }
+
+    try {
+      await this.itShouldAddACouponToTheCart();
+    }
+    catch (e) {
+      console.log(e)
+    }
   }
 
   itShouldInstantiate() {
@@ -313,10 +334,13 @@ export class ConditionSpec {
 
     cart.add({...cloneObject(cartItem), ...{quantity: 3}});
 
+/*
     console.log('Number of items: ',cart.numberOfItems);
     console.log('Subtotal with conditions: ',cart.subTotal);
     console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
     console.log('Total with conditions: ',cart.total);
+*/
+
 
 
     if (cart.subTotal !== 40 && cart.total !== 55) {
@@ -325,6 +349,97 @@ export class ConditionSpec {
 
     console.log('*** Test itShouldAddConditionsToSubtotalAndTotal passed! ***')
   }
+
+  async itShouldUseRulesOnTheCartItem() {
+    const cart = await createCart();
+
+    cart.add({...cloneObject(cartItem), ...{quantity: 3,
+      conditions: [
+        new Condition({
+          name: 'test',
+          type: 'tax',
+          target: 'total',
+          value: '-50%',
+          rules: [
+            new ConditionRule({
+              name: 'Super duper discount',
+              field: 'quantity',
+              operator: '>',
+              value: 2,
+            }),
+          ],
+        })
+        ],
+      }});
+
+    console.log('Number of items: ',cart.numberOfItems);
+    console.log('Subtotal with conditions: ',cart.subTotal);
+    console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
+    console.log('Total with conditions: ',cart.total);
+
+    console.log('*** Test itShouldUseRulesOnTheCartItem passed! ***');
+  }
+
+  /**
+   * For coupons, we assume that the product is already in the cart
+   * then we update the car with the coupon provided we have validated that the coupon exists
+   */
+  async itShouldAddACouponToAProduct() {
+    const cart = await createCart();
+
+    cart.add({...cloneObject(cartItem), ...{quantity: 3,}});
+    const coupon = new Condition({
+      name: 'COUPON 101',
+      type: 'coupon',
+      value: '-5%',
+      target: 'price',
+    });
+
+    cart.addItemCondition(cartItem.productId, coupon);
+
+    console.log('Number of items: ',cart.numberOfItems);
+    console.log('Subtotal with conditions: ',cart.subTotal);
+    console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
+    console.log('Total with conditions: ',cart.total);
+  }
+
+  async itShouldAddACouponToTheCart() {
+    const cart = await createCart();
+
+    const coupon = new Condition({
+      name: 'COUPON 101',
+      type: 'coupon',
+      value: '-5%',
+      target: 'subtotal',
+      rules: [
+        new ConditionRule({
+          name: 'Cart Quantity more than 2',
+          field: 'numberOfItems',
+          operator: '>',
+          value: 2,
+        }),
+        new ConditionRule({
+          name: 'Subtotal greater than 20',
+          field: 'subTotal',
+          operator: '>',
+          value: 20,
+        }),
+        ],
+    });
+
+
+
+
+    cart.add({...cloneObject(cartItem), ...{quantity: 3,}});
+
+    cart.addCartCondition(coupon);
+
+    console.log('Cart rules validity', coupon.validateCartRules(cart));// used to validate a coupon or discount against the cart
+    console.log('Number of items: ',cart.numberOfItems);
+    console.log('Subtotal with conditions: ',cart.subTotal);
+    console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
+    console.log('Total with conditions: ',cart.total);
+  }
 }
 
 
@@ -332,6 +447,7 @@ export class ConditionSpec {
 async function createCart() {
   const cart = new Cart();
   await cart.initialize();
+
 
 
 

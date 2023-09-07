@@ -5,7 +5,7 @@ import { ICoupon } from '~eshop/cart/coupon.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { v4 } from 'uuid';
 import { IBaseFilter, IGenericObject } from '~models/general';
-import { Condition, IConditionCollection } from '~eshop/cart/Condition';
+import { Condition } from '~eshop/cart/Condition';
 import { find, findIndex, isEqual } from 'lodash';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { SharedModule } from '~shared/shared.module';
@@ -105,8 +105,8 @@ export class Cart implements OnModuleInit, ICart {
 
     if (item.quantity === 0) {
       this.remove({ productId: item.productId });
-      this.updateTotals();
       this.count();
+      this.updateTotals();
 
       this.eventEmitter.emit(Cart.itemAddedEventName, {
         item,
@@ -433,7 +433,19 @@ export class Cart implements OnModuleInit, ICart {
         let price = item.price;
 
         if (Array.isArray(item.conditions) && item.conditions.length > 0) {
-          price = item.conditions.map((c) => c.applyCondition(price)).reduce((pre, curr) => pre + curr, 0);
+
+          price = item.conditions.filter(cond => {
+            if (cond.hasRules()) {
+              const valid = cond.validateItemRules(item);
+
+              if (!valid) {
+                return false;
+              }
+            }
+
+            return true;
+          })
+            .map((c) => c.applyCondition(price)).reduce((pre, curr) => pre + curr, 0);
         }
 
         return price * item.quantity;
@@ -500,6 +512,61 @@ export class Cart implements OnModuleInit, ICart {
       item,
       cart: this.toObject(),
     });
+    return this;
+  }
+
+  /**
+   * add condition on an existing item on the cart
+   * @param productId
+   * @param condition
+   */
+  public addItemCondition(productId: string, condition: Condition) {
+    // find the product
+    const product = this.getItem({ productId });
+    if (!product) {
+      return this;
+    }
+
+    const itemConditionTempHolder = product.conditions;
+    if (!Array.isArray(itemConditionTempHolder)) {
+      return this;
+    }
+
+    itemConditionTempHolder.push(condition);
+
+    this.updateItem(productId, { conditions: itemConditionTempHolder });
+
+    return this;
+  }
+
+  /**
+   * useful for applying coupons and discounts after the cart has been filled
+   * @param condition
+   */
+  public addCartCondition(condition: Condition) {
+    this.condition(condition);
+    this.updateTotals();
+    return this;
+  }
+
+  public updateItem(productId: string, item: Partial<ICartItem>) {
+    const idx = this.items.findIndex((it) => it.productId === productId);
+    if (idx === -1) {
+      return this;
+    }
+
+    for (const key in item) {
+      if (item.hasOwnProperty(key)) {
+        this.items[idx][key] = item[key];
+      }
+    }
+
+    this.eventEmitter.emit(Cart.cartItemsUpdatedEventName, {
+      productId,
+      item,
+      cart: this.toObject(),
+    });
+
     return this;
   }
 

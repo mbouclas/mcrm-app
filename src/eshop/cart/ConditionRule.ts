@@ -1,12 +1,12 @@
 export interface IConditionArgsConfig {
   name: string;
-  field: 'quantity'|'price'|'subtotal'|'total'|'promo'|'items'|'numberOfItems'|Function;
+  field: 'quantity'|'price'|'subTotal'|'total'|'promo'|'items'|'numberOfItems'|Function;
   operator: '=='|'!='|'>'|'>='|'<'|'<='|'in'|'not in';
   value: string|number;
 }
 export class ConditionRule {
   public name: string;
-  public field: 'quantity'|'price'|'subtotal'|'total'|'promo'|'items'|'numberOfItems'|Function;
+  public field: 'quantity'|'price'|'subTotal'|'total'|'promo'|'items'|'numberOfItems'|Function;
   public operator: '=='|'!='|'>'|'>='|'<'|'<='|'in'|'not in';
   public value: string|number;
 
