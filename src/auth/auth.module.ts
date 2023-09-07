@@ -14,7 +14,7 @@ import { AuthController } from './controllers/auth.controller';
   providers: [
     oauth2Provider,
     OAuth2ModelService,
-    GateService,
+
   ],
   controllers: [
     Oauth2Controller,

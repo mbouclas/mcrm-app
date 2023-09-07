@@ -17,6 +17,7 @@ import { ShippingMethodService } from '~eshop/shipping-method/services/shipping-
 import { ICartItem } from '~eshop/cart/cart.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { ProductService } from '~catalogue/product/services/product.service';
+import { CartItem } from "~eshop/cart/CartItem";
 
 export class OrderModelDto {
   orderId?: string;
@@ -359,7 +360,7 @@ export class OrderService extends BaseNeoService {
     return { unsavedAddresses, correctAddresses };
   }
 
-  static async validateCartItems(items: ICartItem[]) {
+  static async validateCartItems(items: CartItem[]) {
     const products = await new ProductService().find({
       active: true,
       uuids: items.map((item) => item.productId),

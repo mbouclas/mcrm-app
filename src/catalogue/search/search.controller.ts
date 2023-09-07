@@ -12,7 +12,7 @@ export class SearchController {
 
   @Get('')
   async search(@Req() req: Request, @Query('q') qs: string, @Query('limit') limit = 10, @Session() session: Record<string, any>) {
-    const queryParameters = Object.assign({}, req.query);
+    const queryParameters = Object.assign({active: true}, req.query);
     const page = req.query.page || 1 as any;
 
     return await this.searchService
@@ -33,6 +33,6 @@ export class SearchController {
   async findSimilar(@Req() req: Request, @Query('id') id: string, @Query('limit') limit = 10, @Query('fields') fields = [], @Session() session: Record<string, any>) {
     const page = req.query.page || 1 as any;
 
-    return await (new SimilarProductsSearchService(this.searchService.getEs())).search(id, {limit, page}, null, fields)
+    return await (new SimilarProductsSearchService(this.searchService.getEs())).search(id, {queryParameters: {active: true}, limit, page}, null, fields)
   }
 }

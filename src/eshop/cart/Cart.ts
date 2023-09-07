@@ -1,7 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { CartService, ICart, ICartItem } from '~eshop/cart/cart.service';
-import { ICondition } from '~eshop/cart/condition.service';
 import { ICoupon } from '~eshop/cart/coupon.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { v4 } from 'uuid';
@@ -11,6 +10,9 @@ import { find, findIndex, isEqual } from 'lodash';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { SharedModule } from '~shared/shared.module';
 import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
+import { InvalidConditionTypeException } from "~eshop/cart/exceptions/invalid-condition-type.exception";
+import { Helpers } from "~eshop/cart/helpers/helpers";
+import { CartItem } from "~eshop/cart/CartItem";
 
 export interface ICartSettings {
   formatNumbers: boolean;
@@ -38,9 +40,9 @@ export class Cart implements OnModuleInit, ICart {
   public total = 0;
   public subTotal = 0;
   public vatRate = 0;
-  public items: ICartItem[] = [];
+  public items: CartItem[] = [];
   public metaData = {};
-  public appliedConditions: IConditionCollection[] = [];
+  public appliedConditions: Condition[] = [];
   public couponApplied: ICoupon = {};
   public cartService: CartService;
   protected jsonFields = ['couponApplied', 'items', 'metaData', 'appliedConditions'];
@@ -51,6 +53,7 @@ export class Cart implements OnModuleInit, ICart {
     thousandsSep: ',',
   };
   protected settings: ICartSettings;
+  public conditions: Condition[] = [];
 
   constructor(id?: string, settings?: ICartSettings) {
     this.cartService = new CartService();
@@ -92,7 +95,7 @@ export class Cart implements OnModuleInit, ICart {
 
 
     if (!found) {
-      this.items.push({ ...item, uuid: v4() });
+      this.items.push(new CartItem({ ...item, uuid: v4() }));
       this.updateTotals();
 
       return this;
@@ -116,6 +119,8 @@ export class Cart implements OnModuleInit, ICart {
     else {
       found.quantity = item.quantity;
     }
+
+
 
     this.updateTotals();
 
@@ -181,6 +186,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public updateTotals() {
+    this.calculateItemsTotal();
     this.calculateSubtotal();
     this.calculateTotals();
   }
@@ -266,6 +272,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public toObject(): ICart {
+    this.calculateTotals();
     return {
       id: this.id,
       items: this.items,
@@ -294,51 +301,81 @@ export class Cart implements OnModuleInit, ICart {
     await this.cartService.attachCartToUser(userFilter, this.id);
   }
 
-  protected calculateSubtotal() {
-    let subTotal = 0,
-      conditionsTotal = 0;
+  public getSubTotal(formatted = true) {
+    // get the conditions that are meant to be applied
+    // on the subtotal and apply it here before returning the subtotal
+    const conditions = this.getConditionsByTarget('subtotal');
 
-    subTotal = this.itemsTotal();
-
-    if (!Array.isArray(this.appliedConditions)) {
-      return subTotal;
+    // if there is no conditions, lets just return the sum
+    if (!conditions.length || conditions.length === 0) {
+      return this.itemsTotal();
     }
 
-    this.appliedConditions.forEach((cond) => {
-      // const condition = (new Condition(cond)).apply({subtotal: subTotal});
+    // there are conditions, lets apply it
+    let newTotal = this.itemsTotal();
+    let process = 0;
+
+    conditions.forEach((cond) => {
+      // if this is the first iteration, the toBeCalculated
+      // should be the sum as initial point of value.
+      let toBeCalculated = (process > 0) ? newTotal : this.sum();
+      newTotal = cond.applyCondition(toBeCalculated);
+      this.addAppliedCondition(cond);
+      process++;
     });
 
-    this.subTotal = subTotal;
+    this.subTotal = newTotal;
+
+    return Helpers.formatValue(newTotal, formatted, this.settings)
+  }
+
+  public calculateSubtotal() {
+    this.subTotal = this.getSubTotal(false) as number;
+
+    return this;
+  }
+
+  public calculateItemsTotal() {
+    this.total = this.itemsTotal();
 
     return this;
   }
 
   public calculateTotals() {
     this.calculateSubtotal();
-    const subtotal = this.subTotal;
     let newTotal = 0.0;
+    let subTotal = this.getSubTotal() as number;
     let process = 0;
 
-    // Figure out conditions here
+
+    newTotal = this.subTotal;
+
+    const conditions = this.getConditionsByTarget('total');
 
     // if no conditions were added, just return the sub total
-    /*    if (!$conditions->count()) {
-          return Helpers::formatValue($subTotal, $this->config['format_numbers'], $this->config);
-        }*/
+    if (!conditions.length || conditions.length === 0) {
+      this.total = newTotal;
+      return this;
+    }
 
-    /*    $conditions
-          ->each(function (CartCondition $cond) use ($subTotal, &$newTotal, &$process) {
-          $toBeCalculated = ($process > 0) ? $newTotal : $subTotal;
+    conditions.forEach((cond) => {
+      let toBeCalculated = (process > 0) ? newTotal : subTotal;
+      newTotal = cond.applyCondition(toBeCalculated);
+      this.addAppliedCondition(cond);
+      process++;
+    });
 
-          $newTotal = $cond->applyCondition($toBeCalculated);
-
-          $process++;
-        });*/
-
-    newTotal = subtotal;
     this.total = newTotal;
+    return this;
+  }
 
-    // return Helpers::formatValue($newTotal, $this->config['format_numbers'], $this->config);
+  protected addAppliedCondition(condition: Condition) {
+    const foundIdx = this.appliedConditions.findIndex((c) => c.name === condition.name);
+    if (foundIdx === -1) {
+      this.appliedConditions.push(condition);
+    }
+
+    return this;
   }
 
   public getMetaData(filter: IBaseFilter) {
@@ -363,20 +400,18 @@ export class Cart implements OnModuleInit, ICart {
     return this;
   }
 
+  public getTotalQuantity() {
+    return this.items.map((item) => item.quantity).reduce((pre, curr) => pre + curr, 0);
+  }
+
   protected itemsTotal() {
     return this.items
       .map((item) => {
-        let conditionsTotal = 0,
-          price = item.price;
-        if (Array.isArray(item.conditions)) {
-          //line 308
+        let price = item.price;
+
+        if (Array.isArray(item.conditions) && item.conditions.length > 0) {
+          price = item.conditions.map((c) => c.applyCondition(price)).reduce((pre, curr) => pre + curr, 0);
         }
-
-        /*      if (item.attributesPrice) {
-              price = price + item.attributesPrice;
-            }*/
-
-        price = price + conditionsTotal;
 
         return price * item.quantity;
       })
@@ -412,7 +447,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public manageAdd(item: ICartItem) {
-    this.items.push({ ...item, uuid: v4() });
+    this.items.push(new CartItem({ ...item, uuid: v4() }));
     this.updateTotals();
     this.eventEmitter.emit(Cart.itemAddedEventName, {
       item,
@@ -450,12 +485,161 @@ export class Cart implements OnModuleInit, ICart {
    * @param items
    */
   updateItems(items: ICartItem[]) {
-    this.items = items;
+    this.items = items.map((item) => new CartItem(item));
     this.updateTotals();
     this.eventEmitter.emit(Cart.cartItemsUpdatedEventName, {
       cart: this.toObject(),
     });
     return this;
+  }
+
+  public getConditions(): Condition[] {
+    return this.conditions;
+  }
+
+  public getCondition(name: string): Condition {
+    return this.conditions.find((c => c.name === name));
+  }
+
+  public getConditionsByType(type: string): Condition[] {
+    return this.conditions.filter((c => c.getType() === type));
+  }
+
+  public getConditionsByTarget(target: string): Condition[] {
+    return this.conditions.filter((c => c.getTarget() === target));
+  }
+
+  public removeConditionsByType(type: string): Condition[] {
+    const conditions = this.getConditionsByType(type);
+    conditions.forEach((c) => {
+      this.removeCartCondition(c);
+    });
+
+    return conditions;
+  }
+
+  /**
+   * removes a condition on a cart by condition name,
+   *  this can only remove conditions that are added on cart bases not conditions that are added on an item/product.
+   * If you wish to remove a condition that has been added for a specific item/product, you may
+   * use the removeItemCondition(itemId, conditionName) method instead.
+   *
+   * @param condition
+   */
+  public removeCartCondition(condition: Condition): Condition {
+    const conditions = this.getConditions();
+    const idx = conditions.findIndex((c) => c.name === condition.name);
+    conditions.splice(idx, 1);
+
+    return condition;
+  }
+
+  /**
+   * remove a condition that has been applied on an item that is already on the cart
+   */
+  public removeItemCondition(itemId: string, conditionName: string): boolean {
+    const item = this.getItem({ uuid: itemId });
+    if (!this.itemHasConditions(item)) {
+      return false;
+    }
+
+    const tempConditionsHolder = item.conditions;
+    if (!Array.isArray(tempConditionsHolder)) {
+      return false;
+    }
+
+    tempConditionsHolder.forEach((c, idx) => {
+      if (c.name === conditionName) {
+        tempConditionsHolder.splice(idx, 1);
+      }
+    });
+
+    item.conditions = tempConditionsHolder;
+    return true;
+  }
+
+  public clearItemConditions(itemId: string) {
+    const item = this.getItem({ uuid: itemId });
+    if (!this.itemHasConditions(item)) {
+      return false;
+    }
+
+    item.conditions = [];
+    return true;
+  }
+
+  public clearItemsConditions() {
+    this.items.forEach((item) => {
+      this.clearItemConditions(item.uuid);
+    });
+
+    return true;
+  }
+
+  public clearCartConditions() {
+    this.conditions = [];
+    return true;
+  }
+
+  public getSubTotalWithoutConditions(formatted = true) {
+    const subTotal = this.sum();
+
+    return formatted ? Helpers.formatValue(subTotal, formatted, this.settings) : subTotal;
+  }
+
+  public sum() {
+    let sum = 0;
+    this.items.forEach((item) => {
+      sum += item.price * item.quantity;
+    });
+
+
+    return sum;
+  }
+
+  public getItemPriceSum(item: ICartItem) {
+    return Helpers.formatValue(item.price * item.quantity, this.settings.formatNumbers, this.settings);
+  }
+
+  public itemHasConditions(item: ICartItem): boolean {
+    if (!item.conditions || !Array.isArray(item.conditions) || item.conditions.length === 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public condition(condition: Condition|Condition[]) {
+    if (Array.isArray(condition)) {
+      condition.forEach((cond) => {
+        this.condition(cond);
+      });
+    }
+
+  // if not instanceof condition throw exception
+    if (!(condition instanceof Condition)) {
+      throw new InvalidConditionTypeException('NotInstanceOfCondition', '1600.1');
+    }
+
+    const conditions = this.getConditions();
+    let last: Condition;
+
+    if (condition.getOrder() === 0) {
+      // last becomes the last condition in the array
+      last = conditions[conditions.length - 1];
+      condition.setOrder(last ? last.getOrder() + 1 : 1);
+    }
+
+    conditions.push(condition);
+
+    // sort conditions by order
+    conditions.sort((a, b) => {
+      return a.getOrder() - b.getOrder();
+    });
+
+    this.conditions = conditions;
+
+    return this.conditions;
   }
 
 }

@@ -3,7 +3,6 @@ import { Neo4jService } from '~root/neo4j/neo4j.service';
 import { IBaseFilter, IGenericObject, IPagination } from '~models/general';
 import { BaseModel, INeo4jModel, INeo4jModelRelationshipConfig } from '~models/base.model';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SharedModule } from '~shared/shared.module';
 import { extractFiltersFromObject, extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import {
   extractQueryParamsFilters,
@@ -17,11 +16,9 @@ import { RecordStoreFailedException } from '~shared/exceptions/record-store-fail
 import { postedDataToUpdatesQuery } from '~helpers/postedDataToUpdatesQuery';
 import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-failed.exception';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
-import { store } from '~root/state';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
-import { fromRecordToModel } from '~helpers/fromRecordToModel';
-import { range } from 'lodash';
 import { AppModule } from '~root/app.module';
+
 
 const debug = require('debug')('mcms:neo:query');
 

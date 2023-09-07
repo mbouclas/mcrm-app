@@ -7,6 +7,7 @@ import { CouponService } from './coupon.service';
 import { MoneyService } from './money.service';
 import { ConditionService } from './condition.service';
 import { CartModel } from "~eshop/models/Cart.model";
+import * as process from "process";
 
 
 @Module({
@@ -26,4 +27,17 @@ import { CartModel } from "~eshop/models/Cart.model";
     CartController,
   ],
 })
-export class CartModule {}
+export class CartModule {
+  async onApplicationBootstrap() {
+    setTimeout(async () => {
+      if (process.env.ENV !== 'development' || process.env.RUN_TESTS_ON_BOOT !== 'true') {
+        return;
+      }
+
+      const c = await import('./condition.spec');
+      const conditionSpec = new c.ConditionSpec();
+      await conditionSpec.runTests();
+    }, 500)
+
+  }
+}

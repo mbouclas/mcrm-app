@@ -27,7 +27,9 @@ export default {
     '~dashboard/(.*)$': '<rootDir>/src/dashboard/$1',
     '~image/(.*)$': '<rootDir>/src/image/$1',
     '~neo4j/(.*)$': '<rootDir>/src/neo4j/$1',
+    '^axios$': require.resolve('axios'),
   } ,
+
   // Stop running tests after `n` failures
   // bail: 0,
 
@@ -198,9 +200,11 @@ export default {
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   // transformIgnorePatterns: [
   //   "\\\\node_modules\\\\",
-  //   "\\.pnp\\.[^\\\\]+$"
+  //   "\\.pnp\\.[^\\\\]+$".+\\.js$
   // ],
-
+  transformIgnorePatterns: [
+    '<rootDir>/node_modules/(?!axios).+\\\\.js$',
+  ],
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
   // unmockedModulePathPatterns: undefined,
 

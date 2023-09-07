@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import * as process from "process";
-
 require('dotenv').config();
 import { Liquid } from "liquidjs";
 import { ListCommand } from "~cli/commands/list.command";

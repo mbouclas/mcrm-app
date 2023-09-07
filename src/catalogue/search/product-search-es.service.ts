@@ -55,6 +55,15 @@ export class ProductSearchEsService {
       size: 60,
     },
     {
+      name: 'manufacturer',
+      multilingual: false,
+      type: "nested",
+      key: 'slug',
+      buckets: ['title.keyword', 'slug'],
+      isKeyword: true,
+      size: 60,
+    },
+    {
       name: 'properties',
       alias: 'colors',
       multilingual: false,

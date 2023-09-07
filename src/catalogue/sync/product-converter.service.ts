@@ -145,6 +145,14 @@ export class ProductConverterService {
       }));
     }
 
+    if (product['manufacturer']) {
+      result.manufacturer = {
+        uuid: product['manufacturer'].uuid,
+        title: product['manufacturer'].title,
+        slug: product['manufacturer'].slug,
+      };
+    }
+
     return result;
   }
 }

@@ -41,7 +41,7 @@ export interface ITagEs {
 }
 
 export interface IProductManufacturerEs {
-  id: string;
+  uuid: string;
   title: string;
   slug: string;
 }

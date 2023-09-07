@@ -1,12 +1,11 @@
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { Injectable } from '@nestjs/common';
-import { IGenericObject, IPagination } from '~models/general';
+import { IGenericObject } from '~models/general';
 import { store } from '~root/state';
 import { UserModel } from '~user/models/user.model';
 import { BaseNeoService, IBaseNeoServiceRelationships } from "~shared/services/base-neo.service";
 import { OnEvent } from '@nestjs/event-emitter';
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { ChangeLogService } from '~change-log/change-log.service';
 import { AuthService } from '~root/auth/auth.service';
 import { MailService } from '~root/mail/services/mail.service';
 import { GateService } from '~root/auth/gate.service';
@@ -15,8 +14,7 @@ import { CouldNotVerifyUserTokenException } from "~user/exceptions/could-not-ver
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
 import { tokenGenerator } from "~helpers/tokenGenerator";
-import { SharedModule } from "~shared/shared.module";
-import { AppModule } from "~root/app.module";
+import { ChangeLogService } from "~change-log/change-log.service";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -47,7 +45,6 @@ export class UserModelDto {
 export class UserService extends BaseNeoService {
   protected relationships = [];
   protected model: typeof UserModel;
-  protected changeLog: ChangeLogService;
   protected auth: AuthService;
   protected mail: MailService;
   static updatedEventName = 'user.model.updated';
@@ -59,7 +56,7 @@ export class UserService extends BaseNeoService {
   constructor() {
     super();
     this.model = store.getState().models.User;
-    this.changeLog = new ChangeLogService();
+
     this.auth = new AuthService();
     this.mail = new MailService();
   }
@@ -156,7 +153,7 @@ export class UserService extends BaseNeoService {
         this.model.modelConfig.relationships,
         this.findOne.bind(this),
       );
-      await this.changeLog.add(
+      await new ChangeLogService().add(
         this.model.modelName,
         uuid,
         'updated',
@@ -179,7 +176,7 @@ export class UserService extends BaseNeoService {
 
   async delete(uuid: string, userId?: string) {
     const r = await super.delete(uuid, userId);
-    await this.changeLog.add(
+    await new ChangeLogService().add(
       this.model.modelName,
       uuid,
       'deleted',

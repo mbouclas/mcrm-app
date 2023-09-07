@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '~shared/services/cache.service';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { IBaseFilter, IBaseModel, IGenericObject } from "~models/general";
+import { IBaseFilter,  IGenericObject } from "~models/general";
 import { ICoupon } from '~eshop/cart/coupon.service';
 import { ICondition } from '~eshop/cart/condition.service';
 import { UserService } from '~user/services/user.service';
@@ -16,6 +16,7 @@ import { Cart } from "~eshop/cart/Cart";
 import { CouldNotAttachUserToCartException } from "~eshop/cart/exceptions/could-not-attach-user-to-cart.exception";
 import { BaseModel } from "~models/base.model";
 import { CouldNotAttachModelToCartException } from "~eshop/cart/exceptions/could-not-attach-model-to-cart.exception";
+import { Condition } from "~eshop/cart/Condition";
 
 export interface ICartItem {
   uuid?: string;
@@ -24,7 +25,7 @@ export interface ICartItem {
   productId: string;
   variantId: string;
   title: string;
-  conditions?: ICondition[];
+  conditions?: Condition[];
   metaData?: IGenericObject;
   thumb?: string;
   slug?: string;
