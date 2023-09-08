@@ -28,6 +28,13 @@ export class PropertyController {
     return await new PropertyValueService().searchValues(q);
   }
 
+  @Get('/value')
+  async findValues(@Query() queryParams = {}) {
+    const rels = queryParams['with'] ? queryParams['with'] : [];
+
+    return await new PropertyValueService().find(queryParams, rels);
+  }
+
   @Post('/basic')
   async storeBasic(@Body() body: IGenericObject) {
     return await new PropertyService().store(body);

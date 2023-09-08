@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Session } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
-import { OrderEventNames, OrderService } from "~eshop/order/services/order.service";
+import { OrderEventNames, OrderService } from '~eshop/order/services/order.service';
 import { CustomerService } from '~eshop/customer/services/customer.service';
 import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
 import { AddressService } from '~eshop/address/services/address.service';
@@ -33,11 +33,10 @@ import {
 
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get()
-  async find(@Session() session: SessionData, @Query() queryParams = {}) {
-    const userId = session.user && session.user['uuid'];
+  async find(@Query() queryParams = {}) {
     const rels = queryParams['with'] ? queryParams['with'] : [];
 
     return await new OrderService().findAll(queryParams, rels);
@@ -157,9 +156,8 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${
-        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
@@ -177,9 +175,8 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
@@ -311,10 +308,10 @@ export class OrderController {
   }
 
   @Patch(`:uuid/status`)
-  async updateStatus(@Body() body: {status: number}, @Param('uuid') uuid: string) {
+  async updateStatus(@Body() body: { status: number }, @Param('uuid') uuid: string) {
     const service = new OrderService();
-    await service.update(uuid, {status: body.status});
-    service.emit(OrderEventNames.orderStatusChanged, {uuid, status: body.status});
-    return {success: true};
+    await service.update(uuid, { status: body.status });
+    service.emit(OrderEventNames.orderStatusChanged, { uuid, status: body.status });
+    return { success: true };
   }
 }
