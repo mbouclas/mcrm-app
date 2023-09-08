@@ -19,7 +19,6 @@ import { RecordUpdateFailedException } from '~shared/exceptions/record-update-fa
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { AppModule } from '~root/app.module';
 
-
 const debug = require('debug')('mcms:neo:query');
 
 export interface IBaseNeoServiceRelationships {

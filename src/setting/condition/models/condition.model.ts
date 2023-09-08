@@ -3,13 +3,13 @@ import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 
-const modelName = 'Condition';
+const modelName = 'CartCondition';
 @McmsDi({
   id: modelName,
   type: 'model',
 })
 @Injectable()
-export class ConditionModel extends BaseModel implements OnModuleInit {
+export class CartConditionModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
@@ -20,8 +20,8 @@ export class ConditionModel extends BaseModel implements OnModuleInit {
   public static displayedColumns = ['title', 'category'];
 
   public static modelConfig: INeo4jModel = {
-    select: 'condition:Condition',
-    as: 'condition',
+    select: 'cartCondition:CartCondition',
+    as: 'cartCondition',
     relationships: {},
   };
 

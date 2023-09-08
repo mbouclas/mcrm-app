@@ -3,7 +3,6 @@ import { ChangeLogService } from '~change-log/change-log.service';
 import { store } from '~root/state';
 import { OnEvent } from '@nestjs/event-emitter';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { ImageService } from '~image/image.service';
 import { IGenericObject } from '~models/general';
 import { ConditionRule } from '~root/eshop/cart/ConditionRule';
 
@@ -23,19 +22,17 @@ export class ConditionModelDto {
 @Injectable()
 export class ConditionService extends BaseNeoService {
   protected changeLog: ChangeLogService;
-  static updatedEventName = 'page.model.updated';
-  static createdEventName = 'page.model.created';
-  static deletedEventName = 'page.model.deleted';
-  protected imageService: ImageService;
+  static updatedEventName = 'condition.model.updated';
+  static createdEventName = 'condition.model.created';
+  static deletedEventName = 'condition.model.deleted';
 
   constructor() {
     super();
-    this.model = store.getState().models.Condition;
+    this.model = store.getState().models.CartCondition;
 
     this.changeLog = new ChangeLogService();
-    this.imageService = new ImageService();
   }
 
   @OnEvent('app.loaded')
-  async onAppLoaded() { }
+  async onAppLoaded() {}
 }
