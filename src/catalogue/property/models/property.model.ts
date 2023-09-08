@@ -77,10 +77,9 @@ export class PropertyModel extends BaseModel {
       label: 'Active',
       placeholder: 'Active',
       type: 'boolean',
-      translatable: true,
+      isSortable: true,
       group: 'main',
     },
-
     {
       varName: 'slug',
       label: 'Slug',
