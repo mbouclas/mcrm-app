@@ -14,6 +14,7 @@ import { SharedModule } from '~shared/shared.module';
 import { UserModule } from '~user/user.module';
 import { CrmModule } from '~crm/crm.module';
 import { CmsModule } from '~cms/cms.module';
+import { SettingModule } from '~setting/setting.module';
 import { MarketingManagerModule } from './marketing-manager/marketing-manager.module';
 import { PublicModule } from './public/public.module';
 import { ServiceDeskModule } from './service-desk/service-desk.module';
@@ -54,6 +55,7 @@ export const Test = { token: null };
       maxListeners: 50,
     }),
     SharedModule,
+    SettingModule,
     LoggerModule,
     MailModule,
     // Neo4jModule,

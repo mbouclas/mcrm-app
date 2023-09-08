@@ -24,6 +24,7 @@
       "~helpers/*": ["src/helpers/*"],
       "~admin/*": ["src/admin/*"],
       "~crm/*": ["src/crm/*"],
+      "~setting/*": ["src/setting/*"],
       "~change-log/*": ["src/change-log/*"],
       "~cms/*": ["src/cms/*"],
       "~user/*": ["src/user/*"],
