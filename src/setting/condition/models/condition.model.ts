@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~root/shared/models/queryBuilder';
 
 const modelName = 'CartCondition';
 @McmsDi({
@@ -15,7 +16,7 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
   public static defaultAggregationSize = 30;
   public name: string;
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = ['title', 'category'];
 
@@ -99,6 +100,47 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
       type: 'json',
       isSortable: false,
       group: 'main',
+    },
+  ];
+
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'title',
+      label: 'Title',
+      type: 'text',
+      model: 'CartCondition',
+      filterType: 'partial',
+      isInSimpleQuery: false,
+    },
+
+    {
+      varName: 'type',
+      label: 'Type',
+      type: 'text',
+      model: 'CartCondition',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+
+    {
+      varName: 'target',
+      label: 'Target',
+      type: 'text',
+      model: 'CartCondition',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+
+    {
+      varName: 'createdAt',
+      label: 'Created At',
+      type: 'date',
+      model: 'CartCondition',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'createdAtFrom',
+      rangeToFieldName: 'createdAtTo',
+      isInSimpleQuery: false,
     },
   ];
 

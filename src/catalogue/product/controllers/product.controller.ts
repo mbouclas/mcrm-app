@@ -38,7 +38,7 @@ const productSchema = z.object({
 
 @Controller('api/product')
 export class ProductController {
-  constructor() {}
+  constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -50,7 +50,10 @@ export class ProductController {
     try {
       const rels = queryParams['with'] ? queryParams['with'] : [];
 
-      return await new ProductService().findOne({ uuid }, rels);
+      const a = await new ProductService().findOne({ uuid }, rels);
+
+      console.log(a);
+      return a;
     } catch (e) {
       throw new NotFound();
     }
