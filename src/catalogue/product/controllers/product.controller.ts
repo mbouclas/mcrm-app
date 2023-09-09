@@ -233,19 +233,27 @@ export class ProductController {
   async manageCartCondition(@Body() body: IGenericObject) {
     try {
       const product = await new ProductService().findOne({ uuid: body.sourceUuid }, ['cartCondition']);
-      console.log(product);
 
       await new ConditionService().findOne({ uuid: body.destinationUuid });
 
       if (body.type === 'attachCondition') {
-        const order = product?.cartCondition.length + 1;
-        await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'cartCondition', { order });
+        const maxOrderValue = product?.cartCondition.reduce(
+          (maxOrder, currentObj) =>
+            currentObj.relationship && currentObj.relationship.order > maxOrder
+              ? currentObj.relationship.order
+              : maxOrder,
+          -1,
+        );
+        await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'cartCondition', {
+          order: maxOrderValue + 1,
+        });
       } else {
         await new ProductService().detachFromModelById(body.sourceUuid, body.destinationUuid, 'cartCondition');
       }
 
       return { success: true };
     } catch (e) {
+      console.log('error ', e);
       throw new FailedToManageCondition();
     }
   }
