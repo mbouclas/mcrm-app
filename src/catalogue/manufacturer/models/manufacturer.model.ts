@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import { BaseModel, INeo4jModel } from '~models/base.model';
+import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IQueryBuilderFieldBlueprint } from '~root/shared/models/queryBuilder';
 
 const modelName = 'Manufacturer';
 @McmsDi({
@@ -231,4 +232,33 @@ export class ManufacturerModel extends BaseModel {
       ],
     },
   ];
+
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'title',
+      label: 'Title',
+      type: 'text',
+      model: 'CartCondition',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+
+    {
+      varName: 'createdAt',
+      label: 'Created At',
+      type: 'date',
+      model: 'CartCondition',
+      filterType: 'exact',
+      isRange: true,
+      rangeFromFieldName: 'createdAtFrom',
+      rangeToFieldName: 'createdAtTo',
+      isInSimpleQuery: false,
+    },
+  ];
+
+  public static filterConfig: IBaseModelFilterConfig = {
+    filterParamName: 'q',
+    defaultOrderBy: 'createdAt',
+    defaultWay: 'DESC',
+  };
 }

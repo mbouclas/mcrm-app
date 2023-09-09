@@ -97,6 +97,15 @@ export class PropertyValueModel extends BaseModel {
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
     {
+      varName: 'name',
+      label: 'Name',
+      type: 'text',
+      model: 'CartCondition',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+
+    {
       varName: 'createdAt',
       label: 'Created At',
       type: 'date',
