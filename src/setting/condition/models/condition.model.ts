@@ -16,7 +16,7 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
   public static defaultAggregationSize = 30;
   public name: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = ['title', 'category'];
 
@@ -44,9 +44,9 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'type',
-      label: 'Type',
-      placeholder: 'Type',
+      varName: 'kind',
+      label: 'Kind',
+      placeholder: 'Kind',
       type: 'text',
       isSortable: true,
       group: 'main',
@@ -114,8 +114,8 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
     },
 
     {
-      varName: 'type',
-      label: 'Type',
+      varName: 'kind',
+      label: 'Kind',
       type: 'text',
       model: 'CartCondition',
       filterType: 'exact',
