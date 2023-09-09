@@ -18,6 +18,7 @@ import {
 import errors from '../exceptions/errors';
 import { z } from 'zod';
 import { validateData } from '~helpers/validateData';
+import { ConditionService } from '~setting/condition/services/condition.service';
 
 const productSchema = z.object({
   title: z
@@ -36,7 +37,7 @@ const productSchema = z.object({
 
 @Controller('api/product')
 export class ProductController {
-  constructor() { }
+  constructor() {}
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -223,6 +224,27 @@ export class ProductController {
 
       return { success: true };
     } catch (e) {
+      throw new FailedToRelate();
+    }
+  }
+
+  @Post('/manage-cart-condition')
+  async manageCartCondition(@Body() body: IGenericObject) {
+    try {
+      for (const destinationUuid of body.destinationUuids) {
+        await new ProductService().findOne({ uuid: body.sourceUuid });
+        await new ConditionService().findOne({ uuid: destinationUuid });
+
+        if (body.type === 'attachCondition') {
+          await new ProductService().attachToModelById(body.sourceUuid, destinationUuid, 'cartCondition');
+        } else {
+          await new ProductService().detachFromModelById(body.sourceUuid, destinationUuid, 'cartCondition');
+        }
+      }
+
+      return { success: true };
+    } catch (e) {
+      console.log(e);
       throw new FailedToRelate();
     }
   }

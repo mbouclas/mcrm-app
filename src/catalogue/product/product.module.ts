@@ -9,6 +9,7 @@ import { ProductController } from './controllers/product.controller';
 import { ProductVariantService } from './services/product-variant.service';
 import { ProductCategoryController } from './controllers/product-category.controller';
 import { ProductVariantController } from './controllers/product-variant.controller';
+import { ConditionService } from '~root/setting/condition/services/condition.service';
 
 @Module({
   imports: [SharedModule],
@@ -19,7 +20,8 @@ import { ProductVariantController } from './controllers/product-variant.controll
     ProductVariantModel,
     ProductService,
     ProductVariantService,
+    ConditionService,
   ],
   controllers: [ProductController, ProductCategoryController, ProductVariantController],
 })
-export class ProductModule { }
+export class ProductModule {}

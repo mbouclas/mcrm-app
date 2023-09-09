@@ -268,6 +268,16 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         isCollection: false,
         defaultProperty: 'id',
       },
+
+      cartCondition: {
+        rel: 'HAS_CONDITION',
+        alias: 'cartConditionRelationship',
+        model: 'CartCondition',
+        modelAlias: 'cartCondition',
+        type: 'normal',
+        isCollection: true,
+        defaultProperty: 'title',
+      },
     },
   };
 
