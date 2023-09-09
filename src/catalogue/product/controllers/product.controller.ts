@@ -50,10 +50,7 @@ export class ProductController {
     try {
       const rels = queryParams['with'] ? queryParams['with'] : [];
 
-      const a = await new ProductService().findOne({ uuid }, rels);
-
-      console.log(a);
-      return a;
+      return await new ProductService().findOne({ uuid }, rels);
     } catch (e) {
       throw new NotFound();
     }

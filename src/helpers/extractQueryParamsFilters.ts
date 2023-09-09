@@ -1,29 +1,31 @@
 import { findIndex, uniq } from 'lodash';
-import { IItemSelectorConfig } from "~models/item-selector";
-import { BaseModel } from "~models/base.model";
-import { IGenericObject, IPaginatedQueryParams } from "~models/general";
-import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
-import { LocationModel } from "~shared/models/location.model";
+import { IItemSelectorConfig } from '~models/item-selector';
+import { BaseModel } from '~models/base.model';
+import { IGenericObject, IPaginatedQueryParams } from '~models/general';
+import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { LocationModel } from '~shared/models/location.model';
 
-
-
-export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: string | typeof BaseModel, itemSelector?: IItemSelectorConfig) {
-  const modelAlias = (typeof model === 'string') ? model : model.modelConfig.as;
+export function extractQueryParamsFilters(
+  params: IPaginatedQueryParams,
+  model: string | typeof BaseModel,
+  itemSelector?: IItemSelectorConfig,
+) {
+  const modelAlias = typeof model === 'string' ? model : model.modelConfig.as;
   const toRemove = ['page', 'limit', 'skip', 'per_page', 'type', 'orderBy', 'way', 'with'];
-  const page = (params.page) ? params.page : 1;
-  const limit = (params.limit) ? params.limit : 10;
+  const page = params.page ? params.page : 1;
+  const limit = params.limit ? params.limit : 10;
   const skip = limit * (page - 1);
-  let orderBy = (params.orderBy) ? `${modelAlias}.${params.orderBy}` : `${modelAlias}.name`;
-  let way = (params.way) ? params.way : 'ASC';
+  let orderBy = params.orderBy ? `${modelAlias}.${params.orderBy}` : `${modelAlias}.name`;
+  let way = params.way ? params.way : 'ASC';
   let relationships = params.with || [];
-  const searchFields: string[] = (params.searchIn) ? params.searchIn : [];
+  const searchFields: string[] = params.searchIn ? params.searchIn : [];
   const where = [];
-  let filters: any = {};
+  const filters: any = {};
 
   // Add all the relationships to the query
   if (relationships.indexOf('*') !== -1 && typeof model !== 'string') {
     const tempRelationships: string[] = [];
-    for (let key in model.modelConfig.relationships) {
+    for (const key in model.modelConfig.relationships) {
       tempRelationships.push(key);
     }
     relationships = tempRelationships;
@@ -38,10 +40,9 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
   }
 
   if (params.uuids) {
-    const uuids: string[] = (Array.isArray(params.uuids)) ? params.uuids : JSON.parse(params.uuids);
-    where.push(`${modelAlias}.uuid IN [${uuids.map(id => `'${id}'`).join(',')}]`);
+    const uuids: string[] = Array.isArray(params.uuids) ? params.uuids : JSON.parse(params.uuids);
+    where.push(`${modelAlias}.uuid IN [${uuids.map((id) => `'${id}'`).join(',')}]`);
   }
-
 
   if (params.clientId && params.showClientItemsOnly) {
     where.push(`EXISTS((${modelAlias})<-[:ITEM_BELONGS_TO_CLIENT]-(:Client {uuid: '${params.clientId}'}))`);
@@ -54,32 +55,35 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
     const tabIdx = findIndex(itemSelector?.tabs, { varName: params.tab });
     const tab = itemSelector?.tabs[tabIdx];
 
-    tab?.filterFields().forEach(field => searchableFields.push(field.varName));
+    tab?.filterFields().forEach((field) => searchableFields.push(field.varName));
     if (tab && tab.config && tab.config.filterParamName) {
       toRemove.push(tab.config.filterParamName);
       const paramValue = params[tab.config.filterParamName];
       const tmpValues: string[] = [];
-      searchableFields.forEach(field => tmpValues.push(`${modelAlias}.${field} =~ '(?i).*${paramValue}.*'`));
+      searchableFields.forEach((field) => tmpValues.push(`${modelAlias}.${field} =~ '(?i).*${paramValue}.*'`));
       where.push(tmpValues.join(` OR `));
     }
   }
 
-  if ((typeof model !== 'string' && model.filterConfig) && !params.tab) {
-
+  if (typeof model !== 'string' && model.filterConfig && !params.tab) {
     const searchableFields: string[] = [];
     model.filterFields
-      .filter((field: IQueryBuilderFieldBlueprint) => !field.relName)// If it has a relName, it's a relationship filter
+      .filter((field: IQueryBuilderFieldBlueprint) => !field.relName) // If it has a relName, it's a relationship filter
       .forEach((field: IQueryBuilderFieldBlueprint) => searchableFields.push(field.varName));
 
     // Look up for q
-    if (model.filterConfig.filterParamName && typeof params[model.filterConfig.filterParamName] !== 'undefined' && params[model.filterConfig.filterParamName]) {
+    if (
+      model.filterConfig.filterParamName &&
+      typeof params[model.filterConfig.filterParamName] !== 'undefined' &&
+      params[model.filterConfig.filterParamName]
+    ) {
       toRemove.push(model.filterConfig.filterParamName);
       const paramValue = params[model.filterConfig.filterParamName];
       const tmpValues: string[] = [];
       model.filterFields
         .filter((field: IQueryBuilderFieldBlueprint) => field.isInSimpleQuery)
         .filter((field: IQueryBuilderFieldBlueprint) => {
-          return (!searchFields || searchFields.length === 0 || searchFields.indexOf(field.varName) !== -1);
+          return !searchFields || searchFields.length === 0 || searchFields.indexOf(field.varName) !== -1;
         })
         .map((field: IQueryBuilderFieldBlueprint) => field.varName)
         .filter((field: string) => field && true && field.length > 0)
@@ -90,19 +94,17 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
       }
     }
 
-
-    orderBy = (!params.orderBy) ? `${modelAlias}.${model.filterConfig.defaultOrderBy}` : orderBy;
-    way = (!params.way) ? model.filterConfig.defaultWay : way;
+    orderBy = !params.orderBy ? `${modelAlias}.${model.filterConfig.defaultOrderBy}` : orderBy;
+    way = !params.way ? model.filterConfig.defaultWay : way;
   }
 
-
-  for (let key in params) {
+  for (const key in params) {
     if (toRemove.indexOf(key) === -1 && params[key] && params[key] !== '') {
       filters[key] = params[key];
     }
   }
 
-  for (let key in filters) {
+  for (const key in filters) {
     if (typeof filters[key] === 'undefined' || !filters[key] || filters[key] === 'undefined') {
       continue;
     }
@@ -120,18 +122,27 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
       return field.varName === key;
     });
 
-    if (idx === -1 || (model.filterFields[idx].model !== model.modelName) || model.filterFields[idx].relName) { continue; }
+    if (idx === -1 || model.filterFields[idx].model !== model.modelName || model.filterFields[idx].relName) {
+      continue;
+    }
 
     const filter = model.filterFields[idx];
 
     if (filter.isRange && (filters[filter.rangeFromFieldName] || filters[filter.rangeToFieldName])) {
       const rangeTmp = [];
       if (filters[filter.rangeFromFieldName]) {
-        rangeTmp.push(`${modelAlias}.${filter.varName} >= ${buildWhereValueString(filter.type, filters[filter.rangeFromFieldName])}`);
+        rangeTmp.push(
+          `${modelAlias}.${filter.varName} >= ${buildWhereValueString(
+            filter.type,
+            filters[filter.rangeFromFieldName],
+          )}`,
+        );
       }
 
       if (filters[filter.rangeToFieldName]) {
-        rangeTmp.push(`${modelAlias}.${filter.varName} <= ${buildWhereValueString(filter.type, filters[filter.rangeToFieldName])}`);
+        rangeTmp.push(
+          `${modelAlias}.${filter.varName} <= ${buildWhereValueString(filter.type, filters[filter.rangeToFieldName])}`,
+        );
       }
 
       // as there's 2 fields in the range, it will run twice, so we need to make sure we don't add the same range twice
@@ -144,13 +155,17 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
 
     // Arrays can only use exact type filters, can't match partials in an array
     if (Array.isArray(filters[key]) && filter.filterType === 'exact') {
-      where.push(`${modelAlias}.${key} IN [${filters[key].map((value: any) => buildWhereValueString(filter.type, value)).join(',')}]`);
+      where.push(
+        `${modelAlias}.${key} IN [${filters[key]
+          .map((value: any) => buildWhereValueString(filter.type, value))
+          .join(',')}]`,
+      );
       continue;
     }
 
     // For partial matches we need to break down the array and create a query for each value
     if (Array.isArray(filters[key]) && filter.filterType === 'partial') {
-      const tmp = []
+      const tmp = [];
       filters[key].forEach((value: any) => {
         tmp.push(`${modelAlias}.${key} =~ '(?i).*${value}.*'`);
       });
@@ -161,8 +176,7 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
     // Need to check if the filter belongs to another model. In that case we need a secondary filter to be applied to the setupRelationShipsQuery function
     let optionalBooleanQuery = '';
 
-
-    if (filter.type === 'boolean' && filter.booleanOrNull && (filters[key] === false || filters[key] === 'false') ) {
+    if (filter.type === 'boolean' && filter.booleanOrNull && (filters[key] === false || filters[key] === 'false')) {
       optionalBooleanQuery = ` OR ${modelAlias}.${key} IS NULL`;
     }
     let exactMatchOperator = '=';
@@ -178,26 +192,30 @@ export function extractQueryParamsFilters(params: IPaginatedQueryParams, model: 
         break;
     }
 
-    const whereQuery = (filter.filterType === 'partial') ? `${modelAlias}.${key} =~ '(?i).*${filters[key]}.*'` : `${modelAlias}.${key} ${exactMatchOperator} ${buildWhereValueString(filter.type, filters[key])} ${optionalBooleanQuery}`;
+    const whereQuery =
+      filter.filterType === 'partial'
+        ? `${modelAlias}.${key} =~ '(?i).*${filters[key]}.*'`
+        : `${modelAlias}.${key} ${exactMatchOperator} ${buildWhereValueString(
+          filter.type,
+          filters[key],
+        )} ${optionalBooleanQuery}`;
 
     where.push(whereQuery);
-
-
-
   }
-
-
-
 
   return { filters, orderBy, way, skip, limit, page, relationships, where };
 }
 
-
-export function setupRelationShipsQuery(model: typeof BaseModel, params: IGenericObject = {}, relationships: any, filters: any = {}) {
+export function setupRelationShipsQuery(
+  model: typeof BaseModel,
+  params: IGenericObject = {},
+  relationships: any,
+  filters: any = {},
+) {
   const modelConfig = model.modelConfig;
   const modelAlias = modelConfig.as;
   const matches: string[] = [];
-  const searchFields: string[] = (params.searchIn) ? params.searchIn : [];
+  const searchFields: string[] = params.searchIn ? params.searchIn : [];
   let returnVars: string[] = [`distinct ${modelAlias}`];
   const returnAliases: string[] = [modelAlias];
   /**
@@ -214,7 +232,7 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
 
   if (params.orderBy) {
     orderByFound = model.isFieldSortable(params.orderBy, model.fields);
-    orderBy = (orderByFound) ? `${modelConfig.as}.${params.orderBy}` : orderBy;
+    orderBy = orderByFound ? `${modelConfig.as}.${params.orderBy}` : orderBy;
   }
 
   // Try out a count orderBy
@@ -231,18 +249,25 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
   if (modelRelationships.length > 0) {
     modelRelationships.forEach((r: string) => {
       let filterField: IQueryBuilderFieldBlueprint;
-      if (modelRelationships.indexOf(r) === -1) { return; }
-      if (relationships.indexOf(r) === -1 && !params[r]) { return; } // In case we have a query for a relationship, but we don't need the data
+      if (modelRelationships.indexOf(r) === -1) {
+        return;
+      }
+      if (relationships.indexOf(r) === -1 && !params[r]) {
+        return;
+      } // In case we have a query for a relationship, but we don't need the data
       const relationshipModel = model.modelConfig.relationships[r];
-      if (!relationshipModel || !modelConfig.relationships || !modelConfig.relationships[r]) { return; }
+      if (!relationshipModel || !modelConfig.relationships || !modelConfig.relationships[r]) {
+        return;
+      }
       if (!orderByFound && relationshipModel.isSortable && relationshipModel.modelAlias === params.orderBy) {
-        orderBy = (relationshipModel.isCount) ? params.orderBy :
-          `${relationshipModel.modelAlias}.${relationshipModel.orderByKey || params.orderBy}`;
+        orderBy = relationshipModel.isCount
+          ? params.orderBy
+          : `${relationshipModel.modelAlias}.${relationshipModel.orderByKey || params.orderBy}`;
         // look into relationships
         orderByFound = true;
       }
-      const fromRel = (relationshipModel.type === 'normal') ? '-' : '<-';
-      const toRel = (relationshipModel.type === 'normal') ? '->' : '-';
+      const fromRel = relationshipModel.type === 'normal' ? '-' : '<-';
+      const toRel = relationshipModel.type === 'normal' ? '->' : '-';
 
       let whereQuery = '';
 
@@ -262,12 +287,14 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
         if (!filterField) {
           // Lets check if we can find it in the location model
           const fallBackIdx = findIndex(LocationModel.filterFields, { varName: r });
-          if (fallBackIdx === -1) { return; }
+          if (fallBackIdx === -1) {
+            return;
+          }
           filterField = LocationModel.filterFields[fallBackIdx];
         }
 
         whereQuery = ' WHERE ';
-        let filterKey = (filterField && filterField.filterField) ? filterField.filterField : r;
+        let filterKey = filterField && filterField.filterField ? filterField.filterField : r;
         // As a secondary check, lets check if we have a request to swap filterField keys
         if (params.swapFilterFields && params.swapFilterFields[relationshipModel.modelAlias]) {
           filterKey = params.swapFilterFields[relationshipModel.modelAlias].filterField;
@@ -278,19 +305,32 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
           // Need to add an IN in case the value is an array
           if (Array.isArray(filters[r])) {
             if (filterField.filterType === 'exact') {
-              whereQuery += `${relationshipModel.modelAlias}.${filterKey} IN [${filters[r].map((value: any) => `'${value}'`).join(',')}]`;
+              whereQuery += `${relationshipModel.modelAlias}.${filterKey} IN [${filters[r]
+                .map((value: any) => `'${value}'`)
+                .join(',')}]`;
             } else {
-              whereQuery += filters[r].map((value: any) => `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${value}.*'`).join(' OR ');
+              whereQuery += filters[r]
+                .map((value: any) => `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${value}.*'`)
+                .join(' OR ');
             }
-          }
-          else if (filterField.isRange) {
+          } else if (filterField.isRange) {
             const rangeTmp = [];
             const parts = filters[r].split('::');
             if (parts[0]) {
-              rangeTmp.push(`${relationshipModel.modelAlias}.${filterField.filterField} >= ${buildWhereValueString(filterField.type, parts[0])}`);
+              rangeTmp.push(
+                `${relationshipModel.modelAlias}.${filterField.filterField} >= ${buildWhereValueString(
+                  filterField.type,
+                  parts[0],
+                )}`,
+              );
             }
             if (parts[1]) {
-              rangeTmp.push(`${relationshipModel.modelAlias}.${filterField.filterField} <= ${buildWhereValueString(filterField.type, parts[1])}`);
+              rangeTmp.push(
+                `${relationshipModel.modelAlias}.${filterField.filterField} <= ${buildWhereValueString(
+                  filterField.type,
+                  parts[1],
+                )}`,
+              );
             }
             whereQuery += rangeTmp.join(' AND ');
           }
@@ -309,40 +349,46 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
                 break;
             }
 
-
-            whereQuery += (filterField.filterType === 'partial') ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'` : `${relationshipModel.modelAlias}.${filterKey} ${exactMatchOperator} ${buildWhereValueString(filterField.type, filters[r])}`;
-
+            whereQuery +=
+              filterField.filterType === 'partial'
+                ? `${relationshipModel.modelAlias}.${filterKey} =~ '(?i).*${filters[r]}.*'`
+                : `${relationshipModel.modelAlias}.${filterKey} ${exactMatchOperator} ${buildWhereValueString(
+                  filterField.type,
+                  filters[r],
+                )}`;
           }
 
-          optionalQuery = '';// We can't have a where and an optional together
+          optionalQuery = ''; // We can't have a where and an optional together
         }
-
       }
-      const modelAliasQuery = (relationshipModel.exactAliasQuery) ? `${relationshipModel.modelAlias}:${relationshipModel.model}` : `${relationshipModel.modelAlias}`;
+      const modelAliasQuery = relationshipModel.exactAliasQuery
+        ? `${relationshipModel.modelAlias}:${relationshipModel.model}`
+        : `${relationshipModel.modelAlias}`;
 
-      matches.push(`${optionalQuery} MATCH (${modelAlias})${fromRel}[${modelConfig.relationships[r].alias}:${modelConfig.relationships[r].rel}]${toRel}(${modelAliasQuery}) ${whereQuery}`);
+      matches.push(
+        `${optionalQuery} MATCH (${modelAlias})${fromRel}[${modelConfig.relationships[r].alias}:${modelConfig.relationships[r].rel}]${toRel}(${modelAliasQuery}) ${whereQuery}`,
+      );
       if (relationshipModel.isCount) {
         returnVars.push(`count(distinct ${relationshipModel.modelAlias}) as ${relationshipModel.modelAlias}`);
-      }
-      else if (relationshipModel.isCollection) {
-        (relationshipModel.addRelationshipData)
-          ? returnVars.push(`collect(distinct {model: ${relationshipModel.modelAlias}, relationship: ${relationshipModel.alias}}) as ${relationshipModel.modelAlias}`)
+      } else if (relationshipModel.isCollection) {
+        relationshipModel.addRelationshipData
+          ? returnVars.push(`
+            CASE
+                WHEN any(x IN collect(distinct ${relationshipModel.modelAlias}) WHERE x IS NOT NULL)
+                THEN collect(distinct {model: ${relationshipModel.modelAlias}, relationship: ${relationshipModel.alias}})
+                ELSE []
+            END as ${relationshipModel.modelAlias}
+        `)
           : returnVars.push(`collect(distinct ${relationshipModel.modelAlias}) as ${relationshipModel.modelAlias}`);
-      }
-      else {
+      } else {
         if (filterField && filterField.doNotReturnValues && relationships.indexOf(r) === -1) {
           // we really don't need to add anything to the array. There's no relationship and we don't need the value
-        }
-         else {
+        } else {
           returnVars.push(relationshipModel.modelAlias);
         }
-
       }
 
-
-      returnAliases.push( relationshipModel.modelAlias);
-
-
+      returnAliases.push(relationshipModel.modelAlias);
 
       if (orderByCount) {
         const countFieldName = `${params.orderBy}Count`;
@@ -353,14 +399,15 @@ export function setupRelationShipsQuery(model: typeof BaseModel, params: IGeneri
     });
   }
 
-  returnVars = uniq(returnVars)
-  return { matches, returnVars, returnAliases, orderByFound, orderBy }
+  returnVars = uniq(returnVars);
+  return { matches, returnVars, returnAliases, orderByFound, orderBy };
 }
 
-
-export function buildWhereQueryFromFilter(filterName: string, filterValue: any, filters: IQueryBuilderFieldBlueprint[]) {
-
-}
+export function buildWhereQueryFromFilter(
+  filterName: string,
+  filterValue: any,
+  filters: IQueryBuilderFieldBlueprint[],
+) { }
 
 export function buildWhereValueString(type: string, value: any) {
   if (type === 'date') {
@@ -381,20 +428,24 @@ export function buildWhereValueString(type: string, value: any) {
 }
 
 export async function modelPostProcessing(record: Record<any, any>, model: typeof BaseModel) {
-  let relationshipKeys = Object.keys(model.modelConfig.relationships);
+  const relationshipKeys = Object.keys(model.modelConfig.relationships);
 
-  await Promise.all(relationshipKeys.map(async key => {
-    const rel = model.modelConfig.relationships[key];
-    if (!rel.postProcessing || typeof rel.postProcessing !== 'function') { return; }
+  await Promise.all(
+    relationshipKeys.map(async (key) => {
+      const rel = model.modelConfig.relationships[key];
+      if (!rel.postProcessing || typeof rel.postProcessing !== 'function') {
+        return;
+      }
 
-    record = await rel.postProcessing(record, model);
-  }));
+      record = await rel.postProcessing(record, model);
+    }),
+  );
 
   return record;
 }
 
 export async function modelsPostProcessing(records: Record<any, any>[], model: typeof BaseModel) {
-  for (let idx =0; idx < records.length; idx++) {
+  for (let idx = 0; idx < records.length; idx++) {
     records[idx] = await modelPostProcessing(records[idx], model);
   }
   return records;
