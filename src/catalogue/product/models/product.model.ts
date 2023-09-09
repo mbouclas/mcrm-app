@@ -19,6 +19,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
   public title: string;
+  public cartCondition: any[];
   public description: string;
   public price = 0;
   public slug;
@@ -31,7 +32,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     this.loadModelSettingsFromConfig();
   }
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = ['title', 'category'];
 

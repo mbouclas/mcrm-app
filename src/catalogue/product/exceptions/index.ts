@@ -54,3 +54,9 @@ export class FailedToAttach extends BaseHttpException {
     super(errors.FAILED_TO_ATTACH);
   }
 }
+
+export class FailedToManageCondition extends BaseHttpException {
+  constructor() {
+    super(errors.FAILED_TO_MANAGE_CONDITION);
+  }
+}

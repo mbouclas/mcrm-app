@@ -81,4 +81,11 @@ export default {
     code: 'PRODUCT.013',
     statusCode: 400,
   },
+
+  FAILED_TO_MANAGE_CONDITION: {
+    error: 'FAILED_TO_MANAGE_CONDITION',
+    reason: 'Failed to manage condition',
+    code: 'PRODUCT.014',
+    statusCode: 400,
+  },
 };

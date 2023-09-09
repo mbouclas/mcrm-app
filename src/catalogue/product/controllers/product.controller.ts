@@ -14,6 +14,7 @@ import {
   FailedToRelate,
   FailedToUpdateProductCategories,
   NotFound,
+  FailedToManageCondition,
 } from '../exceptions';
 import errors from '../exceptions/errors';
 import { z } from 'zod';
@@ -231,21 +232,21 @@ export class ProductController {
   @Post('/manage-cart-condition')
   async manageCartCondition(@Body() body: IGenericObject) {
     try {
-      for (const destinationUuid of body.destinationUuids) {
-        await new ProductService().findOne({ uuid: body.sourceUuid });
-        await new ConditionService().findOne({ uuid: destinationUuid });
+      const product = await new ProductService().findOne({ uuid: body.sourceUuid }, ['cartCondition']);
+      console.log(product);
 
-        if (body.type === 'attachCondition') {
-          await new ProductService().attachToModelById(body.sourceUuid, destinationUuid, 'cartCondition');
-        } else {
-          await new ProductService().detachFromModelById(body.sourceUuid, destinationUuid, 'cartCondition');
-        }
+      await new ConditionService().findOne({ uuid: body.destinationUuid });
+
+      if (body.type === 'attachCondition') {
+        const order = product?.cartCondition.length + 1;
+        await new ProductService().attachToModelById(body.sourceUuid, body.destinationUuid, 'cartCondition', { order });
+      } else {
+        await new ProductService().detachFromModelById(body.sourceUuid, body.destinationUuid, 'cartCondition');
       }
 
       return { success: true };
     } catch (e) {
-      console.log(e);
-      throw new FailedToRelate();
+      throw new FailedToManageCondition();
     }
   }
 }

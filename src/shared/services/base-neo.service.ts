@@ -595,14 +595,13 @@ export class BaseNeoService {
       ? ', '.concat(
           Object.keys(relationshipProps)
             .map((relProp) => {
-              const finalRelSelector = relSelector || relProp;
               let value = relationshipProps[relProp];
 
               if (typeof value === 'string') {
                 value = `"${value}"`;
               }
 
-              return ` ${relSelector}.${finalRelSelector} = ${value},`;
+              return ` ${relSelector}.${relProp} = ${value},`;
             })
             .join()
             .slice(0, -1),
