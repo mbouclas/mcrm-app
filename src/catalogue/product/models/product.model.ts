@@ -32,7 +32,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     this.loadModelSettingsFromConfig();
   }
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   public static displayedColumns = ['title', 'category'];
 
@@ -278,6 +278,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         defaultProperty: 'title',
+        addRelationshipData: true,
       },
     },
   };
