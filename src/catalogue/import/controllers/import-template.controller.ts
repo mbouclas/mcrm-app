@@ -1,16 +1,16 @@
 import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
-import { ManufacturerService } from '~catalogue/manufacturer/services/manufacturer.service';
+import { ImportTemplateService } from '~catalogue/import/services/import-template.service';
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { FailedCreate, FailedDelete, FailedUpdate, NotFound } from '../exceptions';
 
-@Controller('api/manufacturer')
-export class ManufacturerController {
+@Controller('api/import-template')
+export class ImportTemplateController {
   constructor() { }
 
   @Get('')
   async find(@Query() queryParams = {}) {
-    return await new ManufacturerService().find(
+    return await new ImportTemplateService().find(
       queryParams,
       Array.isArray(queryParams['with']) ? queryParams['with'] : [],
     );
@@ -21,7 +21,7 @@ export class ManufacturerController {
     try {
       const rels = queryParams['with'] ? queryParams['with'] : [];
 
-      return await new ManufacturerService().findOne({ uuid }, rels);
+      return await new ImportTemplateService().findOne({ uuid }, rels);
     } catch (e) {
       throw new NotFound();
     }
@@ -32,7 +32,7 @@ export class ManufacturerController {
     try {
       const userId = session.user && session.user['uuid'];
 
-      return await new ManufacturerService().delete(uuid, userId);
+      return await new ImportTemplateService().delete(uuid, userId);
     } catch (e) {
       throw new FailedDelete();
     }
@@ -40,9 +40,9 @@ export class ManufacturerController {
   @Post('')
   async create(@Body() body: IGenericObject) {
     try {
-      const manufacturer = await new ManufacturerService().store(body, null);
+      const importTemplate = await new ImportTemplateService().store(body, null);
 
-      return manufacturer;
+      return importTemplate;
     } catch (e) {
       throw new FailedCreate();
     }
@@ -51,7 +51,7 @@ export class ManufacturerController {
   @Patch(':uuid')
   async patch(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     try {
-      await new ManufacturerService().update(uuid, body, null);
+      await new ImportTemplateService().update(uuid, body, null);
 
       return { success: true };
     } catch (e) {
