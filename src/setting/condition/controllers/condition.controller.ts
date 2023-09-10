@@ -3,6 +3,18 @@ import { ConditionService } from '~setting/condition/services/condition.service'
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { FailedCreate, FailedUpdate, FailedDelete, NotFound } from '../exceptions';
+import { validateData } from '~helpers/validateData';
+import errors from '../exceptions/errors';
+import { z } from 'zod';
+
+const conditionSchema = z.object({
+  title: z
+    .string({
+      required_error: errors.TITLE_REQUIRED.code,
+      invalid_type_error: errors.TITLE_REQUIRED.code,
+    })
+    .min(1, errors.TITLE_REQUIRED.code),
+});
 
 @Controller('api/condition')
 export class ConditionController {
@@ -40,6 +52,7 @@ export class ConditionController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
+    await validateData(conditionSchema, body);
     try {
       const rels = [];
 
