@@ -10,6 +10,7 @@ import { CsvProcessorService } from '~catalogue/import/services/csv-processor.se
 import { PropertiesService } from '~catalogue/import/services/properties.service';
 import { ImportTemplateService } from './services/import-template.service';
 import { ImportProductPhotosService } from '~catalogue/import/services/import-product-photos.service';
+import { ImportTemplateModel } from './models/import-template.model';
 
 @Module({
   providers: [
@@ -20,6 +21,7 @@ import { ImportProductPhotosService } from '~catalogue/import/services/import-pr
     CsvProcessorService,
     ImportTemplateService,
     ImportProductPhotosService,
+    ImportTemplateModel,
   ],
   imports: [
     MulterModule.registerAsync({
