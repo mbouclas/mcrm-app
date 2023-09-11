@@ -18,7 +18,7 @@ const conditionSchema = z.object({
 
 @Controller('api/condition')
 export class ConditionController {
-  constructor() { }
+  constructor() {}
 
   @Get('')
   async find(@Query() queryParams = {}) {
@@ -52,7 +52,7 @@ export class ConditionController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
-    await validateData(conditionSchema, body);
+    await validateData(body, conditionSchema);
     try {
       const rels = [];
 
