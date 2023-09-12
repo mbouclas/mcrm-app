@@ -74,5 +74,13 @@ export class ImportTemplateModel extends BaseModel {
       type: 'json',
       group: 'main',
     },
+
+    {
+      varName: 'settings',
+      label: 'Settings',
+      placeholder: 'Settings',
+      type: 'json',
+      group: 'main',
+    },
   ];
 }
