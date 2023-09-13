@@ -22,6 +22,18 @@ export class CartItem implements ICartItem {
         this[key] = args[key];
       }
     }
+
+    if (Array.isArray(this.conditions) && this.conditions.length > 0) {
+      this.conditions = this.conditions.map(c => {
+        if (c instanceof Condition) {
+          return c;
+        }
+
+        return new Condition(c);
+      });
+    } {
+
+    }
   }
 
   public getPriceSum(): number {

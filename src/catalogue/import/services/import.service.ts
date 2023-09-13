@@ -10,13 +10,14 @@ import { PropertyService } from '~catalogue/property/services/property.service';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { store } from '~root/state';
 import { CacheService } from '~shared/services/cache.service';
-import { IImportProcessorFieldMap } from '~catalogue/import/services/base-processor';
+import { IBaseTransformerSchema, IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { PropertyValueModel } from '~catalogue/property/models/property-value.model';
 import { ImageService } from '~image/image.service';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SharedModule } from '~shared/shared.module';
 import { ImportProductPhotosService } from '~catalogue/import/services/import-product-photos.service';
+import { IBaseProcessorResult } from "~catalogue/import/services/base-import.service";
 
 const slugify = require('slug');
 
@@ -26,7 +27,7 @@ export interface ITransformerResult<T> {
   invalidFields: IInvalidField[];
 }
 
-export interface IImportSchema {
+export interface IImportSchema extends IBaseTransformerSchema {
   title: string;
   sku: string;
   description: string;
@@ -47,7 +48,7 @@ export interface IInvalidField {
   }[];
 }
 
-export interface IProcessorResult {
+export interface IProcessorResult extends IBaseProcessorResult {
   data: IImportSchema[];
   isInvalid: boolean;
   invalidRows: IInvalidField[];

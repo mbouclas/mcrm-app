@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { BaseModel, INeo4jModel } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
+import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 
 const modelName = 'ImportTemplate';
 @McmsDi({
@@ -12,6 +13,12 @@ const modelName = 'ImportTemplate';
 export class ImportTemplateModel extends BaseModel {
   public modelName = modelName;
   public static modelName = modelName;
+
+  public fieldMap: IImportProcessorFieldMap[] = [];
+  public processor: string;
+  public description: string;
+  public name: string;
+  public type: string;
 
   constructor() {
     super();

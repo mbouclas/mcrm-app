@@ -2,7 +2,7 @@ import { findIndex } from "lodash";
 import {Container} from "typedi";
 import { IGenericObject } from "../models/general";
 import { BaseModel } from "../models/base.model";
-import { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
+
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;

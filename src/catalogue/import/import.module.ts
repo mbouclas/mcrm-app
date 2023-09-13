@@ -11,6 +11,10 @@ import { PropertiesService } from '~catalogue/import/services/properties.service
 import { ImportTemplateService } from './services/import-template.service';
 import { ImportProductPhotosService } from '~catalogue/import/services/import-product-photos.service';
 import { ImportTemplateModel } from './models/import-template.model';
+import { ChangeProductStatusTemplateService } from "~catalogue/import/templates/change-product-status-template.service";
+import {
+  ChangeProductVariantStatusTemplate
+} from "~catalogue/import/templates/change-product-variant-status-template.service";
 
 @Module({
   providers: [
@@ -22,6 +26,8 @@ import { ImportTemplateModel } from './models/import-template.model';
     ImportTemplateService,
     ImportProductPhotosService,
     ImportTemplateModel,
+    ChangeProductStatusTemplateService,
+    ChangeProductVariantStatusTemplate,
   ],
   imports: [
     MulterModule.registerAsync({

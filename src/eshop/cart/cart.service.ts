@@ -177,7 +177,7 @@ export class CartService extends BaseNeoService {
     let product, thumb, sku, slug;
 
     try {
-      product = await new ProductService().findOne({ uuid: id }, ['variants']);
+      product = await new ProductService().findOne({ uuid: id }, ['variants', 'cartCondition']);
       thumb = typeof product.thumb === 'string' ? product.thumb : product?.thumb?.url || '';
       sku = product.sku;
       slug = product.slug;
@@ -204,6 +204,7 @@ export class CartService extends BaseNeoService {
       metaData,
       title: product.title,
       thumb,
+      conditions: (Array.isArray(product.cartCondition) && product.cartCondition.length > 0) ? product.cartCondition.map(c => new Condition(c)) : undefined,
     };
   }
 
@@ -219,6 +220,7 @@ export class CartService extends BaseNeoService {
       ...{
         items: JSON.stringify(cart.items),
         appliedConditions: JSON.stringify(cart.appliedConditions),
+        conditions: JSON.stringify(cart.conditions),
         metaData: JSON.stringify(cart.metaData),
         couponApplied: JSON.stringify(cart.couponApplied),
       },

@@ -6,12 +6,42 @@ import {resolve} from 'path';
 import { stat } from "fs/promises";
 import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
 import { HttpService } from "@nestjs/axios";
+import { IsNotEmpty } from "class-validator";
+import { ImportTemplateService } from "~catalogue/import/services/import-template.service";
+import { McmsDiContainer } from "~helpers/mcms-component.decorator";
+import { capitalize } from "lodash";
+import { BaseImportService } from "~catalogue/import/services/base-import.service";
+import { ImportTemplateRegistry } from "~catalogue/import/decorators/import-template-registry.decorator";
 
 export class AnalyzerQueryParamsDTO {
-  template?: string;
+  template: string;
 }
+
+class ValidateUploadedFileDTO {
+  @IsNotEmpty()
+  template: string;
+}
+
 @Controller('api/import')
 export class ImportController {
+
+  @Post('validate')
+  @UseInterceptors(FileInterceptor('file'))
+  async validateUploadedFile(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO ) {
+
+    const container = ImportTemplateRegistry.get({id: queryParams.template});
+
+    if (!container) {
+      throw new Error(`Could not find container for ${queryParams.template}`);
+    }
+
+
+    const handler = new container.reference() as BaseImportService;
+
+    const res = await handler.analyze(file);
+    return {...res, file : { filename: file.filename, mimetype: file.mimetype }, fieldMap: handler.processor.getFieldMap(), ...{data: res.data.slice(0, 10)}};
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
@@ -34,7 +64,7 @@ export class ImportController {
 
   @Post('analyze')
   @UseInterceptors(FileInterceptor('file'))
-  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
+  async analyzeUploadedFile(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO) {
     if (queryParams.template) {
       //Get the template and load it into the import service
     }
@@ -53,7 +83,7 @@ export class ImportController {
    */
   @Post('photos/analyze')
   @UseInterceptors(FileInterceptor('file'))
-  async analyzePhotos(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO = {}) {
+  async analyzePhotos(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO) {
     const res = await (new ImportProductPhotosService(new HttpService())).analyze(file, limit);
     return res;
   }

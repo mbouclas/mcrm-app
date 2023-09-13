@@ -42,3 +42,4 @@ src/submodules/*
 client-configs/*.js
 client-configs/*.json
 client-configs/*.ts
+client-code/**/*.ts

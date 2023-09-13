@@ -51,3 +51,34 @@ function checkExtension(file: string, ext: string|string[]) {
 
     return isValid;
 }
+
+interface IFileFolder {
+    path: string;
+    type: 'file' | 'directory';
+}
+
+function shouldBeExcluded(filePath: string, excludedFileTypes: string[]) {
+    return excludedFileTypes.some((type) => filePath.endsWith("." + type));
+}
+
+export function readFilesRecursively(rootPath: string, excludedFileTypes: string[]): IFileFolder[] {
+    let result: IFileFolder[] = [];
+
+    if (!fs.existsSync(rootPath)) {
+        return result;
+    }
+
+    fs.readdirSync(rootPath).forEach(item => {
+        const itemPath = path.join(rootPath, item);
+        const stat = fs.statSync(itemPath);
+
+        if (stat.isDirectory()) {
+            result.push({ path: itemPath, type: 'directory' });
+            result = result.concat(readFilesRecursively(itemPath, excludedFileTypes));
+        } else if (stat.isFile() && !shouldBeExcluded(itemPath, excludedFileTypes)) {
+            result.push({ path: itemPath, type: 'file' });
+        }
+    });
+
+    return result;
+}
