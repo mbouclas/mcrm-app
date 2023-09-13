@@ -5,7 +5,7 @@ import { ICoupon } from '~eshop/cart/coupon.service';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { v4 } from 'uuid';
 import { IBaseFilter, IGenericObject } from '~models/general';
-import { Condition } from '~eshop/cart/Condition';
+import { Condition, IConditionArgsConfig } from "~eshop/cart/Condition";
 import { find, findIndex, isEqual } from 'lodash';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { SharedModule } from '~shared/shared.module';
@@ -46,7 +46,7 @@ export class Cart implements OnModuleInit, ICart {
   public appliedConditions: Condition[] = [];
   public couponApplied: ICoupon = {};
   public cartService: CartService;
-  protected jsonFields = ['couponApplied', 'items', 'metaData', 'appliedConditions'];
+  protected jsonFields = ['couponApplied', 'items', 'metaData', 'appliedConditions', 'conditions'];
   protected settingsDefaults: ICartSettings = {
     formatNumbers: false,
     decimals: 2,
@@ -123,10 +123,9 @@ export class Cart implements OnModuleInit, ICart {
       found.quantity = item.quantity;
     }
 
-    console.log(333333333)
 
-    this.updateTotals();
     this.count();
+    this.updateTotals();
 
     this.eventEmitter.emit(Cart.itemAddedEventName, {
       item,
@@ -156,7 +155,8 @@ export class Cart implements OnModuleInit, ICart {
 
   public clear() {
     this.items = [];
-
+    this.conditions = [];
+    this.appliedConditions = [];
     this.updateTotals();
 
     this.eventEmitter.emit(Cart.cartClearedEventName, {
@@ -286,9 +286,19 @@ export class Cart implements OnModuleInit, ICart {
       subTotal: this.subTotal,
       vatRate: this.vatRate,
       metaData: this.metaData,
-      appliedConditions: this.appliedConditions,
+      appliedConditions: this.getAppliedConditions(),
       couponApplied: this.couponApplied,
     };
+  }
+
+  getAppliedConditions(): Condition[] {
+    return this.appliedConditions.map((c) => {
+      if (!(c instanceof Condition)) {
+        c = new Condition(c as IConditionArgsConfig);
+      }
+
+      return c;
+    });
   }
 
   public toJSON() {
@@ -310,8 +320,9 @@ export class Cart implements OnModuleInit, ICart {
     // get the conditions that are meant to be applied
     // on the subtotal and apply it here before returning the subtotal
     const conditions = this.getConditionsByTarget('subtotal');
-
+    this.resetAppliedConditionsByTarget('subtotal'); //reset so they will be properly filled
     // if there is no conditions, lets just return the sum
+    // console.log('----', this.itemsTotal())
     if (!conditions.length || conditions.length === 0) {
       return this.itemsTotal();
     }
@@ -332,6 +343,7 @@ export class Cart implements OnModuleInit, ICart {
       // if this is the first iteration, the toBeCalculated
       // should be the sum as initial point of value.
       let toBeCalculated = (process > 0) ? newTotal : this.sum();
+      // console.log('----', newTotal, toBeCalculated, process, cond.applyCondition(toBeCalculated))
       newTotal = cond.applyCondition(toBeCalculated);
       this.addAppliedCondition(cond);
       process++;
@@ -364,7 +376,7 @@ export class Cart implements OnModuleInit, ICart {
     newTotal = this.subTotal;
 
     const conditions = this.getConditionsByTarget('total');
-
+    this.resetAppliedConditionsByTarget('total'); //reset so they will be properly filled
     // if no conditions were added, just return the sub total
     if (!conditions.length || conditions.length === 0) {
       this.total = newTotal;
@@ -393,9 +405,12 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   protected addAppliedCondition(condition: Condition) {
-    const foundIdx = this.appliedConditions.findIndex((c) => c.name === condition.name);
+    const foundIdx = this.appliedConditions.findIndex((c) => c.uuid === condition.uuid);
+
     if (foundIdx === -1) {
       this.appliedConditions.push(condition);
+    } else {
+      this.appliedConditions[foundIdx] = condition;
     }
 
     return this;
@@ -428,16 +443,21 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   protected itemsTotal() {
+    this.items.forEach((item, idx) => {
+      if (!(item instanceof CartItem)) {
+        this.items[idx] = new CartItem(item);
+      }
+    });
+
     return this.items
       .map((item) => {
         let price = item.price;
-
+// console.log('*********', item.uuid, item.conditions)
         if (Array.isArray(item.conditions) && item.conditions.length > 0) {
-
           price = item.conditions.filter(cond => {
+
             if (cond.hasRules()) {
               const valid = cond.validateItemRules(item);
-
               if (!valid) {
                 return false;
               }
@@ -462,6 +482,9 @@ export class Cart implements OnModuleInit, ICart {
 
 
       this[key] = (typeof cart[key] === 'string') ? JSON.parse(cart[key]) : cart[key];
+      if (key === 'conditions') {
+        this.conditions = this.conditions.map((c) => new Condition(c as IConditionArgsConfig));
+      }
     });
   }
 
@@ -587,8 +610,14 @@ export class Cart implements OnModuleInit, ICart {
     return this.conditions;
   }
 
-  public getCondition(name: string): Condition {
-    return this.conditions.find((c => c.name === name));
+  public getCondition(filter: IGenericObject): Condition {
+    const {key, value} = extractSingleFilterFromObject(filter);
+    return this.conditions.find((c => c[key] === value));
+  }
+
+  public getConditionIdx (filter: IGenericObject): number {
+    const {key, value} = extractSingleFilterFromObject(filter);
+    return this.conditions.findIndex((c => c[key] === value));
   }
 
   public getConditionsByType(type: string): Condition[] {
@@ -596,7 +625,9 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public getConditionsByTarget(target: string): Condition[] {
-    return this.conditions.filter((c => c.getTarget() === target));
+    return this.conditions.filter((c => {
+      return c.getTarget() === target;
+    }));
   }
 
   public removeConditionsByType(type: string): Condition[] {
@@ -618,7 +649,7 @@ export class Cart implements OnModuleInit, ICart {
    */
   public removeCartCondition(condition: Condition): Condition {
     const conditions = this.getConditions();
-    const idx = conditions.findIndex((c) => c.name === condition.name);
+    const idx = conditions.findIndex((c) => c.title === condition.title);
     conditions.splice(idx, 1);
 
     return condition;
@@ -639,7 +670,7 @@ export class Cart implements OnModuleInit, ICart {
     }
 
     tempConditionsHolder.forEach((c, idx) => {
-      if (c.name === conditionName) {
+      if (c.title === conditionName) {
         tempConditionsHolder.splice(idx, 1);
       }
     });
@@ -680,9 +711,12 @@ export class Cart implements OnModuleInit, ICart {
   public sum() {
     let sum = 0;
     this.items.forEach((item) => {
+      if (Array.isArray(item.conditions) && item.conditions.length > 0) {
+        sum += item.conditions.map((c) => c.applyCondition(item.price)).reduce((pre, curr) => pre + curr, 0) * item.quantity;
+        return;
+      }
       sum += item.price * item.quantity;
     });
-
 
     return sum;
   }
@@ -712,6 +746,16 @@ export class Cart implements OnModuleInit, ICart {
     }
 
     const conditions = this.getConditions();
+
+    const foundIdx = this.getConditionIdx({uuid: condition.getId()});
+
+    // only add the condition 1 time
+    if (foundIdx > -1) {
+      this.conditions[foundIdx] = condition;
+      this.addAppliedCondition(condition);
+      return this.conditions;
+    }
+
     let last: Condition;
 
     if (condition.getOrder() === 0) {
@@ -732,4 +776,17 @@ export class Cart implements OnModuleInit, ICart {
     return this.conditions;
   }
 
+  /**
+   * remove conditions of this target from the array of applied conditions
+   * @param target
+   * @private
+   */
+  private resetAppliedConditionsByTarget(target: string) {
+    this.appliedConditions
+      .filter(c => c.target === target)
+      .forEach(c => {
+        const idx = this.appliedConditions.findIndex(co => co.uuid === c.uuid);
+        this.appliedConditions.splice(idx, 1)
+      });
+  }
 }

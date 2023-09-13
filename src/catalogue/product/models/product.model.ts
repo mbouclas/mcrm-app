@@ -278,6 +278,24 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
         addRelationshipData: true,
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.cartCondition || !Array.isArray(record.cartCondition) || record.cartCondition.length === 0) {
+            return record;
+          }
+
+            record.cartCondition = record.cartCondition
+              .map((condition) => ({
+                ...condition.model,
+                ...{
+                  order: condition.relationship.order,
+                  rules: JSON.parse(condition.model.rules),
+                  attributes: JSON.parse(condition.model.attributes),
+                },
+              }));
+
+            record.cartCondition = sortBy(record.cartCondition, 'order');
+            return record;
+        }
       },
     },
   };

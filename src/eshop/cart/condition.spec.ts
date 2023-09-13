@@ -95,7 +95,7 @@ export class ConditionSpec {
 
   itShouldInstantiate() {
     const condition = new Condition({
-      name: 'test',
+      title: 'test',
       type: 'tax',
       target: 'subtotal',
       value: '10',
@@ -115,7 +115,7 @@ export class ConditionSpec {
   async itShouldAddASingleCondition() {
     const cart = await createCart();
     const condition = new Condition({
-      name: "VAT 19%",
+      title: "VAT 19%",
       type: "tax",
       target: "subtotal",
       value: "19%",
@@ -129,7 +129,7 @@ export class ConditionSpec {
     // add the condition to the cart
     cart.condition(condition);
     cart.condition(new Condition({
-      name: 'Express Shipping $15',
+      title: 'Express Shipping $15',
       type: 'shipping',
       target: 'total',
       value: '+15',
@@ -165,7 +165,7 @@ export class ConditionSpec {
   async itShouldAddPerItemCondition() {
     const cart = await createCart();
     const itemCondition = new Condition({
-      name: 'SALE 5%',
+      title: 'SALE 5%',
       type: 'tax',
       target: 'item',
       value: '-5%',
@@ -187,14 +187,14 @@ export class ConditionSpec {
   async itShouldAddPerItemAndCartCondition() {
     const cart = await createCart();
     const itemCondition = new Condition({
-      name: 'SALE 5%',
+      title: 'SALE 5%',
       type: 'tax',
       target: 'item',
       value: '-5%',
     });
 
     cart.condition(new Condition({
-      name: 'Express Shipping $15',
+      title: 'Express Shipping $15',
       type: 'shipping',
       target: 'total',
       value: '+15',
@@ -220,7 +220,7 @@ export class ConditionSpec {
     const cart = await createCart();
 
     cart.condition(new Condition({
-      name: 'Express Shipping $15',
+      title: 'Express Shipping $15',
       type: 'shipping',
       target: 'total',
       value: '+15',
@@ -244,7 +244,7 @@ export class ConditionSpec {
     const cart = await createCart();
 
     const itemCondition = new Condition({
-      name: 'SALE 5%',
+      title: 'SALE 5%',
       type: 'tax',
       target: 'item',
       value: '-5%',
@@ -265,7 +265,7 @@ export class ConditionSpec {
     const cart = await createCart();
 
     const itemCondition = new Condition({
-      name: 'SALE 5%',
+      title: 'SALE 5%',
       type: 'tax',
       target: 'item',
       value: '-5%',
@@ -288,7 +288,7 @@ export class ConditionSpec {
   async itShouldAddConditionsToSubtotalAndTotal() {
     const cart = await createCart();
     cart.condition(new Condition({
-      name: 'Express Shipping $15',
+      title: 'Express Shipping $15',
       type: 'shipping',
       target: 'total',
       value: '+15',
@@ -296,7 +296,7 @@ export class ConditionSpec {
     }));
 
     cart.condition(new Condition({
-      name: 'test',
+      title: 'test',
       type: 'tax',
       target: 'subtotal',
       value: '+10',
@@ -318,7 +318,7 @@ export class ConditionSpec {
     }));
 
     cart.condition(new Condition({
-      name: 'test',
+      title: 'test',
       type: 'tax',
       target: 'total',
       value: '-50%',
@@ -356,7 +356,7 @@ export class ConditionSpec {
     cart.add({...cloneObject(cartItem), ...{quantity: 3,
       conditions: [
         new Condition({
-          name: 'test',
+          title: 'test',
           type: 'tax',
           target: 'total',
           value: '-50%',
@@ -389,7 +389,7 @@ export class ConditionSpec {
 
     cart.add({...cloneObject(cartItem), ...{quantity: 3,}});
     const coupon = new Condition({
-      name: 'COUPON 101',
+      title: 'COUPON 101',
       type: 'coupon',
       value: '-5%',
       target: 'price',
@@ -407,7 +407,7 @@ export class ConditionSpec {
     const cart = await createCart();
 
     const coupon = new Condition({
-      name: 'COUPON 101',
+      title: 'COUPON 101',
       type: 'coupon',
       value: '-5%',
       target: 'subtotal',

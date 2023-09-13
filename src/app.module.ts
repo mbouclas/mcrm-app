@@ -41,6 +41,8 @@ import { SyncModule } from './sync/sync.module';
 import { ClientModule } from './client/client.module';
 import { ObjectStorageModule } from './object-storage/object-storage.module';
 import { FilesModule } from './files/files.module';
+import { ClientCodeModule } from "~root/client-code/client-code.module";
+
 const Lang = require('mcms-node-localization');
 export let Translate;
 export const Test = { token: null };
@@ -54,6 +56,7 @@ export const Test = { token: null };
       verboseMemoryLeak: true,
       maxListeners: 50,
     }),
+
     SharedModule,
     SettingModule,
     LoggerModule,
@@ -80,6 +83,7 @@ export const Test = { token: null };
     ClientModule,
     ObjectStorageModule,
     FilesModule,
+    ClientCodeModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],

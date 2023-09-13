@@ -170,7 +170,7 @@ describe('OrderService', () => {
     customerPaymentMethodService = module.get<CustomerPaymentMethodService>(CustomerPaymentMethodService);
     customerPaymentMethodService.setModel(store.getState().models['CustomerPaymentMethod']);
 
-    new PickUpProvider();
+
   });
 
   it('should be defined', () => {

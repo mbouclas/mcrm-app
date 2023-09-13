@@ -2,6 +2,9 @@ import { Controller, Get, Put, Post, Session, Body, Delete, Param, Patch, Req } 
 import { CartService, ICartItem } from "~eshop/cart/cart.service";
 import { IGenericObject } from '~models/general';
 import { ISessionData } from "~shared/models/session.model";
+import { ConditionService } from "~setting/condition/services/condition.service";
+import { Condition, IConditionArgsConfig } from "~eshop/cart/Condition";
+
 
 export class AddToCartDto {
   id: string;
@@ -20,10 +23,18 @@ export class ManageCartDto {
 @Controller('cart')
 export class CartController {
   constructor(protected cartService: CartService) {}
+  async onApplicationBootstrap() {
+
+  }
 
   @Get('get')
   async get(@Req() req: any, @Session() session: ISessionData) {
+    // check if there's any conditions to apply
+    const conditions = await new ConditionService().find({target: ['total', 'subtotal', 'numberOfItems'], active: true});
 
+    for (const condition of conditions.data) {
+      session.cart.condition(new Condition(condition as unknown as IConditionArgsConfig));
+    }
     return session.cart.toObject();
   }
 
@@ -31,6 +42,13 @@ export class CartController {
   async addToCart(@Req() req: any, @Body() item: AddToCartDto, @Session() session: ISessionData) {
     const userId = session.user && session.user['uuid'];
     let cartItem;
+
+    // check if there's any conditions to apply
+    const conditions = await new ConditionService().find({target: ['total', 'subtotal', 'numberOfItems'], active: true});
+
+    for (const condition of conditions.data) {
+      session.cart.condition(new Condition(condition as unknown as IConditionArgsConfig));
+    }
 
     try {
       cartItem = await this.cartService.createCartItemFromProductId(

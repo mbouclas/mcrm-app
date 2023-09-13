@@ -5,7 +5,7 @@ import { ElasticSearchModule } from "~es/elastic-search.module";
 import { HttpModule } from "@nestjs/axios";
 import { ModelSchematic } from "./schematics/model/model.schematic";
 import { ServiceSchematic } from "~shared/schematics/service/service.schematic";
-import { ModuleRef } from "@nestjs/core";
+import { LazyModuleLoader, ModuleRef } from "@nestjs/core";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { LocationModel } from "~shared/models/location.model";
 import { EventEmitter2 } from "@nestjs/event-emitter";
@@ -68,11 +68,14 @@ export enum SharedEventNames {
 export class SharedModule implements OnModuleInit {
   static eventEmitter: EventEmitter2;
   static moduleRef: ModuleRef;
+  static lazyModuleLoader: LazyModuleLoader;
   constructor(
     private m: ModuleRef,
+    private lazyModuleLoader: LazyModuleLoader,
 
   ) {
     SharedModule.eventEmitter = AppModule.eventEmitter;
+    SharedModule.lazyModuleLoader = lazyModuleLoader;
   }
 
   onModuleInit(): any {

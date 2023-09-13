@@ -18,6 +18,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "~clientCode/*": ["client-code/*"],
       "~root/*": ["src/*"],
       "~cli/*": ["src/cli/*"],
       "~shared/*": ["src/shared/*"],

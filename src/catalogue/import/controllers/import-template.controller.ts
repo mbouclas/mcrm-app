@@ -1,8 +1,10 @@
 import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
 import { ImportTemplateService } from '~catalogue/import/services/import-template.service';
-import { IGenericObject } from '~models/general';
+import { IGenericObject, IPagination } from "~models/general";
 import { SessionData } from 'express-session';
 import { FailedCreate, FailedDelete, FailedUpdate, NotFound } from '../exceptions';
+import { ImportTemplateRegistry } from "~catalogue/import/decorators/import-template-registry.decorator";
+import { ImportTemplateModel } from "~catalogue/import/models/import-template.model";
 
 @Controller('api/import-template')
 export class ImportTemplateController {
@@ -10,10 +12,9 @@ export class ImportTemplateController {
 
   @Get('')
   async find(@Query() queryParams = {}) {
-    return await new ImportTemplateService().find(
-      queryParams,
-      Array.isArray(queryParams['with']) ? queryParams['with'] : [],
-    );
+
+      return ImportTemplateRegistry.all();
+
   }
 
   @Get(':uuid')

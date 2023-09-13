@@ -1,9 +1,9 @@
-import { BaseProcessorService } from "~catalogue/import/services/base-processor";
+import { BaseProcessorService, IBaseTransformerSchema } from "~catalogue/import/services/base-processor";
 import { IInvalidField, IProcessorResult, ITransformerResult } from "~catalogue/import/services/import.service";
 import { createReadStream, existsSync } from "fs";
 import slug from "slug";
 const csv = require('csv-parser');
-export interface IPhotosImportSchema {
+export interface IPhotosImportSchema extends IBaseTransformerSchema {
   variantId?: string;
   productId?: string;
   image: string;

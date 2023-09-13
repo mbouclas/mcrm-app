@@ -81,5 +81,21 @@ export class CartModel extends BaseModel implements OnModuleInit {
       isSortable: false,
       group: 'hidden',
     },
+    {
+      varName: 'conditions',
+      label: 'Conditions',
+      placeholder: 'Conditions',
+      type: 'json',
+      isSortable: false,
+      group: 'hidden',
+    },
+    {
+      varName: 'appliedConditions',
+      label: 'Applied Conditions',
+      placeholder: 'Applied Conditions',
+      type: 'json',
+      isSortable: false,
+      group: 'hidden',
+    },
   ];
 }

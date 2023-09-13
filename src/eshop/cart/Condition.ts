@@ -1,6 +1,6 @@
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Injectable } from "@nestjs/common";
-import { z } from 'zod';
+import {  z } from "zod";
 import {Helpers} from "~eshop/cart/helpers/helpers";
 import { IGenericObject } from "~models/general";
 import { ConditionRule } from "~eshop/cart/ConditionRule";
@@ -8,7 +8,8 @@ import { Cart } from "~eshop/cart/Cart";
 import { CartItem } from "~eshop/cart/CartItem";
 
 export interface IConditionArgsConfig {
-  name: string;
+  uuid?: string;
+  title: string;
   type: 'tax'|'shipping'|'coupon';
   target: 'subtotal'|'price'|'total'|'quantity'|'numberOfItems'|'item';
   value: string;
@@ -24,16 +25,40 @@ export interface IConditionArgsConfig {
 @Injectable()
 export class Condition {
   public parsedRawValue: any; //the parsed raw value of the condition
-  public name: string;
+  public uuid: string;
+  public title: string;
   public type: string;
   public target: string;
   public value: string;
   public order: number;
   public rules: ConditionRule[] = [];
+  public parsedRawValueType: {type: string, operator: string} = {type: "fixed", operator: "add" };
   public attributes: IGenericObject = {};
 
   constructor(protected args: IConditionArgsConfig) {
+    if (args.rules) {
+      this.rules = args.rules.map((rule) => {
+        if (rule instanceof ConditionRule) {
+          return rule;
+        }
+
+        return new ConditionRule(rule);
+      });
+    }
     this.validate(args);
+  }
+
+  protected validationRules() {
+    return z.object({
+      title: z.string().min(1, 'Name is required'),
+      kind: z.string().min(1, 'Type is required'),
+      value: z.string().min(1, 'Value is required'),
+      target: z.string().min(1, 'Target is required'),
+    });
+  }
+
+  getId(): string {
+    return this.args['uuid'];
   }
 
   getTarget(): string {
@@ -41,7 +66,7 @@ export class Condition {
   }
 
   getName(): string {
-    return this.args['name'];
+    return this.args['title'];
   }
 
   getType(): string {
@@ -68,15 +93,26 @@ export class Condition {
     return this.apply(totalOrSubTotalOrPrice, this.getValue());
   }
 
-  public hasRules() {
+  /**
+   * Checks if the object has rules defined.
+   *
+   * @return {boolean} - Returns true if the object has rules, false otherwise.
+   */
+  public hasRules(): boolean {
     return (Array.isArray(this.rules) && this.rules.length > 0);
   }
 
-  public validateCartRules(cart: Cart) {
+  /**
+   * Validates the cart rules.
+   *
+   * @param {Cart} cart - The cart to be validated.
+   * @return {boolean} - `true` if all cart rules are valid, `false` otherwise.
+   */
+  public validateCartRules(cart: Cart): boolean {
     let isValid = true;
 
     for (let i = 0; i < this.rules.length; i++) {
-      const rule = this.rules[i];
+      const rule = (!(this.rules[i] instanceof ConditionRule)) ? new ConditionRule(this.rules[i]) : this.rules[i];
       // if the rule is valid
 
       if (!rule.validate(typeof rule.field === 'function' ? rule.field(cart) : cart[rule.field])) {
@@ -87,7 +123,13 @@ export class Condition {
     return isValid;
   }
 
-  public validateItemRules(item: CartItem) {
+  /**
+   * Validates the item rules based on the provided CartItem object.
+   *
+   * @param {CartItem} item - The CartItem object to validate.
+   * @return {boolean} - True if all rules are valid, otherwise false.
+   */
+  public validateItemRules(item: CartItem): boolean {
     let isValid = true;
 
     for (let i = 0; i < this.rules.length; i++) {
@@ -122,16 +164,19 @@ export class Condition {
         const value = Helpers.normalizePrice(this.cleanValue(conditionValue));
         this.parsedRawValue = totalOrSubTotalOrPrice * (value / 100);
         result = totalOrSubTotalOrPrice - this.parsedRawValue;
+        this.parsedRawValueType = {type: "percentage", operator: "subtract" };
       }
       else if (this.valueIsToBeAdded(conditionValue)) {
         const value = Helpers.normalizePrice(this.cleanValue(conditionValue));
         this.parsedRawValue = totalOrSubTotalOrPrice * (value / 100);
         result = totalOrSubTotalOrPrice + this.parsedRawValue;
+        this.parsedRawValueType = {type: "percentage", operator: "add" };
       }
       else {
         const value = Helpers.normalizePrice(conditionValue);
         this.parsedRawValue = totalOrSubTotalOrPrice * (value / 100);
         result = totalOrSubTotalOrPrice + this.parsedRawValue;
+        this.parsedRawValueType = {type: "percentage", operator: "add" };
       }
     }
 
@@ -140,14 +185,17 @@ export class Condition {
       if (this.valueIsToBeSubtracted(conditionValue)) {
         this.parsedRawValue = Helpers.normalizePrice(this.cleanValue(conditionValue));
         result = totalOrSubTotalOrPrice - this.parsedRawValue;
+        this.parsedRawValueType = {type: "fixed", operator: "subtract" };
       }
       else if (this.valueIsToBeAdded(conditionValue)) {
         this.parsedRawValue = Helpers.normalizePrice(this.cleanValue(conditionValue));
         result = totalOrSubTotalOrPrice + this.parsedRawValue;
+        this.parsedRawValueType = {type: "fixed", operator: "add" };
       }
       else {
         this.parsedRawValue = Helpers.normalizePrice(conditionValue);
         result = totalOrSubTotalOrPrice + this.parsedRawValue;
+        this.parsedRawValueType = {type: "fixed", operator: "add" };
       }
     }
 
@@ -172,18 +220,14 @@ export class Condition {
   }
 
   protected validate(args: IConditionArgsConfig) {
-    const rules = z.object({
-      name: z.string().min(1, 'Name is required'),
-      type: z.string().min(1, 'Type is required'),
-      value: z.string().min(1, 'Value is required'),
-      target: z.string().min(1, 'Target is required'),
-    })
+    const rules = this.validationRules();
 
     try {
       rules.parse(args);
     }
     catch (e) {
       if (e instanceof z.ZodError) {
+        console.log('--------------------------------',e.issues[0], e.issues[0].path)
         throw new Error(e.issues[0].message);
       }
     }
@@ -196,4 +240,5 @@ export class Condition {
 
     return true;
   }
+
 }

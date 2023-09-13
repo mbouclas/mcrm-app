@@ -29,3 +29,7 @@ git submodule
 * variants is nested and contains the id, title, price, thumb, color, sku, slug
 * color is a nested property on the root. Contains code, id, name, slug
 * categories is a nested property
+
+
+* On cart add pull all the rules and see if any of them apply to the cart
+* Need to scan the product first to see if there's a rule for this product
