@@ -1,19 +1,17 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { ShippingMethodService } from '~eshop/shipping-method/services/shipping-method.service';
 
 @Controller('api/shipping-method')
 export class ShippingMethodController {
   constructor() {}
+
+  @Get('')
+  async find(@Query() queryParams = {}) {
+    const rels = queryParams['with'] ? queryParams['with'] : [];
+
+    return await new ShippingMethodService().find(queryParams, rels);
+  }
 
   @Get(':uuid')
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
