@@ -3,7 +3,7 @@ import { ChangeLogService } from '~change-log/change-log.service';
 import { store } from '~root/state';
 import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderModel } from '~eshop/order/models/order.model';
-import { BaseNeoService } from '~shared/services/base-neo.service';
+import { BaseNeoService, IBaseNeoServiceRelationships } from '~shared/services/base-neo.service';
 import { IGenericObject, IPagination } from '~models/general';
 import { SharedModule } from '~shared/shared.module';
 import { RecordStoreFailedException } from '~shared/exceptions/record-store-failed.exception';
@@ -17,7 +17,7 @@ import { ShippingMethodService } from '~eshop/shipping-method/services/shipping-
 import { ICartItem } from '~eshop/cart/cart.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { ProductService } from '~catalogue/product/services/product.service';
-import { CartItem } from "~eshop/cart/CartItem";
+import { CartItem } from '~eshop/cart/CartItem';
 
 export class OrderModelDto {
   orderId?: string;
@@ -212,16 +212,23 @@ export class OrderService extends BaseNeoService {
     }
   }
 
-  async update(uuid: string, record: OrderModelDto, userId?: string) {
+  async update(
+    uuid: string,
+    record: OrderModelDto,
+    userId?: string,
+    relationships: IBaseNeoServiceRelationships[] = [],
+    options?: IGenericObject,
+  ) {
     if (record.status && !OrderService.statuses.map((status) => status.id).includes(record.status)) {
-      throw new InvalidOrderException('INVALID_ORDER_STATUS', '900.2', );
+      throw new InvalidOrderException('INVALID_ORDER_STATUS', '900.2');
     }
 
     try {
-      const r = await super.update(uuid, record, userId);
+      const r = await super.update(uuid, record, userId, relationships, options);
       this.eventEmitter.emit(OrderEventNames.orderUpdated, r);
       return r;
     } catch (e) {
+      console.log(e);
       throw new InvalidOrderException('ORDER_UPDATE_ERROR', '900.1', e.getErrors());
     }
   }
@@ -387,7 +394,6 @@ export class OrderService extends BaseNeoService {
   }
 
   private async generateOrderId() {
-    return  Math.random().toString(36).substring(2, 10).toUpperCase();
-
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
   }
 }

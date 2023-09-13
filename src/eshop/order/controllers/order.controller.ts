@@ -33,7 +33,7 @@ import {
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Query() queryParams = {}) {
@@ -156,8 +156,9 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-        }Provider`,
+      id: `${
+        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
+      }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
@@ -175,8 +176,9 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-        }Provider`,
+      id: `${
+        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
+      }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
@@ -300,9 +302,45 @@ export class OrderController {
       throw new Error("Order doesn't exist");
     }
 
-    const order = await orderService.update(uuid, {
-      status: body.status,
-    });
+    const rels = [];
+
+    if (body.paymentMethod) {
+      rels.push({
+        id: body.paymentMethod.uuid,
+        name: 'paymentMethod',
+      });
+    }
+
+    if (body.shippingMethod) {
+      rels.push({
+        id: body.shippingMethod.uuid,
+        name: 'shippingMethod',
+      });
+    }
+
+    if (body.address) {
+      for (const address of body.address) {
+        for (const addressType of address.type) {
+          rels.push({
+            id: address.uuid,
+            name: 'address',
+            relationshipProps: {
+              type: addressType,
+            },
+          });
+        }
+      }
+    }
+
+    const order = await orderService.update(
+      uuid,
+      {
+        status: body.status,
+      },
+      null,
+      rels,
+      { clearExistingData: true },
+    );
 
     return order;
   }
