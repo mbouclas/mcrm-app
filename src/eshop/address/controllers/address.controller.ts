@@ -18,12 +18,11 @@ export class AddressController {
   constructor() {}
 
   @Get()
-  async find(@Session() session: SessionData, @Query() queryParams = {}) {
+  async find(@Query() queryParams = {}) {
     try {
-      const userId = session.user && session.user['uuid'];
       const rels = queryParams['with'] ? queryParams['with'] : [];
 
-      return await new AddressService().find({ userId }, rels);
+      return await new AddressService().find(queryParams, rels);
     } catch (e) {
       return { success: false, message: e.message, code: e.getCode() };
     }
