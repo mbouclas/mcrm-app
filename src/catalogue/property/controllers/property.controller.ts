@@ -56,23 +56,7 @@ export class PropertyController {
 
   @Post('')
   async create(@Body() body: IGenericObject) {
-    const propertyValues = body.propertyValue;
-
-    let rels = [];
-    await Promise.all(
-      propertyValues.map(async (propertyValue) => {
-        const propertyValueCreated = await new PropertyValueService().store(propertyValue);
-        rels = [
-          ...rels,
-          {
-            id: propertyValueCreated?.uuid,
-            name: 'propertyValue',
-          },
-        ];
-      }),
-    );
-
-    await new PropertyService().store(body, null, rels);
+    await new PropertyService().store(body, null, []);
 
     return { success: true };
   }
