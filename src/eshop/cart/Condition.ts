@@ -6,12 +6,13 @@ import { IGenericObject } from "~models/general";
 import { ConditionRule } from "~eshop/cart/ConditionRule";
 import { Cart } from "~eshop/cart/Cart";
 import { CartItem } from "~eshop/cart/CartItem";
+import { v4 } from "uuid";
 
 export interface IConditionArgsConfig {
   uuid?: string;
   title: string;
-  type: 'tax'|'shipping'|'coupon';
-  target: 'subtotal'|'price'|'total'|'quantity'|'numberOfItems'|'item';
+  type: 'tax'|'shipping'|'coupon'|'sale'|'promo';
+  target: 'subtotal'|'price'|'total'|'quantity'|'numberOfItems'|'item'|'shipping';
   value: string;
   order?: number;
   attributes?: IGenericObject;
@@ -45,13 +46,16 @@ export class Condition {
         return new ConditionRule(rule);
       });
     }
+
+
+
     this.validate(args);
   }
 
   protected validationRules() {
     return z.object({
       title: z.string().min(1, 'Name is required'),
-      kind: z.string().min(1, 'Type is required'),
+      type: z.string().min(1, 'Type is required'),
       value: z.string().min(1, 'Value is required'),
       target: z.string().min(1, 'Target is required'),
     });
@@ -230,6 +234,10 @@ export class Condition {
         console.log('--------------------------------',e.issues[0], e.issues[0].path)
         throw new Error(e.issues[0].message);
       }
+    }
+
+    if (!this.args['uuid']) {
+      this.args['uuid'] = v4();
     }
 
     for (const key in args) {

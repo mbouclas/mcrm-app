@@ -12,6 +12,7 @@ export function extractQueryParamsFilters(
 ) {
   const modelAlias = typeof model === 'string' ? model : model.modelConfig.as;
   const toRemove = ['page', 'limit', 'skip', 'per_page', 'type', 'orderBy', 'way', 'with'];
+  const replaceParamKeyWithOtherKey = [{key: 'Type', replaceWith: 'type'}];
   const page = params.page ? params.page : 1;
   const limit = params.limit ? params.limit : 10;
   const skip = limit * (page - 1);
@@ -103,6 +104,13 @@ export function extractQueryParamsFilters(
       filters[key] = params[key];
     }
   }
+
+  replaceParamKeyWithOtherKey.forEach((item) => {
+    if (filters[item.key]) {
+      filters[item.replaceWith] = filters[item.key];
+      delete filters[item.key];
+    }
+  });
 
   for (const key in filters) {
     if (typeof filters[key] === 'undefined' || !filters[key] || filters[key] === 'undefined') {

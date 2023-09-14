@@ -36,6 +36,7 @@ export interface ICart {
   id: string;
   total: number;
   subTotal: number;
+  shipping: number;
   numberOfItems?: number;
   items: ICartItem[];
   vatRate: number;

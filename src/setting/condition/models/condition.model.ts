@@ -44,9 +44,9 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
       group: 'main',
     },
     {
-      varName: 'kind',
-      label: 'Kind',
-      placeholder: 'Kind',
+      varName: 'type',
+      label: 'Type',
+      placeholder: 'Type',
       type: 'text',
       isSortable: true,
       group: 'main',

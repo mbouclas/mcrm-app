@@ -15,6 +15,9 @@ import { ChangeProductStatusTemplateService } from "~catalogue/import/templates/
 import {
   ChangeProductVariantStatusTemplate
 } from "~catalogue/import/templates/change-product-variant-status-template.service";
+import {
+  AddImagesToVariantsTemplateService
+} from "~catalogue/import/templates/add-images-to-variants-template.service";
 
 @Module({
   providers: [
@@ -28,6 +31,7 @@ import {
     ImportTemplateModel,
     ChangeProductStatusTemplateService,
     ChangeProductVariantStatusTemplate,
+    AddImagesToVariantsTemplateService,
   ],
   imports: [
     MulterModule.registerAsync({

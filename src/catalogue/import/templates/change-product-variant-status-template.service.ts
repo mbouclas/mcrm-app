@@ -1,15 +1,10 @@
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { Injectable, Optional } from "@nestjs/common";
-import { BaseImportService, IBaseImportServiceArgs } from "~catalogue/import/services/base-import.service";
+import { Injectable } from "@nestjs/common";
+import { BaseImportService } from "~catalogue/import/services/base-import.service";
 import { ProductService } from "~catalogue/product/services/product.service";
-import { BaseProcessorService, IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
+import {  IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { McrmImportTemplate } from "~catalogue/import/decorators/import-template-registry.decorator";
 
 
-@McmsDi({
-  id: 'ChangeProductVariantStatusTemplate',
-  type: 'class',
-})
 @McrmImportTemplate({
   id: 'ChangeProductVariantStatusTemplate',
   name: 'Change Product Variants Status',

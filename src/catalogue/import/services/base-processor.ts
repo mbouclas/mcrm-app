@@ -25,6 +25,10 @@ export interface IBaseTransformerSchema {
   sku: string;
 }
 
+/**
+ * BaseProcessorService is a class that provides a base functionality for processing data from a file.
+ * It includes methods for setting and getting field mappings, as well as running the processing logic.
+ */
 @Injectable()
 export class BaseProcessorService {
   protected fieldMap: IImportProcessorFieldMap[] = [];
@@ -53,6 +57,12 @@ export class BaseProcessorService {
         .on('data', (data) => {
           const processedRow = this.transformRow(data, idx === 0);
 
+          if (processedRow.isInvalid) {
+            this.invalidRows.push({id: idx, row: data, fields: processedRow.invalidFields});
+            idx++;
+            return;
+          }
+
           this.results.push(processedRow.data);
           idx++;
         })
@@ -79,12 +89,64 @@ export class BaseProcessorService {
     const invalidFields = [];
     const data: IBaseTransformerSchema = {} as IBaseTransformerSchema;
 
-    Object.keys(rowData)
-      .filter(key => {
-        return this.fieldMap.findIndex(f => f.importFieldName === key.trim()) !== -1
-      })
+    this.fieldMap.forEach(field => {
+      const key = field.importFieldName;
+
+      if (field.required && !rowData[key]) {
+        isInvalid = true;
+        invalidFields.push({key, value: rowData});
+        return;
+      }
+
+      data[field.name] = rowData[key];
+
+      if (field.type === 'boolean') {
+        data[field.name] = rowData[key].toLowerCase() === 'true';
+      }
+
+      if (field.type === 'image') {
+        data['image'] = rowData[key];
+      }
+
+      if (field.type === 'number') {
+        data[field.name] = parseInt(rowData[key]);
+      }
+
+      if (field.type === 'float') {
+        data[field.name] = parseFloat(rowData[key]);
+      }
+
+      if (field.type === 'price') {
+        // Some products may have a special flag that asks the customer to contact for info "priceOnRequestFlag"
+        // ignoring the price field will make sure that this product won't show on the price range results
+        data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null : parseFloat(rowData[key]);
+      }
+
+      if (field.type === 'variantId') {
+        data['variantId'] = rowData[key];
+        data['variantSlug'] = slug(rowData[key], {trim: true, lower: true});
+      }
+
+      if (field.isSlugFor) {
+        data[field.isSlugFor] = slug(rowData[key], {trim: true, lower: true});
+      }
+
+    });
+
+
+/*    Object.keys(rowData)
       .forEach(key => {
         const field = this.fieldMap.find(f => f.importFieldName === key.trim());
+        if (!field) {
+          isInvalid = true;
+          invalidFields.push({key, value: rowData[key]});
+          return;
+        }
+       // reject unknown fields
+
+/!*        if (!field[key]) {
+          return;
+        }*!/
 
         if (field.required && !rowData[key]) {
           isInvalid = true;
@@ -125,7 +187,7 @@ export class BaseProcessorService {
           data[field.isSlugFor] = slug(rowData[key], {trim: true, lower: true});
         }
 
-      });
+      });*/
 
     return {
       data,

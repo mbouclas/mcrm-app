@@ -40,6 +40,7 @@ export class Cart implements OnModuleInit, ICart {
   public total = 0;
   public subTotal = 0;
   public vatRate = 0;
+  public shipping = 0;
   public items: CartItem[] = [];
   public metaData = {};
   public numberOfItems = 0;
@@ -192,6 +193,7 @@ export class Cart implements OnModuleInit, ICart {
   public updateTotals() {
     this.calculateItemsTotal();
     this.calculateSubtotal();
+    this.calculateShipping();
     this.calculateTotals();
   }
 
@@ -283,6 +285,7 @@ export class Cart implements OnModuleInit, ICart {
       items: this.items,
       total: this.total,
       numberOfItems: this.count(),
+      shipping: this.shipping,
       subTotal: this.subTotal,
       vatRate: this.vatRate,
       metaData: this.metaData,
@@ -317,6 +320,7 @@ export class Cart implements OnModuleInit, ICart {
   }
 
   public getSubTotal(formatted = true) {
+    this.calculateShipping();
     // get the conditions that are meant to be applied
     // on the subtotal and apply it here before returning the subtotal
     const conditions = this.getConditionsByTarget('subtotal');
@@ -324,11 +328,11 @@ export class Cart implements OnModuleInit, ICart {
     // if there is no conditions, lets just return the sum
     // console.log('----', this.itemsTotal())
     if (!conditions.length || conditions.length === 0) {
-      return this.itemsTotal();
+      return this.itemsTotal() + this.shipping;
     }
 
     // there are conditions, lets apply it
-    let newTotal = this.itemsTotal();
+    let newTotal = this.itemsTotal() + this.shipping;
     let process = 0;
 
     conditions.forEach((cond) => {
@@ -366,8 +370,82 @@ export class Cart implements OnModuleInit, ICart {
     return this;
   }
 
+  public getShipping() {
+    const condition = this.getConditionsByType('shipping');
+    if (!condition || condition.length === 0) {
+      return null;
+    }
+
+    return condition[0];
+  }
+
+
+  /**
+   * Shipping is calculated by looking for a condition of type shipping
+   */
+  public calculateShipping() {
+    let newTotal = 0.0;
+    let process = 0;
+
+    const conditions = this.getConditionsByType('shipping');
+
+
+/*    if (!conditions.length || conditions.length === 0) {
+      this.shipping = newTotal;
+      return newTotal;
+    }*/
+
+  /*  conditions.forEach((cond) => {
+      // validate any rules that are attached to this condition
+      if (cond.hasRules()) {
+        const valid = cond.validateCartRules(this);
+
+        if (!valid) {
+          return;
+        }
+      }
+
+      let toBeCalculated = (process > 0) ? newTotal : this.shipping as number;
+      newTotal = cond.applyCondition(newTotal);
+
+      this.addAppliedCondition(cond);
+      process++;
+    });
+
+    this.shipping = newTotal;
+*/
+
+    // apply any conditions targeting shipping
+
+    const shippingConditions = this.getConditionsByTarget('shipping');
+    this.resetAppliedConditionsByTarget('shipping');
+
+    shippingConditions.forEach((cond) => {
+      // validate any rules that are attached to this condition
+      if (cond.hasRules()) {
+        const valid = cond.validateCartRules(this);
+
+        if (!valid) {
+          return;
+        }
+      }
+
+      let toBeCalculated = (process > 0) ? newTotal : this.shipping;
+      newTotal = cond.applyCondition(newTotal);
+
+
+      this.addAppliedCondition(cond);
+      process++;
+    });
+
+    this.shipping = newTotal;
+
+    return newTotal;
+  }
+
   public calculateTotals() {
     this.calculateSubtotal();
+
     let newTotal = 0.0;
     let subTotal = this.getSubTotal() as number;
     let process = 0;
@@ -377,8 +455,9 @@ export class Cart implements OnModuleInit, ICart {
 
     const conditions = this.getConditionsByTarget('total');
     this.resetAppliedConditionsByTarget('total'); //reset so they will be properly filled
+
     // if no conditions were added, just return the sub total
-    if (!conditions.length || conditions.length === 0) {
+    if ((!conditions.length || conditions.length === 0) ) {
       this.total = newTotal;
       return this;
     }
@@ -399,6 +478,7 @@ export class Cart implements OnModuleInit, ICart {
       this.addAppliedCondition(cond);
       process++;
     });
+
 
     this.total = newTotal;
     return this;
@@ -748,7 +828,6 @@ export class Cart implements OnModuleInit, ICart {
     const conditions = this.getConditions();
 
     const foundIdx = this.getConditionIdx({uuid: condition.getId()});
-
     // only add the condition 1 time
     if (foundIdx > -1) {
       this.conditions[foundIdx] = condition;

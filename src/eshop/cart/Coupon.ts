@@ -36,7 +36,7 @@ export class Coupon extends Condition {
   protected validationRules() {
     return z.object({
       title: z.string().min(1, 'Name is required'),
-      kind: z.string().min(1, 'Type is required'),
+      type: z.string().min(1, 'Type is required'),
       value: z.string().min(1, 'Value is required'),
       target: z.string().min(1, 'Target is required'),
       validFrom: z.date().min(new Date(), 'Valid from date must be in the future'),

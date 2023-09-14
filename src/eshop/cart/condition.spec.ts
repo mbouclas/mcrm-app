@@ -91,6 +91,13 @@ export class ConditionSpec {
     catch (e) {
       console.log(e)
     }
+
+    try {
+      await this.itShouldAddAShippingCostToTheCart();
+    }
+    catch (e) {
+      console.log(e)
+    }
   }
 
   itShouldInstantiate() {
@@ -439,6 +446,39 @@ export class ConditionSpec {
     console.log('Subtotal with conditions: ',cart.subTotal);
     console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
     console.log('Total with conditions: ',cart.total);
+  }
+
+  async itShouldAddAShippingCostToTheCart() {
+    const cart = await createCart();
+
+    const shippingCost = new Condition({
+      title: 'Express Shipping $15',
+      type: 'shipping',
+      target: 'shipping',
+      value: '+15',
+      order: 1,
+    });
+
+    cart.add({...cloneObject(cartItem), ...{quantity: 3,}});
+
+    const shippingCouponDiscount = new Condition({
+      title: 'Shipping Coupon Discount',
+      type: 'promo',
+      target: 'shipping',
+      value: '-50%',
+      order: 2,
+    });
+
+    cart.addCartCondition(shippingCost);
+    cart.addCartCondition(shippingCouponDiscount)
+
+    console.log('Number of items: ',cart.numberOfItems);
+    console.log('Subtotal with conditions: ',cart.subTotal);
+    console.log('Subtotal without conditions: ',cart.getSubTotalWithoutConditions());
+    console.log('Total with conditions: ',cart.total);
+    console.log('Shipping: ',cart.shipping);
+    console.log('Applied conditions length',cart.appliedConditions.length)
+
   }
 }
 
