@@ -9,7 +9,9 @@ export interface ICourierProviderConfig extends IBaseShippingMethodProviderSetti
 }
 @McmsDi({
   id: 'CourierProvider',
-  type: 'class',
+  type: 'shippingMethodProvider',
+  title: 'Courier',
+  description: 'Courier provider',
 })
 export class CourierProvider extends BaseShippingMethodProvider{
   protected config: ICourierProviderConfig;

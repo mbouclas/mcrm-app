@@ -1,4 +1,5 @@
 import { IGenericObject } from "~models/general";
+import { ConditionRule } from "~eshop/cart/ConditionRule";
 
 export interface IStep {
   id: string;
@@ -38,6 +39,7 @@ export interface IShippingMethod {
   slug: string;
   status: boolean;
   baseCost?: number;
+  rules?: ConditionRule[];
 }
 
 export interface IAddress {

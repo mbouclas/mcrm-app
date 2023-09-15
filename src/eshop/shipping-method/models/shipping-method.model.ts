@@ -7,6 +7,7 @@ import {
 } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { ConditionRule } from "~eshop/cart/ConditionRule";
 
 const modelName = 'ShippingMethod';
 @McmsDi({
@@ -21,6 +22,8 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
   public uuid: string;
   public title: string;
   public providerSettings: Record<string, any>;
+  public baseCost: number = 0;
+  public rules: ConditionRule[] = [];
 
   async onModuleInit() {}
 

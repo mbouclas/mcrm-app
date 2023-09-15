@@ -4,6 +4,8 @@ import { IGenericObject } from '~models/general';
 import { ISessionData } from "~shared/models/session.model";
 import { ConditionService } from "~setting/condition/services/condition.service";
 import { Condition, IConditionArgsConfig } from "~eshop/cart/Condition";
+import { IsNotEmpty } from "class-validator";
+import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
 
 
 export class AddToCartDto {
@@ -20,6 +22,11 @@ export class ManageCartDto {
   metaData?: IGenericObject;
 }
 
+export class UpdateShippingMethodDto {
+  @IsNotEmpty()
+  id: string;
+}
+
 @Controller('cart')
 export class CartController {
   constructor(protected cartService: CartService) {}
@@ -27,14 +34,18 @@ export class CartController {
 
   }
 
-  @Get('get')
-  async get(@Req() req: any, @Session() session: ISessionData) {
+  async applyCartConditions(session: ISessionData) {
     // check if there's any conditions to apply
     const conditions = await new ConditionService().find({target: ['total', 'subtotal', 'numberOfItems'], active: true});
 
     for (const condition of conditions.data) {
       session.cart.condition(new Condition(condition as unknown as IConditionArgsConfig));
     }
+  }
+
+  @Get('get')
+  async get(@Req() req: any, @Session() session: ISessionData) {
+    await this.applyCartConditions(session);
     return session.cart.toObject();
   }
 
@@ -44,11 +55,7 @@ export class CartController {
     let cartItem;
 
     // check if there's any conditions to apply
-    const conditions = await new ConditionService().find({target: ['total', 'subtotal', 'numberOfItems'], active: true});
-
-    for (const condition of conditions.data) {
-      session.cart.condition(new Condition(condition as unknown as IConditionArgsConfig));
-    }
+    await this.applyCartConditions(session);
 
     try {
       cartItem = await this.cartService.createCartItemFromProductId(
@@ -141,6 +148,44 @@ export class CartController {
       return { success: false, reason: 'ProductNotFound' };
     }
 
+    return session.cart.toObject();
+  }
+
+  @Post('update-shipping')
+  async updateShippingMethod(@Req() req: any, @Session() session: ISessionData, @Body() body: UpdateShippingMethodDto) {
+    await this.applyCartConditions(session);
+
+    // get the shipping method
+    const shippingMethod = await new ShippingMethodService().findOne({uuid: body.id});
+    const appliedShippingMethod = session.cart.getShipping();
+    if (appliedShippingMethod && appliedShippingMethod.uuid === shippingMethod.uuid) {
+      return session.cart.toObject();
+    }
+
+    // remove all shipping conditions
+    session.cart.clearCartConditionsByTarget('shipping');
+
+    if (!shippingMethod.baseCost || shippingMethod.baseCost === 0) {
+      await session.cart.save();
+      return session.cart.toObject();
+    }
+
+    // now add this method to the cart as a condition
+    session.cart.addCartCondition(new Condition({
+      uuid: shippingMethod.uuid,
+      title: shippingMethod.title,
+      type: 'shipping',
+      target: 'shipping',
+      value: shippingMethod.baseCost.toString(),
+      order: 999,
+      attributes: {
+        shippingMethod: shippingMethod.uuid,
+        shippingTime: shippingMethod['shippingTime'],
+        provider: shippingMethod['providerName'],
+      }
+    }));
+
+    await session.cart.save();
     return session.cart.toObject();
   }
 }

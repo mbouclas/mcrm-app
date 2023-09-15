@@ -13,7 +13,9 @@ export interface IPickUpProviderConfig extends IBaseShippingMethodProviderSettin
 
 @McmsDi({
   id: 'PickUpProvider',
-  type: 'class',
+  type: 'shippingMethodProvider',
+  title: 'Pick Up',
+  description: 'Pick Up provider',
 })
 export class PickUpProvider extends BaseShippingMethodProvider {
   protected config: IPickUpProviderConfig;
