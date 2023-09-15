@@ -114,8 +114,8 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
     },
 
     {
-      varName: 'kind',
-      label: 'Kind',
+      varName: 'type',
+      label: 'Type',
       type: 'text',
       model: 'CartCondition',
       filterType: 'exact',
