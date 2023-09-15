@@ -33,7 +33,7 @@ export class ProductsSyncAstroController {
     @Query('rels') rels = undefined,
     @Query('id') uuids = undefined,
   ) {
-    const service = new SyncEsService(new HttpService(), new ElasticSearchService(ElasticSearchModule.moduleRef));
+    const service = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
 
     return await service.all(limit, false);
   }

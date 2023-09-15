@@ -18,7 +18,6 @@ export class ExportController {
     const queryParameters = Object.assign({}, req.query);
     const page = req.query.page || 1 as any;
     const service = new SyncEsService(
-      new HttpService(),
       new ElasticSearchService(ElasticSearchModule.moduleRef),
     );
     return await service.all(limit, false);

@@ -8,6 +8,7 @@
   "scripts": {
     "cli": "node dist/src/cli",
     "cli:dev": "cross-env MODE=cli ts-node -r tsconfig-paths/register src/cli.ts",
+    "syncAll": "cross-env MODE=cli node dist/src/cli syncAll",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

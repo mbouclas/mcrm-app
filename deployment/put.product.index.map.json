@@ -95,6 +95,26 @@
          }
        }
      },
+     "thumb": {
+       "dynamic": true,
+       "properties": {
+         "url": { "type": "text" }
+       }
+     },
+     "images": {
+       "dynamic": true,
+       "properties": {
+         "url": { "type": "text" }
+       }
+     },
+     "similar": {
+       "dynamic": true,
+       "properties": {
+         "uuid": { "type": "text" },
+         "title": { "type": "text" },
+         "slug": { "type": "text" }
+       }
+     },
      "properties": {
        "type": "nested",
        "properties": {

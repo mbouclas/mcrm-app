@@ -14,7 +14,6 @@ import { ElasticSearchModule } from "~es/elastic-search.module";
 export class SyncAllCommand {
   async handle(args: CommandArguments) {
     const service = new SyncEsService(
-      new HttpService(),
       new ElasticSearchService(ElasticSearchModule.moduleRef),
     );
     const limit = args['limit'] ? parseInt(args['limit'] as string) : 40;

@@ -37,7 +37,10 @@ export class SimilarProductsSearchService {
 
   async search(id: number|string, args: ISearchArgs, index = null, fields = []) {
     const result = {};
-    console.log(fields)
+    if (fields.length === 0) {
+      fields = this.similarFields;
+    }
+
     const similarQuery = this.similarFields
       .filter(field => fields.length === 0 || fields.includes(field.name))
       .map(field => (

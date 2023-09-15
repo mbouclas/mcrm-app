@@ -13,6 +13,9 @@ import { CashProvider } from "~eshop/payment-method/providers/cash.provider";
 import { StripeProvider } from "~eshop/payment-method/providers/stripe.provider";
 import { CourierProvider } from "~eshop/shipping-method/providers/courier.provider";
 import { PickUpProvider } from "~eshop/shipping-method/providers/pickUp.provider";
+import { ElasticSearchService } from "~es/elastic-search.service";
+import * as process from "process";
+import { getStoreProperty } from "~root/state";
 
 @Module({
   imports: [
@@ -34,4 +37,25 @@ import { PickUpProvider } from "~eshop/shipping-method/providers/pickUp.provider
   ],
   controllers: [StoreController],
 })
-export class EshopModule {}
+export class EshopModule {
+async onApplicationBootstrap() {
+    // Wait for everything to finish loading
+    setTimeout(async () => {
+      await EshopModule.checkIfAllElasticSearchIndexesArePresent();
+    }, 1000)
+
+  }
+
+  static async checkIfAllElasticSearchIndexesArePresent() {
+
+    const es = ElasticSearchService.newInstance();
+    const indexExists = await es.indexExists(process.env.ELASTICSEARCH_INDEX);
+    if (indexExists) {
+      // console.log(`Index ${client.elasticSearch.index} already exists`);
+      return;
+    }
+
+    await es.createIndex(process.env.ELASTICSEARCH_INDEX, getStoreProperty('catalogue.elasticSearch.template'));
+
+  }
+}

@@ -3,6 +3,11 @@ import { IProductModelEs, IPropertyEs, IVariantEs } from '~catalogue/export/sync
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
 import { IPagination } from '~models/general';
 import { PropertyModel } from '~catalogue/property/models/property.model';
+import * as process from "process";
+import { SimilarProductsSearchService } from "~catalogue/search/similar-products-search.service";
+import { ProductSearchEsService } from "~catalogue/search/product-search-es.service";
+import { ElasticSearchModule } from "~es/elastic-search.module";
+import { ElasticSearchService } from "~es/elastic-search.service";
 const slugify = require('slug');
 
 export class ProductConverterService {
@@ -15,7 +20,6 @@ export class ProductConverterService {
     result.title = product.title;
     result.id = product.uuid;
     result.price = product.price;
-    result.thumb = product['thumb'];
     result.description = product.description;
     result.description_short = product['description_short'];
     result.createdAt = product["createdAt"];
@@ -27,6 +31,10 @@ export class ProductConverterService {
     result['length'] = product['length'];
     result['diameter'] = product['diameter'];
     result['width'] = product['width'];
+
+    if (product['thumb']) {
+      result['thumb'] = Array.isArray(product['thumb']) ? product['thumb'][0] : product['thumb'];
+    }
 
     if (Array.isArray(product['property'])) {
       result.properties = [];
@@ -68,8 +76,27 @@ export class ProductConverterService {
       });
     }
 
+    if (Array.isArray(product['related'])) {
+      result['related'] = product['related'].map((related) => ({
+        uuid: related.uuid,
+        title: related.title,
+        slug: related.slug,
+        description: related.description,
+        thumb: related.thumb || null,
+      }));
+
+    }
+
     if (Array.isArray(product['variants'])) {
-      result.variants = product['variants'].map((variant) => {
+      result.variants = product['variants']
+        .filter((variant) => {
+          if (process.env.ENV === 'development') {
+            return true;
+          }
+
+          return variant.active;
+        })
+        .map((variant) => {
         const item = {
           uuid: variant.uuid,
           title: variant.name.length > 0 ? variant.name : product.title,
@@ -151,6 +178,21 @@ export class ProductConverterService {
         title: product['manufacturer'].title,
         slug: product['manufacturer'].slug,
       };
+    }
+
+    const similar = await new SimilarProductsSearchService(new ElasticSearchService(ElasticSearchModule.moduleRef))
+      .search(product.uuid, {queryParameters: {active: true}, limit: 5, page: 1});
+
+    if (similar && Array.isArray(similar.data) && similar.data.length > 0) {
+      result["similar"] = similar.data
+        .filter((item) => item["uuid"] !== product.uuid)
+        .map((item) => ({
+          uuid: item['uuid'],
+          title: item.title,
+          slug: item.slug,
+          description: item.description,
+          thumb: item.thumb || null,
+        }));
     }
 
     return result;

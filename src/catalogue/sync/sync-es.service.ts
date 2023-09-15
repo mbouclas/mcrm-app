@@ -9,6 +9,7 @@ import { ProductConverterService } from '~catalogue/sync/product-converter.servi
 import { SyncModule } from '~catalogue/sync/sync.module';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { PropertyService } from '~catalogue/property/services/property.service';
+import { ElasticSearchModule } from "~es/elastic-search.module";
 
 @Injectable()
 export class SyncEsService {
@@ -17,14 +18,19 @@ export class SyncEsService {
   static onSyncAllEvent = 'sync.all.complete';
   static onSyncMultipleEvent = 'sync.multiple.complete';
   private readonly logger = new Logger(SyncEsService.name);
-  protected rels = ['propertyValues', 'properties', 'category', 'manufacturer', 'variants', 'images', 'tags'];
+  protected rels = ['propertyValues', 'properties', 'productCategory', 'manufacturer', 'variants', 'images', 'thumb', 'tags', 'related'];
 
-  constructor(private readonly httpService: HttpService, private es: ElasticSearchService) {}
+  constructor(private es: ElasticSearchService) {}
 
-  @OnEvent('app.loaded')
-  async onAppLoaded() {
+  async onApplicationBootstrap() {
     // SyncModule.event.emit(SyncEsService.onSyncAllEvent, {limit: 40, saveOnEs: true})
-    // SyncModule.event.emit(SyncEsService.onSyncSingleEvent, '7cad2fb1-e0d6-4f5e-aca7-d5d08423efe6')
+    // SyncModule.event.emit(SyncEsService.onSyncSingleEvent, '75342920-a45c-403a-a320-8c748dfc1b26')
+    setTimeout(async () =>{
+      const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
+      // await s.one('75342920-a45c-403a-a320-8c748dfc1b26', true);
+      // await s.one('58e6277c-9c85-49e3-a391-feae7b301ade', true);
+    }, 1000)
+
   }
 
   @OnEvent(SyncEsService.onSyncSingleEvent)

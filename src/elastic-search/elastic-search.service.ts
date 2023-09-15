@@ -11,10 +11,11 @@ import {
 } from "./elastic-search.models";
 import { IGenericObject } from "~models/general";
 import {findIndex} from 'lodash';
-import { ELASTIC_SEARCH_CONFIG, ELASTIC_SEARCH_DRIVER } from "./elastic-search.module";
+import { ELASTIC_SEARCH_CONFIG, ELASTIC_SEARCH_DRIVER, ElasticSearchModule } from "./elastic-search.module";
 import { ModuleRef } from "@nestjs/core";
 import { highlighter, qsMatcher } from "~helpers/highlighter";
 import { IProductModelEs } from "~catalogue/export/sync-elastic-search.service";
+import { CouldNotCreateIndexException } from "~es/exceptions/could-not-create-index.exception";
 
 export interface ISearchArgs {
   page?: number;
@@ -87,6 +88,10 @@ export class ElasticSearchService implements OnApplicationShutdown {
       this.lang = opts.lang;
     }*/
 
+  }
+
+  public static newInstance() {
+    return new ElasticSearchService(ElasticSearchModule.moduleRef)
   }
 
   async indexExists(index: string): Promise<boolean> {
@@ -765,5 +770,20 @@ export class ElasticSearchService implements OnApplicationShutdown {
       }
     })
     console.log(erroredDocuments)
+  }
+
+  async createIndex(index: string, indexTemplate: IGenericObject) {
+    try {
+      await this.client.indices.create({
+        index,
+        ...indexTemplate,
+      });
+    }
+    catch (e) {
+      console.log(`Error creating index ${index}`, e);
+      throw new CouldNotCreateIndexException(`COULD_NOT_CREATE_INDEX`, '1001.1', e);
+    }
+
+    return true;
   }
 }
