@@ -47,9 +47,12 @@ async onApplicationBootstrap() {
   }
 
   static async checkIfAllElasticSearchIndexesArePresent() {
+    if (!getStoreProperty('catalogue.elasticSearch.template')) {
+      return;
+    }
 
     const es = ElasticSearchService.newInstance();
-    const indexExists = await es.indexExists(process.env.ELASTICSEARCH_INDEX);
+    const indexExists = await es.indexExists(getStoreProperty('catalogue.elasticSearch.index'));
     if (indexExists) {
       // console.log(`Index ${client.elasticSearch.index} already exists`);
       return;
