@@ -8,6 +8,7 @@ import { SimilarProductsSearchService } from "~catalogue/search/similar-products
 import { ProductSearchEsService } from "~catalogue/search/product-search-es.service";
 import { ElasticSearchModule } from "~es/elastic-search.module";
 import { ElasticSearchService } from "~es/elastic-search.service";
+import { RecommendedProductsSearchService } from "~catalogue/search/recommended-products-search.service";
 const slugify = require('slug');
 
 export class ProductConverterService {
@@ -180,12 +181,11 @@ export class ProductConverterService {
       };
     }
 
-    const similar = await new SimilarProductsSearchService(new ElasticSearchService(ElasticSearchModule.moduleRef))
-      .search(product.uuid, {queryParameters: {active: true}, limit: 5, page: 1});
+    const similar = await new RecommendedProductsSearchService()
+      .simpleRecommendation({uuid: product.uuid});
 
-    if (similar && Array.isArray(similar.data) && similar.data.length > 0) {
-      result["similar"] = similar.data
-        .filter((item) => item["uuid"] !== product.uuid)
+    if (Array.isArray(similar) && similar.length > 0) {
+      result["similar"] = similar
         .map((item) => ({
           uuid: item['uuid'],
           title: item.title,

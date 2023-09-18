@@ -26,7 +26,7 @@ export class SyncEsService {
     // SyncModule.event.emit(SyncEsService.onSyncAllEvent, {limit: 40, saveOnEs: true})
     // SyncModule.event.emit(SyncEsService.onSyncSingleEvent, '75342920-a45c-403a-a320-8c748dfc1b26')
     setTimeout(async () =>{
-      const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
+      // const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
       // await s.one('75342920-a45c-403a-a320-8c748dfc1b26', true);
       // await s.one('58e6277c-9c85-49e3-a391-feae7b301ade', true);
     }, 1000)
