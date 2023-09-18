@@ -175,7 +175,14 @@ export class StoreController {
       return {success: false, message: 'ERROR_ATTACHING_ADDRESS', error: e.message};
     }
 
-
+    // Attach the order products to the user, create the HAS_BOUGHT relationship
+    try {
+      await (new OrderService()).attachOrderProductsToUser(order.uuid);
+    }
+    catch (e) {
+      console.log('Error attaching products', e.message, e.getErrors());
+      return {success: false, message: 'ERROR_ATTACHING_PRODUCTS', error: e.message};
+    }
 
     (new OrderService).notify(OrderEventNames.orderAttachedToNodes, order);
 

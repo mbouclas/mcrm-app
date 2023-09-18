@@ -367,6 +367,37 @@ export class OrderService extends BaseNeoService {
     return { unsavedAddresses, correctAddresses };
   }
 
+  async attachOrderProductsToUser(orderId: string) {
+    const order = await this.findOne({uuid: orderId});
+    const userId = order['userId'];
+    const items = order['metaData']['cart']['items'];
+
+    for (const item of items) {
+      await this.attachUserToProductOrdered(orderId, userId, item['productId']);
+    }
+
+    return true;
+  }
+
+  async attachUserToProductOrdered(orderId: string, userId: string, productId: string) {
+    const query = `
+      MATCH (u:User {uuid: '${userId}'})
+      MATCH (p:Product {uuid: '${productId}'})
+      MERGE (u)-[r:HAS_BOUGHT {orderId: '${orderId}'}]->(p)
+      ON CREATE SET r.createdAt = timestamp()
+      ON MATCH SET r.updatedAt = timestamp()
+      return *;
+    `;
+
+    try {
+      return await this.neo.write(query);
+    }
+    catch (e) {
+      console.log(`Error in attachUserToProductOrdered`, e.message);
+      return null;
+    }
+  }
+
   static async validateCartItems(items: CartItem[]) {
     const products = await new ProductService().find({
       active: true,

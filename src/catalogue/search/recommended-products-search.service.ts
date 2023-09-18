@@ -3,16 +3,46 @@ import { BaseNeoService } from "~shared/services/base-neo.service";
 import { IGenericObject } from "~models/general";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 import { ImageService } from "~image/image.service";
+import { OrderService } from "~eshop/order/services/order.service";
 
 @Injectable()
 export class RecommendedProductsSearchService extends BaseNeoService {
   onApplicationBootstrap() {
-/*    setTimeout(async () => {
-      const s = new RecommendedProductsSearchService();
+    setTimeout(async () => {
+/*      const s = new RecommendedProductsSearchService();
       const res = await s.simpleRecommendation({slug: 'poppy'});
-      console.log(res);
-    }, 1000);*/
+      console.log(res);*/
+
+/*      const s = new OrderService();
+      const orders = await s.find();
+      for (const o of orders.data) {
+        await s.attachOrderProductsToUser(o['uuid']);
+      }*/
+
+
+/*
+      const s = new RecommendedProductsSearchService();
+
+      console.log(await s.recommendBestSellers())
+*/
+
+    }, 1000);
   }
+
+  async recommendBestSellers(limit = 5) {
+    const query = `
+      MATCH (u:User)-[r:HAS_BOUGHT]->(p:Product)
+      return p.uuid as productId, count(r) as numberOfPurchases ORDER BY numberOfPurchases DESC LIMIT ${limit};
+    `;
+
+    return await this.neo.readWithCleanUp(query);
+
+  }
+
+  async recommendProductsToUserBasedOnPastOrders(userId: string, limit = 5) {
+
+  }
+
   async simpleRecommendation(filter: IGenericObject, limit = 5, priceRange = 2) {
     const {key, value} = extractSingleFilterFromObject(filter);
 

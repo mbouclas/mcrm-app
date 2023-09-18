@@ -6,6 +6,7 @@ import { HttpService } from '@nestjs/axios';
 import { ElasticSearchService } from '~es/elastic-search.service';
 import { ElasticSearchModule } from '~es/elastic-search.module';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
+import { RecommendedProductsSearchService } from "~catalogue/search/recommended-products-search.service";
 
 @Controller('sync/astro/products')
 export class ProductsSyncAstroController {
@@ -42,5 +43,10 @@ export class ProductsSyncAstroController {
   async categories() {
     const s = new ProductCategoryService();
     return await s.toTree();
+  }
+
+  @Get('best-sellers')
+  async bestSellers(@Query('limit') limit = 5) {
+    return new RecommendedProductsSearchService().recommendBestSellers(limit);
   }
 }
