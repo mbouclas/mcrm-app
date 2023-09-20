@@ -1,4 +1,10 @@
 module.exports = {
+  backups: {
+    objectStorage: {
+      uploadOnSuccess: true,
+      bucketName: 'backups',
+    }
+  },
   modelSettings: {
     Product: {
       slugPattern : '/product/%(uuid)s/%(slug)s'

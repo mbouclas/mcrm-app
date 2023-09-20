@@ -3,6 +3,8 @@ import { BaseImportService } from "~catalogue/import/services/base-import.servic
 import { ProductService } from "~catalogue/product/services/product.service";
 import {  IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { McrmImportTemplate } from "~catalogue/import/decorators/import-template-registry.decorator";
+import { ErrorDuringImportException } from "~catalogue/import/exceptions/error-during-import.exception";
+import { Job } from "bullmq";
 
 
 @McrmImportTemplate({
@@ -36,7 +38,7 @@ export class ChangeProductVariantStatusTemplate extends BaseImportService {
       type: "boolean"
     }
   ];
-
+  jobEventName = 'changeProductVariantStatusJob';
   constructor() {
     super();
     this.processor.setFieldMap(this.fieldMap);
@@ -59,17 +61,21 @@ export class ChangeProductVariantStatusTemplate extends BaseImportService {
     RETURN n;
     `;
 
-    console.log(res.data)
-
     try {
       await service.neo.write(query, {rows: res.data});
     }
     catch (e) {
       console.log(`Error executing product variant status update query`, e);
+      throw new ErrorDuringImportException(`ERROR_DURING_IMPORT`, `1700.1`, {message: e.message });
     }
 
-    return true;
+    return {
+      success: true,
+      rowsProcessed: res.data.length,
+    };
   }
+
+
 }
 
 

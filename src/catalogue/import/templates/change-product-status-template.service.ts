@@ -61,6 +61,9 @@ export class ChangeProductStatusTemplateService extends BaseImportService {
       console.log(`Error executing product status update query`, e);
     }
 
-    return true;
+    return {
+      success: true,
+      rowsProcessed: res.data.length,
+    };
   }
 }

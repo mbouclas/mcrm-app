@@ -8,6 +8,16 @@ import { defaultNeo4JConfig, Neo4jModule } from '~root/neo4j/neo4j.module';
 import { IGenericObject } from '~models/general';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
 import { store } from '~root/state';
+import { createWriteStream, existsSync, mkdirSync } from "fs";
+import * as path from "path";
+import { SharedModule } from "~shared/shared.module";
+
+export enum Neo4jEventNames {
+  BACKUP_STARTED = 'BACKUP.STARTED',
+  BACKUP_COMPLETED = 'BACKUP.COMPLETED',
+  RESTORE_STARTED = 'RESTORE.STARTED',
+  RESTORE_COMPLETED = 'RESTORE.COMPLETED',
+}
 
 @Injectable()
 export class Neo4jService implements OnApplicationShutdown {
@@ -298,5 +308,75 @@ export class Neo4jService implements OnApplicationShutdown {
     return res.map((r) => {
       return this.mergeRelationshipsToParent(r, model);
     });
+  }
+
+  async backupDb(filename?: string, databaseOrTransaction?: string) {
+    return new Promise((resolve, reject) => {
+      filename = filename || `backup-${Date.now()}.cypher`;
+      // check if the backup folder exists
+      // if not, create it
+      const backupFolder = path.resolve('./backups');
+      if (!existsSync(backupFolder)) {
+        mkdirSync(backupFolder);
+      }
+
+
+      const outputStream = createWriteStream(path.resolve(backupFolder, filename));
+      const session = this.getWriteSession(<string>databaseOrTransaction);
+      SharedModule.eventEmitter.emit(Neo4jEventNames.BACKUP_STARTED );
+      session.run(`
+        CALL apoc.export.cypher.all(null, {format: "cypher-shell", stream: true, streamStatements: true, useOptimizations: {type: "UNWIND_BATCH", unwindBatchSize: 5}});`
+      ).subscribe({
+        onNext: record => {
+          const data = record.get('cypherStatements');
+
+          if (data) {
+            outputStream.write(data);
+          }
+        },
+        onCompleted: () => {
+          outputStream.end();
+          session.close();
+          SharedModule.eventEmitter.emit(Neo4jEventNames.BACKUP_COMPLETED, {filename: path.resolve(backupFolder, filename)});
+          resolve({
+            success: true,
+            filename
+          });
+        },
+        onError: error => {
+          console.error(error);
+          outputStream.end();
+          session.close();
+
+          console.log(`ERROR BACKING UP DB`, error)
+          reject({
+            success: false,
+            error
+          });
+        }
+      });
+    });
+
+  }
+
+  async clearDb(databaseOrTransaction?: string) {
+    const session = this.getWriteSession(<string>databaseOrTransaction);
+
+    // session.run(`MATCH (n) DETACH DELETE n;`);
+
+    const resConstraints = await this.readWithCleanUp(`SHOW CONSTRAINTS;`)
+    const constraints = resConstraints.map(r => r.name);
+    for (const constraint of constraints) {
+      // await session.run(`DROP CONSTRAINT ${constraint}; IF EXISTS`);
+    }
+
+    const resIndexes = await this.read(`SHOW INDEXES;`)
+    const indexes = resIndexes.records.map(r => r.get('name'));
+    for (const index of indexes) {
+      // await session.run(`DROP INDEX ${index} IF EXISTS;`);
+    }
+    // session.run(`CALL apoc.schema.assert({}, {});`);
+
+
   }
 }

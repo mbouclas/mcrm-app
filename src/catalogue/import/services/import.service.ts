@@ -89,7 +89,7 @@ export class ImportService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.queueName);
+    // ImportQueueService.addWorker(this.processIncomingUpload, ImportQueueService.queueName);
     ImportQueueService.addWorker(this.processImageFromImport, ImportQueueService.imageProcessingQueueName);
     ImportQueueService.imageProcessingEvents.on('completed', async (res) => {
       // res.returnvalue is and instance of IImportSchema

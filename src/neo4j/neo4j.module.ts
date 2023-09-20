@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
-import { Neo4jService } from './neo4j.service';
+import { Neo4jEventNames, Neo4jService } from "./neo4j.service";
 import { Neo4jConfig, Neo4jScheme } from "./neo4j-config.interface";
 import { NEO4J_CONFIG, NEO4J_DRIVER } from './neo4j.constants';
 import { createDriver } from './neo4j.util';
 import { ModuleRef } from "@nestjs/core";
+import { OnEvent } from "@nestjs/event-emitter";
+import { getStoreProperty } from "~root/state";
+import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service";
+import { UploadModule } from "~root/upload/upload.module";
 
 export const defaultNeo4JConfig = {
     scheme: process.env.NEO4J_SCHEME as Neo4jScheme,
@@ -40,6 +44,31 @@ export class Neo4jModule {
     static moduleRef: ModuleRef;
     constructor(private m: ModuleRef) {
 
+    }
+
+    @OnEvent(Neo4jEventNames.BACKUP_COMPLETED)
+    async onBackupCompleted({filename}: {filename: string}) {
+        const config = getStoreProperty(`configs.general.backups.objectStorage`);
+        if (!config || !config['uploadOnSuccess']) {
+            return;
+        }
+
+        const oss = new ObjectStorageService();
+        try {
+            await oss.bucketExistsOrCreate(config['bucketName']);
+        }
+        catch (e) {
+            console.log(`Error creating bucket: ${e.message}`);
+            return false;
+        }
+
+        try {
+            await oss.createObject(config['bucketName'], filename, {type: 'backup'});
+        }
+        catch (e) {
+            console.log(`Error creating object: ${e.message}`);
+            return false;
+        }
     }
 
     onModuleInit(): any {

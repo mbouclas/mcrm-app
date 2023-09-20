@@ -37,6 +37,10 @@ export class ImportQueueService implements OnModuleInit {
     ImportQueueService.photosImportQueue.on('waiting', (job) => ImportQueueService.logger.log(`${ImportQueueService.photosImportQueue}: ${job.id}  now waiting`));
   }
 
+  public static getRedisConnection() {
+    return ImportQueueService.redisConnection;
+  }
+
   public static addWorker(worker: Processor, queueName) {
     const w = new Worker(queueName, worker, {
       connection: ImportQueueService.redisConnection,

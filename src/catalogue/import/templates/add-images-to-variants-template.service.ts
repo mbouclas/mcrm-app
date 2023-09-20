@@ -58,6 +58,9 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
       console.log(`Error executing product variant image update query`, e);
     }
 
-    return true;
+    return {
+      success: true,
+      rowsProcessed: res.data.length,
+    };
   }
 }
