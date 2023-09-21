@@ -19,8 +19,9 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
-import { McmsDi } from '~helpers/mcms-component.decorator';
+import { McmsDi, McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { PermalinkBuilderService } from '~website/menu/permalink-builder.service';
+import { getHooks } from "~shared/hooks/hook.decorator";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -118,6 +119,11 @@ export class ProductService extends BaseNeoService {
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
     let item: ProductModel;
+    const hooks = getHooks({category: 'Product'});
+
+    if (hooks && typeof hooks.findOneBefore === 'function') {
+      hooks.findOneBefore(filter, rels);
+    }
 
     try {
       item = (await super.findOne(filter, rels)) as unknown as ProductModel;
@@ -127,6 +133,10 @@ export class ProductService extends BaseNeoService {
 
     const images = await this.imageService.getItemImages('Product', item['uuid']);
     item['thumb'] = images.find((img) => img.type === 'main') || null;
+
+    if (hooks && typeof hooks.findOneAfter === 'function') {
+      item = hooks.findOneAfter(item);
+    }
 
     return item;
   }
@@ -143,14 +153,22 @@ export class ProductService extends BaseNeoService {
   }
 
   async store(record: ProductModelDto, userId?: string, relationships: IBaseNeoServiceRelationships[] = []) {
+    const hooks = getHooks({category: 'Product'});
+
+    if (hooks && typeof hooks.storeBefore === 'function') {
+      hooks.storeBefore(record, relationships);
+    }
     // Handle SKU
     if (!record.sku) {
       record.sku = tokenGenerator(6);
     }
 
-    const r = await super.store(record, userId, relationships);
+    let r = await super.store(record, userId, relationships);
     // Add changelog?
 
+    if (hooks && typeof hooks.storeAfter === 'function') {
+      r = hooks.storeAfter(r);
+    }
     return r;
   }
 

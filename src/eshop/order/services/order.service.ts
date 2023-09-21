@@ -18,6 +18,7 @@ import { ICartItem } from '~eshop/cart/cart.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { CartItem } from '~eshop/cart/CartItem';
+import { getHooks } from "~shared/hooks/hook.decorator";
 
 export class OrderModelDto {
   orderId?: string;
@@ -180,6 +181,12 @@ export class OrderService extends BaseNeoService {
       relationshipProps?: IGenericObject;
     }>,
   ) {
+    const hooks = getHooks({category: 'Order'});
+
+    if (hooks && typeof hooks.storeBefore === 'function') {
+      hooks.storeBefore(record, relationships);
+    }
+
     if (!record.status) {
       record.status = OrderService.statuses[0].id;
     }
@@ -203,8 +210,12 @@ export class OrderService extends BaseNeoService {
     record.VAT = OrderService.VAT;
 
     try {
-      const r = await super.store(record, userId, relationships);
+      let r = await super.store(record, userId, relationships);
       this.eventEmitter.emit(OrderEventNames.orderCreated, r);
+
+      if (hooks && typeof hooks.storeAfter === 'function') {
+        r = hooks.storeAfter(r);
+      }
 
       return r;
     } catch (e) {
@@ -219,13 +230,24 @@ export class OrderService extends BaseNeoService {
     relationships: IBaseNeoServiceRelationships[] = [],
     options?: IGenericObject,
   ) {
+    const hooks = getHooks({category: 'Order'});
+
+    if (hooks && typeof hooks.updateBefore === 'function') {
+      hooks.updateBefore(record, relationships);
+    }
+
     if (record.status && !OrderService.statuses.map((status) => status.id).includes(record.status)) {
       throw new InvalidOrderException('INVALID_ORDER_STATUS', '900.2');
     }
 
     try {
-      const r = await super.update(uuid, record, userId, relationships, options);
+      let r = await super.update(uuid, record, userId, relationships, options);
       this.eventEmitter.emit(OrderEventNames.orderUpdated, r);
+
+      if (hooks && typeof hooks.updateAfter === 'function') {
+        r = hooks.updateAfter(r);
+      }
+
       return r;
     } catch (e) {
       console.log(e);

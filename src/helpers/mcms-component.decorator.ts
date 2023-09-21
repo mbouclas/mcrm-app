@@ -6,12 +6,13 @@ import { BaseModel } from "../models/base.model";
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;
-    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider';
+    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'hook';
     title?: string;
     description?: string;
     reference?: any;
     usedFor?: string;
     model?: string;
+    category?: string; // used for hooks and other types that you need to differentiate. for example: orders, products, etc. Best practice is to use the model name
 }
 
 export class McmsDiContainer {
@@ -24,6 +25,14 @@ export class McmsDiContainer {
         }
 
         return this.registry[idx];
+    }
+
+    static getAndInstantiate<T = any>(filter: IGenericObject): null|T {
+        const container = this.get(filter);
+        if (!container) {return null;}
+
+        // try to get the item from the DI registry. Need to have the same id as in the DI
+        return container.reference;
     }
 
     static add(obj: IMcmsDiRegistryItem) {

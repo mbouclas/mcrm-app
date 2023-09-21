@@ -40,6 +40,10 @@ const productSchema = z.object({
 export class ProductController {
   constructor() { }
 
+  onApplicationBootstrap() {
+
+  }
+
   @Get('')
   async find(@Query() queryParams = {}) {
     return await new ProductService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
