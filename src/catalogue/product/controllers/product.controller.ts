@@ -41,7 +41,9 @@ export class ProductController {
   constructor() { }
 
   onApplicationBootstrap() {
+    setTimeout(async () => {
 
+    })
   }
 
   @Get('')

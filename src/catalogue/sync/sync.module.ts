@@ -4,6 +4,7 @@ import { SharedModule } from "~shared/shared.module";
 import { ProductConverterService } from "~catalogue/sync/product-converter.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ModuleRef } from "@nestjs/core";
+import { ProductEvents } from "~catalogue/sync/event-handlers/product.events";
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ModuleRef } from "@nestjs/core";
   providers: [
     SyncEsService,
     ProductConverterService,
+    ProductEvents,
   ]
 })
 export class SyncModule {

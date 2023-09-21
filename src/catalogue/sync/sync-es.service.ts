@@ -1,15 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { ElasticSearchService } from '~es/elastic-search.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { IProductModelEs } from '~catalogue/export/sync-elastic-search.service';
-import { IPagination } from '~models/general';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { ProductConverterService } from '~catalogue/sync/product-converter.service';
-import { SyncModule } from '~catalogue/sync/sync.module';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { PropertyService } from '~catalogue/property/services/property.service';
-import { ElasticSearchModule } from "~es/elastic-search.module";
 
 @Injectable()
 export class SyncEsService {

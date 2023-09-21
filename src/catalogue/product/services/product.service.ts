@@ -19,9 +19,9 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
-import { McmsDi, McmsDiContainer } from "~helpers/mcms-component.decorator";
-import { PermalinkBuilderService } from '~website/menu/permalink-builder.service';
+import { McmsDi } from "~helpers/mcms-component.decorator";
 import { getHooks } from "~shared/hooks/hook.decorator";
+import { SharedModule } from "~shared/shared.module";
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -62,6 +62,14 @@ export class ProductModelDto {
     basicUnit?: string;
   };
 }
+
+export enum ProductEventNames {
+  productCreated = 'productCreated',
+  productUpdated = 'productUpdated',
+  productDeleted = 'productDeleted',
+
+}
+
 @McmsDi({
   id: 'ProductService',
   type: 'service',
@@ -122,7 +130,7 @@ export class ProductService extends BaseNeoService {
     const hooks = getHooks({category: 'Product'});
 
     if (hooks && typeof hooks.findOneBefore === 'function') {
-      hooks.findOneBefore(filter, rels);
+      await hooks.findOneBefore(filter, rels);
     }
 
     try {
@@ -135,7 +143,7 @@ export class ProductService extends BaseNeoService {
     item['thumb'] = images.find((img) => img.type === 'main') || null;
 
     if (hooks && typeof hooks.findOneAfter === 'function') {
-      item = hooks.findOneAfter(item);
+      item = await hooks.findOneAfter(item);
     }
 
     return item;
@@ -156,7 +164,7 @@ export class ProductService extends BaseNeoService {
     const hooks = getHooks({category: 'Product'});
 
     if (hooks && typeof hooks.storeBefore === 'function') {
-      hooks.storeBefore(record, relationships);
+      await hooks.storeBefore(record, relationships);
     }
     // Handle SKU
     if (!record.sku) {
@@ -167,10 +175,67 @@ export class ProductService extends BaseNeoService {
     // Add changelog?
 
     if (hooks && typeof hooks.storeAfter === 'function') {
-      r = hooks.storeAfter(r);
+      r = await hooks.storeAfter(r);
     }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productCreated, r);
     return r;
   }
+
+  async update(    uuid: string,
+                   record: IGenericObject,
+                   userId?: string,
+                   relationships?: Array<{
+                     id: string;
+                     name: string;
+                     relationshipProps?: IGenericObject;
+                   }>,
+                   options?: IGenericObject,): Promise<ProductModel> {
+    const hooks = getHooks({category: 'Product'});
+    if (hooks && typeof hooks.updateBefore === 'function') {
+      await hooks.updateBefore(record, relationships);
+    }
+
+    try {
+      let r = await super.update(uuid, record, userId, relationships, options);
+
+      if (hooks && typeof hooks.updateAfter === 'function') {
+        r = await hooks.updateAfter(r);
+      }
+
+      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, r);
+
+      return r;
+    }
+    catch (e) {
+      console.log(`ERROR UPDATING PRODUCT:`, e);
+      throw new RecordUpdateFailedException(e);
+    }
+
+  }
+
+  async delete(uuid: string, userId?: string) {
+    const hooks = getHooks({category: 'Product'});
+    if (hooks && typeof hooks.deleteBefore === 'function') {
+      await hooks.deleteBefore(uuid);
+    }
+
+    try {
+      await super.delete(uuid, userId);
+    }
+    catch (e) {
+      console.log(`ERROR DELETING PRODUCT:`, e);
+      throw new RecordUpdateFailedException(e);
+    }
+
+    if (hooks && typeof hooks.deleteAfter === 'function') {
+      await hooks.deleteAfter(uuid);
+    }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productDeleted, uuid);
+    return { success: true };
+  }
+
 
   /**
    * Given a property and it's values, generate product variants.

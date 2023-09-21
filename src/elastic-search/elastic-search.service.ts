@@ -786,4 +786,19 @@ export class ElasticSearchService implements OnApplicationShutdown {
 
     return true;
   }
+
+  async deleteRecord(uuid: string) {
+    try {
+      await this.client.delete({
+        index: this.index,
+        id: uuid,
+      });
+    }
+    catch (e) {
+      console.log(`Error deleting record ${uuid}`, e);
+      return false;
+    }
+
+    return true;
+  }
 }
