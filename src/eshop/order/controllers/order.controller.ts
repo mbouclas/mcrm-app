@@ -340,7 +340,7 @@ export class OrderController {
       },
       null,
       rels,
-      { clearExistingData: true },
+      { clearExistingRelationships: true },
     );
 
     try {
