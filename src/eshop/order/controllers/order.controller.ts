@@ -33,7 +33,7 @@ import {
 
 @Controller('api/order')
 export class OrderController {
-  constructor() {}
+  constructor() { }
 
   @Get()
   async find(@Query() queryParams = {}) {
@@ -156,9 +156,8 @@ export class OrderController {
     const paymentProviderSettings = paymentMethod.providerSettings;
 
     const paymentProviderContainer = McmsDiContainer.get({
-      id: `${
-        paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
@@ -176,9 +175,8 @@ export class OrderController {
     const shippingProviderSettings = shippingMethod.providerSettings;
 
     const shippingProviderContainer = McmsDiContainer.get({
-      id: `${
-        shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-      }Provider`,
+      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
+        }Provider`,
     });
 
     const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
@@ -332,15 +330,34 @@ export class OrderController {
       }
     }
 
+    const cart = body.metaData.cart;
+
     const order = await orderService.update(
       uuid,
       {
         status: body.status,
+        metaData: body.metaData,
       },
       null,
       rels,
-      { clearExistingData: true },
+      { clearExistingRelationships: true },
     );
+
+    try {
+      await orderService.attachProductsToOrder(order.uuid, cart.items);
+    } catch (e) {
+      console.log('Error attaching products', e.getMessage(), e.getErrors());
+    }
+
+    // Attach the order products to the user, create the HAS_BOUGHT relationship
+    try {
+      await orderService.attachOrderProductsToUser(order.uuid);
+    } catch (e) {
+      console.log('Error attaching products', e.message, e.getErrors());
+      return { success: false, message: 'ERROR_ATTACHING_PRODUCTS', error: e.message };
+    }
+
+    new OrderService().notify(OrderEventNames.orderAttachedToNodes, order);
 
     return order;
   }
