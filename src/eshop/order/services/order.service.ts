@@ -37,6 +37,7 @@ export class OrderModelDto {
   paymentInfo?: string;
   shippingInfo?: string;
   VAT?: number;
+  metaData?: any;
 }
 
 export enum OrderEventNames {
@@ -301,6 +302,7 @@ export class OrderService extends BaseNeoService {
 
   async attachProductsToOrder(uuid, items: ICartItem[]) {
     let query = `MATCH (o:Order {uuid: '${uuid}'}) `;
+
     query += items
       .map((item, index) => {
         let q = '';
@@ -326,8 +328,10 @@ export class OrderService extends BaseNeoService {
     query += `RETURN *`;
 
     try {
+      console.log(query);
       await this.neo.write(query);
     } catch (e) {
+      console.log(e);
       throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e.getErrors());
     }
 
@@ -368,7 +372,7 @@ export class OrderService extends BaseNeoService {
   }
 
   async attachOrderProductsToUser(orderId: string) {
-    const order = await this.findOne({uuid: orderId});
+    const order = await this.findOne({ uuid: orderId });
     const userId = order['userId'];
     const items = order['metaData']['cart']['items'];
 
@@ -391,8 +395,7 @@ export class OrderService extends BaseNeoService {
 
     try {
       return await this.neo.write(query);
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`Error in attachUserToProductOrdered`, e.message);
       return null;
     }
