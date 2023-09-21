@@ -303,6 +303,8 @@ export class OrderService extends BaseNeoService {
   async attachProductsToOrder(uuid, items: ICartItem[]) {
     let query = `MATCH (o:Order {uuid: '${uuid}'}) `;
 
+    query += ` OPTIONAL MATCH (o)-[r:HAS_ITEM]->(n) DELETE r WITH o `;
+
     query += items
       .map((item, index) => {
         let q = '';
@@ -328,10 +330,8 @@ export class OrderService extends BaseNeoService {
     query += `RETURN *`;
 
     try {
-      console.log(query);
       await this.neo.write(query);
     } catch (e) {
-      console.log(e);
       throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e.getErrors());
     }
 
