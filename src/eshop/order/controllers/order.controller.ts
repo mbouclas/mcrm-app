@@ -81,204 +81,77 @@ export class OrderController {
     return true;
   }
 
-  @Patch('/basic')
-  async storeBasic(@Session() session: SessionData, @Body() body: IGenericObject) {
-    const userId = session.user && session.user['uuid'];
-
-    const orderService = new OrderService();
-
-    const order = await orderService.store({
-      ...body,
-      userId,
-    });
-
-    await orderService.attachToModelById(order.uuid, userId, 'user');
-
-    return order;
-  }
-
   @Post()
-  async store(@Session() session: SessionData, @Body() body: IGenericObject) {
-    const cart = session.cart.toObject();
-
-    if (!cart.items || !cart.items.length) {
-      throw new RecordNotFoundException('No items in cart');
-    }
-
-    // The userId must be posted. This is a method for the admin, not the system users
-    const userId = session.user && session.user['uuid'];
-
+  async store(@Body() body: IGenericObject) {
     const orderService = new OrderService();
 
-    const [shippingAddressError, shippingAddress] = await handleAsync(
-      new AddressService().findOne({
-        uuid: body.shippingAddressId,
-        type: 'SHIPPING',
-        userId,
-      }),
-    );
-    if (shippingAddressError) {
-      throw new ShippingAddressNotFound();
-    }
+    const rels = [];
 
-    const [billingAddressError, billingAddress] = await handleAsync(
-      new AddressService().findOne({
-        uuid: body.billingAddressId,
-        type: 'BILLING',
-        userId,
-      }),
-    );
-
-    if (billingAddressError) {
-      throw new BillingAddressNotFound();
-    }
-
-    const [errorCustomerPaymentMethod, customerPaymentMethod] = await handleAsync(
-      new CustomerPaymentMethodService().findOne({
-        uuid: body.customerPaymentMethodId,
-      }),
-    );
-
-    if (errorCustomerPaymentMethod) {
-      throw new CustomerPaymentMethodNotFound();
-    }
-
-    const [paymentMethodError, paymentMethod] = await handleAsync(
-      new PaymentMethodService().findOne({
-        uuid: customerPaymentMethod.paymentMethodId,
-      }),
-    );
-
-    if (paymentMethodError) {
-      throw new PaymentMethodNotFound();
-    }
-
-    const paymentProviderSettings = paymentMethod.providerSettings;
-
-    const paymentProviderContainer = McmsDiContainer.get({
-      id: `${paymentProviderSettings.providerName.charAt(0).toUpperCase() + paymentProviderSettings.providerName.slice(1)
-        }Provider`,
-    });
-
-    const paymentMethodProvider: IPaymentMethodProvider = new paymentProviderContainer.reference();
-
-    const [errorShippingMethod, shippingMethod] = await handleAsync(
-      new ShippingMethodService().findOne({
-        uuid: body.shippingMethodId,
-      }),
-    );
-
-    if (errorShippingMethod) {
-      throw new ShippingMethodNotFound();
-    }
-
-    const shippingProviderSettings = shippingMethod.providerSettings;
-
-    const shippingProviderContainer = McmsDiContainer.get({
-      id: `${shippingProviderSettings.providerName.charAt(0).toUpperCase() + shippingProviderSettings.providerName.slice(1)
-        }Provider`,
-    });
-
-    const shippingMethodProvider: IShippingMethodProvider = new shippingProviderContainer.reference();
-
-    const [shippingInfoError, shippingInfo] = await handleAsync(shippingMethodProvider.sendTransaction());
-    if (shippingInfoError) {
-      throw new ShippingMethodFaildTransaction();
-    }
-
-    const products = await new ProductService().find({
-      uuids: cart.items.map((item) => item.productId),
-    });
-
-    const fullPrice = products.data.reduce(
-      (accumulator, productItem: ProductModel) => (productItem.price ? accumulator + productItem.price : accumulator),
-      0,
-    );
-
-    const [error, customer] = await handleAsync(
-      new CustomerService().findOne({
-        userId,
-        provider: paymentProviderSettings.providerName,
-      }),
-    );
-
-    if (error) {
-      throw new CustomerNotFound();
-    }
-
-    const [errorPaymentInfo, paymentInfo] = await handleAsync(
-      paymentMethodProvider.sendTransaction(
-        customer.customerId,
-        fullPrice,
-        customerPaymentMethod.providerPaymentMethodId,
-      ),
-    );
-    if (errorPaymentInfo) {
-      throw new PaymentMethodFailedTransaction();
-    }
-
-    let rels = [
-      {
-        id: shippingAddress.uuid,
-        name: 'address',
-      },
-
-      {
-        id: billingAddress.uuid,
-        name: 'address',
-      },
-
-      {
-        id: paymentMethod.uuid,
+    if (body.paymentMethod) {
+      rels.push({
+        id: body.paymentMethod.uuid,
         name: 'paymentMethod',
-      },
+      });
+    }
 
-      {
-        id: shippingMethod.uuid,
+    if (body.shippingMethod) {
+      rels.push({
+        id: body.shippingMethod.uuid,
         name: 'shippingMethod',
-      },
+      });
+    }
 
-      {
-        id: userId,
+    if (body.user) {
+      rels.push({
+        id: body.user.uuid,
         name: 'user',
-      },
-    ];
+      });
+    }
 
-    products.data.forEach((productItem: ProductModel) => {
-      rels = [
-        ...rels,
-        {
-          id: productItem?.uuid,
-          name: 'product',
-        },
-      ];
-    });
+    if (body.address) {
+      for (const address of body.address) {
+        for (const addressType of address.type) {
+          rels.push({
+            id: address.uuid,
+            name: 'address',
+            relationshipProps: {
+              type: addressType,
+            },
+          });
+        }
+      }
+    }
+
+    const cart = body.metaData.cart;
 
     const [orderError, order] = await handleAsync(
       orderService.store(
         {
           status: 1,
-          paymentMethod: paymentMethod.title,
-          shippingMethod: shippingMethod.title,
           salesChannel: body.salesChannel,
-          billingAddressId: billingAddress.uuid,
-          shippingAddressId: shippingAddress.uuid,
           paymentStatus: 1,
           shippingStatus: 1,
-          paymentInfo,
-          shippingInfo,
-          userId,
         },
         '',
         rels,
       ),
     );
 
-    if (orderError) {
-      throw new OrderFailed();
+    try {
+      await orderService.attachProductsToOrder(order.uuid, cart.items);
+    } catch (e) {
+      console.log('Error attaching products', e.getMessage(), e.getErrors());
     }
 
-    await session.cart.clearWithDb();
+    // Attach the order products to the user, create the HAS_BOUGHT relationship
+    try {
+      await orderService.attachOrderProductsToUser(order.uuid);
+    } catch (e) {
+      console.log('Error attaching products', e.message, e.getErrors());
+      return { success: false, message: 'ERROR_ATTACHING_PRODUCTS', error: e.message };
+    }
+
+    new OrderService().notify(OrderEventNames.orderAttachedToNodes, order);
 
     return order;
   }
@@ -291,7 +164,7 @@ export class OrderController {
   }
 
   @Patch(`:uuid`)
-  async update(@Session() session: SessionData, @Body() body: IGenericObject, @Param('uuid') uuid: string) {
+  async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     const orderService = new OrderService();
 
     const orderItem = await orderService.findOne({ uuid });
