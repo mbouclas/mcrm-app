@@ -128,6 +128,7 @@ export class OrderController {
       orderService.store(
         {
           status: 1,
+          metaData: body.metaData,
           salesChannel: body.salesChannel,
           paymentStatus: 1,
           shippingStatus: 1,
