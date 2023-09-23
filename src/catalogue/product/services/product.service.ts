@@ -19,9 +19,9 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { ImageService } from '~image/image.service';
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
-import { McmsDi } from "~helpers/mcms-component.decorator";
-import { getHooks } from "~shared/hooks/hook.decorator";
-import { SharedModule } from "~shared/shared.module";
+import { McmsDi } from '~helpers/mcms-component.decorator';
+import { getHooks } from '~shared/hooks/hook.decorator';
+import { SharedModule } from '~shared/shared.module';
 
 export class ProductModelDto {
   tempUuid?: string;
@@ -67,7 +67,6 @@ export enum ProductEventNames {
   productCreated = 'productCreated',
   productUpdated = 'productUpdated',
   productDeleted = 'productDeleted',
-
 }
 
 @McmsDi({
@@ -127,7 +126,7 @@ export class ProductService extends BaseNeoService {
 
   async findOne(filter: IGenericObject, rels = []): Promise<ProductModel> {
     let item: ProductModel;
-    const hooks = getHooks({category: 'Product'});
+    const hooks = getHooks({ category: 'Product' });
 
     if (hooks && typeof hooks.findOneBefore === 'function') {
       await hooks.findOneBefore(filter, rels);
@@ -161,7 +160,7 @@ export class ProductService extends BaseNeoService {
   }
 
   async store(record: ProductModelDto, userId?: string, relationships: IBaseNeoServiceRelationships[] = []) {
-    const hooks = getHooks({category: 'Product'});
+    const hooks = getHooks({ category: 'Product' });
 
     if (hooks && typeof hooks.storeBefore === 'function') {
       await hooks.storeBefore(record, relationships);
@@ -182,16 +181,18 @@ export class ProductService extends BaseNeoService {
     return r;
   }
 
-  async update(    uuid: string,
-                   record: IGenericObject,
-                   userId?: string,
-                   relationships?: Array<{
-                     id: string;
-                     name: string;
-                     relationshipProps?: IGenericObject;
-                   }>,
-                   options?: IGenericObject,): Promise<ProductModel> {
-    const hooks = getHooks({category: 'Product'});
+  async update(
+    uuid: string,
+    record: IGenericObject,
+    userId?: string,
+    relationships?: Array<{
+      id: string;
+      name: string;
+      relationshipProps?: IGenericObject;
+    }>,
+    options?: IGenericObject,
+  ): Promise<ProductModel> {
+    const hooks = getHooks({ category: 'Product' });
     if (hooks && typeof hooks.updateBefore === 'function') {
       await hooks.updateBefore(record, relationships);
     }
@@ -206,24 +207,21 @@ export class ProductService extends BaseNeoService {
       SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, r);
 
       return r;
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`ERROR UPDATING PRODUCT:`, e);
       throw new RecordUpdateFailedException(e);
     }
-
   }
 
   async delete(uuid: string, userId?: string) {
-    const hooks = getHooks({category: 'Product'});
+    const hooks = getHooks({ category: 'Product' });
     if (hooks && typeof hooks.deleteBefore === 'function') {
       await hooks.deleteBefore(uuid);
     }
 
     try {
       await super.delete(uuid, userId);
-    }
-    catch (e) {
+    } catch (e) {
       console.log(`ERROR DELETING PRODUCT:`, e);
       throw new RecordUpdateFailedException(e);
     }
@@ -235,7 +233,6 @@ export class ProductService extends BaseNeoService {
     SharedModule.eventEmitter.emit(ProductEventNames.productDeleted, uuid);
     return { success: true };
   }
-
 
   /**
    * Given a property and it's values, generate product variants.
@@ -305,8 +302,13 @@ export class ProductService extends BaseNeoService {
   async generateVariant(product: BaseModel, variantName: string, variantId: string) {
     // attach an isVariant property and a rel to the parent product. The variant needs a rel to that value only. All other rels need to be inherited
     const query = `MATCH (product:Product {uuid: $uuid})
-    MERGE (variant:ProductVariant {name:$variantName}) set variant.price = product.price, variant.title = product.title, variant.quantity = product.quantity, variant.variantId = $variantId,
-    variant.active = true, variant.createdAt = datetime()
+    MERGE (variant:ProductVariant {name:$variantName}) SET 
+      variant.price = product.price, 
+      variant.title = product.title, 
+      variant.quantity = product.quantity, 
+      variant.sku = product.sku,
+      variant.variantId = $variantId,
+      variant.active = true, variant.createdAt = datetime()
     WITH product,variant
     MERGE (product)-[r:HAS_VARIANTS]->(variant)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime()

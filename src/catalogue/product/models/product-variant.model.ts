@@ -121,6 +121,22 @@ export class ProductVariantModel extends BaseModel {
       },
     },
     {
+      varName: 'variantId',
+      label: 'VariantId',
+      placeholder: 'VariantId',
+      type: 'text',
+      group: 'main',
+    },
+
+    {
+      varName: 'sku',
+      label: 'Sku',
+      placeholder: 'Sku',
+      type: 'text',
+      group: 'main',
+    },
+
+    {
       varName: 'description',
       label: 'Description',
       placeholder: 'Description',
