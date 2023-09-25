@@ -1,9 +1,14 @@
+const { resolve } = require("path");
+
 module.exports = {
   backups: {
     objectStorage: {
       uploadOnSuccess: true,
       bucketName: 'backups',
     }
+  },
+  updates: {
+    updatesDir: resolve(process.cwd(), 'updates'),
   },
   modelSettings: {
     Product: {

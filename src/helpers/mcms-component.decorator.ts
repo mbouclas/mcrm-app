@@ -1,12 +1,12 @@
-import { findIndex } from "lodash";
+import { filter, findIndex } from "lodash";
 import {Container} from "typedi";
-import { IGenericObject } from "../models/general";
-import { BaseModel } from "../models/base.model";
+import { IGenericObject } from "~models/general";
+import { BaseModel } from "~models/base.model";
 
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;
-    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'hook';
+    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'hook'|'patch'|'upgrade';
     title?: string;
     description?: string;
     reference?: any;
@@ -59,6 +59,10 @@ export class McmsDiContainer {
 
     static all() {
         return this.registry;
+    }
+
+    static filter(filters: IGenericObject) {
+        return filter(McmsDiContainer.all(), filters) as IMcmsDiRegistryItem[];
     }
 }
 
