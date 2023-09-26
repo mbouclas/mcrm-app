@@ -1,35 +1,17 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Session } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderEventNames, OrderService } from '~eshop/order/services/order.service';
-import { CustomerService } from '~eshop/customer/services/customer.service';
-import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
-import { AddressService } from '~eshop/address/services/address.service';
-import { ProductService } from '~root/catalogue/product/services/product.service';
 import handleAsync from '~helpers/handleAsync';
-import { CartService } from '~eshop/cart/cart.service';
 import { SessionData } from 'express-session';
-import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
-import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
-import { UserService } from '~root/user/services/user.service';
-import { store } from '~root/state';
-import { ProductModel } from '~root/catalogue/product/models/product.model';
-import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
-import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
-import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers.types';
-import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
+
 
 import {
-  BillingAddressNotFound,
-  ShippingAddressNotFound,
-  OrderFailed,
   OrderNotFound,
-  PaymentMethodNotFound,
-  CustomerPaymentMethodNotFound,
-  ShippingMethodNotFound,
-  ShippingMethodFaildTransaction,
-  PaymentMethodFailedTransaction,
-  CustomerNotFound,
 } from '../../exceptions';
+import { getStoreProperty } from "~root/state";
+import { PdfService } from "~root/pdf/pdf.service";
+import BaseHttpException from "~shared/exceptions/base-http-exception";
+import { InvoiceGeneratorService } from "~eshop/order/services/invoice-generator.service";
 
 @Controller('api/order')
 export class OrderController {
@@ -242,5 +224,23 @@ export class OrderController {
     await service.update(uuid, { status: body.status });
     service.emit(OrderEventNames.orderStatusChanged, { uuid, status: body.status });
     return { success: true };
+  }
+
+  @Post(':uuid/pdf')
+  async generatePdf(@Body() body: {regenerate: boolean}, @Param('uuid') uuid: string) {
+    const service = new InvoiceGeneratorService();
+
+    try {
+      return await service.generate(uuid, body.regenerate || false);
+    }
+    catch (e) {
+      throw new BaseHttpException({
+        code: '1450.6',
+        error: e,
+        reason: e.message,
+        statusCode: 500,
+      })
+    }
+
   }
 }

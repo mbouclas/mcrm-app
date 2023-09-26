@@ -43,6 +43,7 @@ import { ObjectStorageModule } from './object-storage/object-storage.module';
 import { FilesModule } from './files/files.module';
 import { ClientCodeModule } from "~root/client-code/client-code.module";
 import { UpdateModule } from './update/update.module';
+import { PdfModule } from './pdf/pdf.module';
 
 const Lang = require('mcms-node-localization');
 export let Translate;
@@ -86,6 +87,7 @@ export const Test = { token: null };
     FilesModule,
     ClientCodeModule,
     UpdateModule,
+    PdfModule,
   ],
   exports: [SharedModule],
   controllers: [AppController],
