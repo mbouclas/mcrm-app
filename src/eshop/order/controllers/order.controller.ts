@@ -66,7 +66,6 @@ export class OrderController {
     const cart = new Cart();
     await cart.initialize(v4(), body.user.uuid);
 
-    console.log(body.metaData.cart.items);
     await Promise.all(
       body.metaData.cart.items.map(async (item) => {
         let cartItem = null;
@@ -90,6 +89,7 @@ export class OrderController {
       }),
     );
     await cart.save();
+    await cart.attachCartToUser({ uuid: body.user.uuid });
 
     const rels = [];
 
