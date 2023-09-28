@@ -63,31 +63,36 @@ export class OrderController {
     const orderService = new OrderService();
     const cartService = new CartService();
 
-    const cart = new Cart();
-    await cart.initialize(v4(), body.user.uuid);
+    const cart = new Cart(v4());
 
-    await Promise.all(
-      body.metaData.cart.items.map(async (item) => {
-        let cartItem = null;
-        try {
-          cartItem = await cartService.createCartItemFromProductId(
-            item.productId || item.uuid,
-            item.quantity,
-            item.variantId,
-            item.metaData,
-            body.user.uuid,
-          );
-        } catch (e) {
-          return { success: false, reason: 'ProductNotFound' };
-        }
+    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
+    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
+    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
+    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
 
-        try {
-          cart.add(cartItem, item.overwriteQuantity || false);
-        } catch (e) {
-          console.log(e);
-        }
-      }),
-    );
+    for (const item of body.metaData.cart.items) {
+      console.log({ item });
+      let cartItem = null;
+      try {
+        cartItem = await cartService.createCartItemFromProductId(
+          item.productId,
+          item.quantity,
+          item.variantId,
+          item.metaData,
+          body.user.uuid,
+        );
+      } catch (e) {
+        console.log(e);
+        return { success: false, reason: 'ProductNotFound' };
+      }
+
+      try {
+        cart.add(cartItem, item.overwriteQuantity || false);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    console.log('evo');
     await cart.save();
     await cart.attachCartToUser({ uuid: body.user.uuid });
 
@@ -132,7 +137,7 @@ export class OrderController {
       orderService.store(
         {
           status: 1,
-          metaData: body.metaData,
+          metaData: { ...body.metaData, cart: cart.toObject() },
           salesChannel: body.salesChannel,
           paymentStatus: 1,
           shippingStatus: 1,
