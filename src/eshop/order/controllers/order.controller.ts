@@ -1,35 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Session } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { OrderEventNames, OrderService } from '~eshop/order/services/order.service';
-import { CustomerService } from '~eshop/customer/services/customer.service';
-import { CustomerPaymentMethodService } from '~eshop/customer/services/customer-payment-method.service';
-import { AddressService } from '~eshop/address/services/address.service';
-import { ProductService } from '~root/catalogue/product/services/product.service';
 import handleAsync from '~helpers/handleAsync';
 import { CartService } from '~eshop/cart/cart.service';
 import { SessionData } from 'express-session';
-import { PaymentMethodService } from '~root/eshop/payment-method/services/payment-method.service';
-import { ShippingMethodService } from '~root/eshop/shipping-method/services/shipping-method.service';
-import { UserService } from '~root/user/services/user.service';
-import { store } from '~root/state';
-import { ProductModel } from '~root/catalogue/product/models/product.model';
-import { RecordNotFoundException } from '~shared/exceptions/record-not-found.exception';
-import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
-import { IShippingMethodProvider } from '~eshop/shipping-method/models/providers.types';
-import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
-
-import {
-  BillingAddressNotFound,
-  ShippingAddressNotFound,
-  OrderFailed,
-  OrderNotFound,
-  PaymentMethodNotFound,
-  CustomerPaymentMethodNotFound,
-  ShippingMethodNotFound,
-  ShippingMethodFaildTransaction,
-  PaymentMethodFailedTransaction,
-  CustomerNotFound,
-} from '../../exceptions';
+import { OrderNotFound } from '../../exceptions';
+import { Cart } from '~root/eshop/cart/Cart';
+import { v4 } from 'uuid';
 
 @Controller('api/order')
 export class OrderController {
@@ -84,6 +61,35 @@ export class OrderController {
   @Post()
   async store(@Body() body: IGenericObject) {
     const orderService = new OrderService();
+    const cartService = new CartService();
+
+    const cart = new Cart();
+    await cart.initialize(v4(), body.user.uuid);
+
+    console.log(body.metaData.cart.items);
+    await Promise.all(
+      body.metaData.cart.items.map(async (item) => {
+        let cartItem = null;
+        try {
+          cartItem = await cartService.createCartItemFromProductId(
+            item.productId || item.uuid,
+            item.quantity,
+            item.variantId,
+            item.metaData,
+            body.user.uuid,
+          );
+        } catch (e) {
+          return { success: false, reason: 'ProductNotFound' };
+        }
+
+        try {
+          cart.add(cartItem, item.overwriteQuantity || false);
+        } catch (e) {
+          console.log(e);
+        }
+      }),
+    );
+    await cart.save();
 
     const rels = [];
 
@@ -121,8 +127,6 @@ export class OrderController {
         }
       }
     }
-
-    const cart = body.metaData.cart;
 
     const [orderError, order] = await handleAsync(
       orderService.store(
