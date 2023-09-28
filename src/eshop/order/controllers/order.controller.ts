@@ -10,7 +10,7 @@ import { v4 } from 'uuid';
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Query() queryParams = {}) {
@@ -129,16 +129,18 @@ export class OrderController {
     const [orderError, order] = await handleAsync(
       orderService.store(
         {
-          status: 1,
+          total: OrderService.calculateTotalPrice(cart.items),
           metaData: { ...body.metaData, cart: cart.toObject() },
-          salesChannel: body.salesChannel,
-          paymentStatus: 1,
-          shippingStatus: 1,
+          shippingMethod: body.shippingMethod.uuid,
+          paymentMethod: body.paymentMethod.uuid,
         },
         '',
         rels,
       ),
     );
+    if (orderError) {
+      return { success: false, message: 'FAILED_ORDER_CREATE', error: orderError.message };
+    }
 
     try {
       await orderService.attachProductsToOrder(order.uuid, cart.items);
@@ -238,8 +240,10 @@ export class OrderController {
     const order = await orderService.update(
       uuid,
       {
-        status: body.status,
+        total: OrderService.calculateTotalPrice(cart.items),
         metaData: { ...body.metaData, cart: cart.toObject() },
+        shippingMethod: body.shippingMethod.uuid,
+        paymentMethod: body.paymentMethod.uuid,
       },
       null,
       rels,
