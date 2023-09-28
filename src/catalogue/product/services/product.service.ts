@@ -306,6 +306,7 @@ export class ProductService extends BaseNeoService {
       variant.price = product.price, 
       variant.title = product.title, 
       variant.quantity = product.quantity, 
+      variant.thumb = product.thumb,
       variant.sku = product.sku,
       variant.variantId = $variantId,
       variant.active = true, variant.createdAt = datetime()
