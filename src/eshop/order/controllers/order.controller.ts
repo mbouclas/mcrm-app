@@ -65,13 +65,7 @@ export class OrderController {
 
     const cart = new Cart(v4());
 
-    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
-    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
-    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
-    console.log(' req body.metaData.cart.items', body.metaData.cart.items.length);
-
     for (const item of body.metaData.cart.items) {
-      console.log({ item });
       let cartItem = null;
       try {
         cartItem = await cartService.createCartItemFromProductId(
@@ -82,17 +76,16 @@ export class OrderController {
           body.user.uuid,
         );
       } catch (e) {
-        console.log(e);
         return { success: false, reason: 'ProductNotFound' };
       }
 
       try {
         cart.add(cartItem, item.overwriteQuantity || false);
       } catch (e) {
-        console.log(e);
+        return { success: false, reason: 'ProductNotFound' };
       }
     }
-    console.log('evo');
+
     await cart.save();
     await cart.attachCartToUser({ uuid: body.user.uuid });
 
@@ -176,12 +169,41 @@ export class OrderController {
   @Patch(`:uuid`)
   async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     const orderService = new OrderService();
+    const cartService = new CartService();
 
     const orderItem = await orderService.findOne({ uuid });
 
     if (!orderItem) {
       throw new Error("Order doesn't exist");
     }
+
+    const cart = new Cart();
+    await cart.initialize(body.metaData.cart.id, body.user.uuid);
+    cart.clear();
+
+    for (const item of body.metaData.cart.items) {
+      let cartItem = null;
+      try {
+        cartItem = await cartService.createCartItemFromProductId(
+          item.productId,
+          item.quantity,
+          item.variantId,
+          item.metaData,
+          body.user.uuid,
+        );
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+
+      try {
+        cart.add(cartItem, item.overwriteQuantity || false);
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+    }
+
+    await cart.save();
+    await cart.attachCartToUser({ uuid: body.user.uuid });
 
     const rels = [];
 
@@ -213,13 +235,11 @@ export class OrderController {
       }
     }
 
-    const cart = body.metaData.cart;
-
     const order = await orderService.update(
       uuid,
       {
         status: body.status,
-        metaData: body.metaData,
+        metaData: { ...body.metaData, cart: cart.toObject() },
       },
       null,
       rels,
