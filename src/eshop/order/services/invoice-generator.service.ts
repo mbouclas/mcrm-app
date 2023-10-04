@@ -20,9 +20,9 @@ export class InvoiceGeneratorService implements OnApplicationBootstrap {
       const pdfService = new PdfService(config)
       const res = await pdfService.generate({name: 'Michael'}, getStoreProperty('configs.store.invoices.pdf.templateFile'))
       console.log(res);*/
-      const service = new InvoiceGeneratorService();
-      const res = await service.generate('3caf535b-d44b-4394-9e1f-1454a5b1ce72', true)
-      console.log(res)
+      // const service = new InvoiceGeneratorService();
+      // const res = await service.generate('3caf535b-d44b-4394-9e1f-1454a5b1ce72', true)
+      // console.log(res)
     }, 1000);
 
   }

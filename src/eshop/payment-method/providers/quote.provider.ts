@@ -9,7 +9,7 @@ import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service
 import { UploadModule } from "~root/upload/upload.module";
 import { OnEvent } from "@nestjs/event-emitter";
 import { PaymentMethodModule } from "~eshop/payment-method/payment-method.module";
-const crypto = require('crypto')
+import { FilesService } from "~files/files.service";
 
 export interface IQuoteFileAttachment {
   id: string;
@@ -18,6 +18,7 @@ export interface IQuoteFileAttachment {
   description: string;
   url?: string;
   metaData?: IGenericObject;
+  uuid?: string;
 }
 
 @McmsDi({
@@ -39,6 +40,9 @@ export class QuoteProvider extends BasePaymentMethodProvider {
     }
   }
 
+  /**
+   * Entry method when invoked via the container or as a driver
+   */
   async handle() {
     // this.bucketName = crypto.createHash('md5').update(this.settings.user.email).digest("hex");
     const attachments = this.settings.cart.items.filter(item => item.metaData && item.metaData.uploadedFiles && Array.isArray(item.metaData.uploadedFiles))
@@ -95,6 +99,26 @@ export class QuoteProvider extends BasePaymentMethodProvider {
     }
 
     attachment.metaData = {};
+
+    const fileService = new FilesService();
+    // create a new node in the database with the information of the file
+    const mime = require('mime');
+    const mime_type = mime.getType(`${UploadModule.uploadDir}${attachment.filename}`)
+    try {
+      const res = await fileService.store({
+        bucket: this.bucketName,
+        filename: attachment.filename,
+        description: attachment.description,
+        driver: 'object-storage',
+        originalFilename: attachment.originalName,
+        mimeType: mime_type,
+      });
+
+      attachment.uuid = res.uuid;
+    }
+    catch (e) {
+      console.log(`Error storing attachment on the DB: ${e.message}`);
+    }
     return attachment;
   }
 }

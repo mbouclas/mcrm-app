@@ -430,11 +430,14 @@ export class OrderService extends BaseNeoService {
     });
     // fix any "broken" prices
     const toRemove = [];
+    console.log(products.data)
     // remove any products that are not available
     items.forEach((item, idx) => {
       const found = products.data.find((p) => p['uuid'] === item.productId) as ProductModel;
+
       if (!found) {
         toRemove.push(idx);
+        // return
       }
 
       // Check stock, if not enough, remove item

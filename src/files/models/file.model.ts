@@ -55,6 +55,14 @@ export class FileModel extends BaseModel {
       group: 'main',
     },
     {
+      varName: 'mimeType',
+      label: 'Mime Type',
+      placeholder: 'Mime Type',
+      type: 'text',
+      isSortable: true,
+      group: 'main',
+    },
+    {
       varName: 'driver',
       label: 'Driver',
       placeholder: 'Driver',

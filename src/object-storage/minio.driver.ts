@@ -12,6 +12,7 @@ import {ObjectNotFoundException} from "./exceptions/ObjectNotFound.exception";
 import {ObjectDownloadException} from "./exceptions/ObjectDownload.exception";
 import {CannotApplyBucketPolicyException} from "./exceptions/CannotApplyBucketPolicy.exception";
 import {S3PolicyManager} from "./S3PolicyManager";
+import { readFile } from "fs/promises";
 
 export class MinioDriver implements IBaseObjectStorageDriver {
     client: Client;
@@ -185,6 +186,7 @@ export class MinioDriver implements IBaseObjectStorageDriver {
             let dataStream,
                 size = 0,
                 contents = '';
+
 
             try {
                 dataStream = await this.client.getObject(bucket, filename);
