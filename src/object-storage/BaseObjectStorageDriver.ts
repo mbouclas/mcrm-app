@@ -58,6 +58,7 @@ export interface IBaseObjectStorageDriver {
     setBucketPolicy(bucketName: string, policy: string, resource: string): Promise<boolean>;
     bucketExistsOrCreate(name: string): Promise<boolean>;
     getObject(bucket: string, filename: string): Promise<IObjectContents>;
+    getObjectStream(bucket: string, filename: string): Promise<any>;
 }
 
 export class BaseObjectMeta {

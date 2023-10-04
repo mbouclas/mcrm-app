@@ -6,6 +6,9 @@ import {
 } from "./BaseObjectStorageDriver";
 
 export class AwsDriver implements IBaseObjectStorageDriver {
+    getObjectStream(bucket: string, filename: string): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
     bucketExists(name: string): Promise<boolean> {
         return Promise.resolve(false);
     }

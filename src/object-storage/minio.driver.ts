@@ -13,6 +13,7 @@ import {ObjectDownloadException} from "./exceptions/ObjectDownload.exception";
 import {CannotApplyBucketPolicyException} from "./exceptions/CannotApplyBucketPolicy.exception";
 import {S3PolicyManager} from "./S3PolicyManager";
 import { readFile } from "fs/promises";
+import { createReadStream, createWriteStream, writeFileSync } from "fs";
 
 export class MinioDriver implements IBaseObjectStorageDriver {
     client: Client;
@@ -180,6 +181,11 @@ export class MinioDriver implements IBaseObjectStorageDriver {
 
         return true;
     }
+
+    async getObjectStream(bucket: string, filename: string) {
+        return  await this.client.fGetObject(bucket, filename, 'upload/' + filename);
+    }
+
 
     async getObject(bucket: string, filename: string): Promise<any> {
         return new Promise(async (resolve, reject) => {

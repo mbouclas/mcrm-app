@@ -96,6 +96,10 @@ export class ObjectStorageService {
         return await this.driver.getObject(bucket, filename);
     }
 
+    async getObjectStream(bucket: string, filename: string) {
+        return this.driver.getObjectStream(bucket, filename);
+    }
+
     async downloadObject(bucketName: string, filename: string, targetLocation: string): Promise<boolean> {
         return await this.driver.downloadObject(bucketName, filename, targetLocation);
     }

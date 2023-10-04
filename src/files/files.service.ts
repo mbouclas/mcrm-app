@@ -6,10 +6,13 @@ import { FileNotFoundException } from "~files/exceptions/file-not-found.exceptio
 import { ObjectStorageService } from "~root/object-storage/ObjectStorage.service";
 import { IGenericObject } from "~models/general";
 import { IObjectContents } from "~root/object-storage/BaseObjectStorageDriver";
+import { ReadStream, unlinkSync } from "fs";
+import { rm, unlink } from "fs/promises";
 
 export enum FileEventNames {
   FileUploaded = 'file.uploaded',
   FileDeleted = 'file.deleted',
+  FileDownloaded = 'file.downloaded',
 }
 
 export interface IUploadedFileResponse {
@@ -40,7 +43,20 @@ export class FilesService extends BaseNeoService {
 
   }
 
-  async getFile(filter: IGenericObject, returnContents: boolean = false): Promise<IUploadedFileResponse> {
+  @OnEvent(FileEventNames.FileDownloaded)
+  async onFileDownloaded(filename: string) {
+    // remove the temp file
+    setTimeout(async () => {
+      try {
+        unlinkSync(filename);
+      }
+      catch (e) {
+        console.log(`Error removing temp file ${filename}: ${e.message}`);
+      }
+    }, 1000)
+  }
+
+  async getFile(filter: IGenericObject, returnContents: boolean = false): Promise<IUploadedFileResponse|ReadStream> {
     let found;
     try {
       found = await this.findOne(filter);
@@ -50,7 +66,7 @@ export class FilesService extends BaseNeoService {
     }
 
     // get the file depending on the driver
-    let file: IUploadedFileResponse;
+    let file: IUploadedFileResponse|ReadStream;
 
     switch (found.driver) {
       //todo: add local driver
@@ -62,14 +78,14 @@ export class FilesService extends BaseNeoService {
         break;
       case 'object-storage': {
         const oss = new ObjectStorageService();
-
-        file = returnContents ? {
-          buffer: await oss.getObject(found.bucket, found.filename),
-          mimeType: found.mimeType,
-        } : {
-          url: await oss.getObjectUrl(found.bucket, found.filename),
-          mimeType: found.mimeType,
+        if (!returnContents) {
+          file = {
+            url: await oss.getObjectUrl(found.bucket, found.filename),
+            mimeType: found.mimeType,
+          };
         }
+
+        file = await oss.getObjectStream(found.bucket, found.filename);
       }
       break;
     }
