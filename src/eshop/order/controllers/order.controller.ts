@@ -8,8 +8,7 @@ import { SessionData } from 'express-session';
 import {
   OrderNotFound,
 } from '../../exceptions';
-import { getStoreProperty } from "~root/state";
-import { PdfService } from "~root/pdf/pdf.service";
+
 import BaseHttpException from "~shared/exceptions/base-http-exception";
 import { InvoiceGeneratorService } from "~eshop/order/services/invoice-generator.service";
 

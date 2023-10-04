@@ -5,6 +5,7 @@ import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { sortBy } from 'lodash';
 
+
 const modelName = 'Page';
 @McmsDi({
   id: modelName,
@@ -15,10 +16,16 @@ export class PageModel extends BaseModel implements OnModuleInit {
   public modelName = modelName;
   public static modelName = modelName;
   public static defaultAggregationSize = 30;
+
+
   public title: string;
+
+
   public slug;
 
   async onModuleInit() { }
+
+
 
   public static displayedColumns = ['title', 'category'];
 

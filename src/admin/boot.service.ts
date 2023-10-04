@@ -17,10 +17,11 @@ export class BootService extends BaseNeoService {
     const configs = store.getState().configs;
 
     const models = Object.keys(allModels)
+      .filter(key => allModels[key] && allModels[key].modelConfig)
       .filter(
-        (key) =>
-          Array.isArray(allModels[key].fields) &&
-          allModels[key].fields.length > 0,
+        (key) => {
+          return Array.isArray(allModels[key].fields) && allModels[key].fields.length > 0;
+        }
       )
       .map((key) => {
         // console.log('ALLLLL MODELS', allModels[key].name);
