@@ -165,6 +165,33 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         type: 'normal',
         isCollection: true,
       },
+      salesChannel: {
+        rel: 'BELONGS_TO',
+        alias: 'salesChannelRelationship',
+        model: 'SalesChannel',
+        modelAlias: 'salesChannel',
+        type: 'normal',
+        isCollection: true,
+        addRelationshipData: true,
+        postProcessing: async (record: Record<any, any>, model: ProductModel) => {
+          if (!record.salesChannel || !Array.isArray(record.salesChannel) || record.salesChannel.length === 0) {
+            return record;
+          }
+
+          record.salesChannel = record.salesChannel.map((salesChannel) => ({
+            ...salesChannel.model,
+            ...{
+              itemSettings: {
+                order: salesChannel.relationship.order || 0,
+                visible: salesChannel.relationship.visible || true,
+              }
+            },
+          }));
+
+          record.salesChannel = sortBy(record.salesChannel, 'order');
+          return record;
+        }
+      },
       thumb: {
         rel: 'HAS_IMAGE',
         alias: 'thumbRelationship',

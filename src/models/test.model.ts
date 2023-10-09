@@ -7,11 +7,11 @@ import { store } from "~root/state";
 @Injectable()
 export class TestModel extends BaseModel {
 
-  @Property({type: 'text', label: 'Title', varName: 'title', required: true})
+/*  @Property({type: 'text', label: 'Title', varName: 'title', required: true})
   public title: string;
 
   @Property({type: 'text', label: 'Slug', varName: 'slug', required: true, isSlug: true, slugFrom: 'title'})
-  public slug;
+  public slug;*/
 
   async onApplicationBootstrap() {
     setTimeout(async () => {

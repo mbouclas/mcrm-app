@@ -1,3 +1,5 @@
+import { IGenericObject } from "~models/general";
+
 export interface IDynamicFieldConfigSettingsBluePrint {}
 
 export interface IDynamicFieldConfigPasswordSettingsBluePrint
@@ -83,6 +85,7 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
   isSortable?: boolean;
   exported?: boolean;
   isJson?: boolean;
+  schema?: IGenericObject;
   isSlug?: boolean;
   slugFrom?: string;
   setDefaultTranslationInModel?: boolean;

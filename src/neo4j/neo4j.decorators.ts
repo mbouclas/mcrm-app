@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 import { AppStateActions } from "~root/state";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
+import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
 
 
 const decoratedPropertiesKey = Symbol('decoratedProperties');
@@ -14,7 +15,12 @@ export function McrmModel(modelName: string) {
       constructor['fields'] = [];
     }
 
+    if (!Array.isArray(constructor['filterFields'])) {
+      constructor['filterFields'] = [];
+    }
+
     const allProperties = getPropertiesWithMetadata(constructor);
+
     for (const property in allProperties) {
       if (allProperties.hasOwnProperty(property)) {
         const field = allProperties[property];
@@ -53,9 +59,25 @@ export function Property(params: IDynamicFieldConfigBlueprint) {
     }
     existingDecoratedProperties.push(propertyKey);
     Reflect.defineMetadata(decoratedPropertiesKey, existingDecoratedProperties, target);
+  };
+}
 
+export function FilterField(params: IQueryBuilderFieldBlueprint) {
+  return function (target: any, propertyKey: string) {
 
+    for (const key in params) {
+      if (params.hasOwnProperty(key)) {
+        Reflect.metadata(key, params[key])(target, propertyKey);
+      }
+    }
 
+    // Maintain a list of decorated properties
+    let existingDecoratedProperties: string[] = Reflect.getOwnMetadata(decoratedPropertiesKey, target);
+    if (!existingDecoratedProperties) {
+      existingDecoratedProperties = [];
+    }
+    existingDecoratedProperties.push(propertyKey);
+    Reflect.defineMetadata(decoratedPropertiesKey, existingDecoratedProperties, target);
   };
 }
 

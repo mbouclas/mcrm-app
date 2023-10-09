@@ -37,6 +37,7 @@
       "~eshop/*": ["src/eshop/*"],
       "~website/*": ["src/website/*"],
       "~files/*": ["src/files/*"],
+      "~sales-channels/*": ["src/sales-channels/*"],
       "~es/*": ["src/elastic-search/*"],
       "~dashboard/*": ["src/dashboard/*"],
       "~models/*": ["src/models/*"]
