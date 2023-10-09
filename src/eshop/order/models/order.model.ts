@@ -585,6 +585,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       isInSimpleQuery: true,
     },
     {
+      varName: 'salesChannel',
+      label: 'Sales Channel',
+      type: 'string',
+      model: 'Order',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+    {
       varName: 'paymentMethod',
       filterField: 'uuid',
       label: 'Payment Method',

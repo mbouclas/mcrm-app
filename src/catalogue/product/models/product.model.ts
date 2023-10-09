@@ -763,6 +763,17 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       rangeToFieldName: 'createdAtTo',
       isInSimpleQuery: false,
     },
+    {
+      varName: 'salesChannel',
+      filterField: 'uuid',
+      label: 'Sales Channel',
+      type: 'string',
+      relName: 'salesChannelFilterRel',
+      relType: 'inverse',
+      model: 'SalesChannel',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {

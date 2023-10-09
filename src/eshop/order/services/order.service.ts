@@ -19,6 +19,7 @@ import { ProductModel } from '~catalogue/product/models/product.model';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { CartItem } from '~eshop/cart/CartItem';
 import { getHooks } from "~shared/hooks/hook.decorator";
+import { SalesChannelsService } from "~sales-channels/sales-channels.service";
 
 export class OrderModelDto {
   orderId?: string;
@@ -201,7 +202,8 @@ export class OrderService extends BaseNeoService {
     }
 
     if (!record.salesChannel) {
-      record.salesChannel = 'web';
+      const defaultChannelQuery = await (new SalesChannelsService()).find({default: true});
+      record.salesChannel = defaultChannelQuery.data[0]['uuid'] || 'storefront';
     }
 
     if (!record.orderId) {

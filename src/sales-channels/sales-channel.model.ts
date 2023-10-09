@@ -35,6 +35,9 @@ export class SalesChannelModel extends BaseModel {
   @Property({type: 'boolean', label: 'Active', varName: 'active', required: true, group: 'main'})
   public active: string;
 
+  @Property({type: 'boolean', label: 'Default', varName: 'default', required: true, group: 'main'})
+  public default: boolean;
+
   @Property({type: 'json', label: 'Settings', varName: 'settings', group: 'secondary', schema: settingsSchema})
   public settings: string;
 
@@ -56,6 +59,14 @@ export class SalesChannelModel extends BaseModel {
     {
       varName: 'active',
       label: 'Active',
+      type: 'boolean',
+      model: 'SalesChannel',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+    {
+      varName: 'default',
+      label: 'Default',
       type: 'boolean',
       model: 'SalesChannel',
       filterType: 'exact',
