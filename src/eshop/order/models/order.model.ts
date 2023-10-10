@@ -6,10 +6,10 @@ import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PaymentMethodModel } from '../../payment-method/models/payment-method.model';
 import { ShippingMethodModel } from '../../shipping-method/models/shipping-method.model';
 import { AddressModel } from '~root/eshop/address/models/address.model';
-import { CartModel } from "~eshop/models/Cart.model";
-import { ProductService } from "~catalogue/product/services/product.service";
-import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
-import { AddressService } from "~eshop/address/services/address.service";
+import { CartModel } from '~eshop/models/Cart.model';
+import { ProductService } from '~catalogue/product/services/product.service';
+import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
+import { AddressService } from '~eshop/address/services/address.service';
 
 const modelName = 'Order';
 @McmsDi({
@@ -27,7 +27,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   public static displayedColumns = [];
 
@@ -73,7 +73,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           allowMultiple: true,
           type: 'inverse',
           allowedFields: ['uuid', 'email', 'firstName', 'lastName', 'phone', 'role', 'createdAt', 'updatedAt'],
-        }
+        },
       },
 
       cart: {
@@ -93,13 +93,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
             return record;
           }
 
-          const products = await (new ProductService()).find({uuids: record.cart.items.map((item) => item.productId)});
+          const products = await new ProductService().find({ uuids: record.cart.items.map((item) => item.productId) });
           record.cart.items.forEach((item) => {
             item.product = products.data.find((product) => product['uuid'] === item.productId);
           });
 
-
-          const variants = await (new ProductVariantService()).find({uuids: record.cart.items.map((item) => item.variantId)});
+          const variants = await new ProductVariantService().find({
+            uuids: record.cart.items.map((item) => item.variantId),
+          });
           record.cart.items.forEach((item) => {
             item.variant = variants.data.find((product) => product['uuid'] === item.variantId);
           });
@@ -188,16 +189,16 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           }
           // get the type of the address
           for (const address of record.address) {
-            const type = await (new AddressService()).getAddressType({uuid: address.uuid}, 'Order', {uuid: record.uuid});
+            const type = await new AddressService().getAddressType({ uuid: address.uuid }, 'Order', {
+              uuid: record.uuid,
+            });
 
             // Same address can be used for billing and shipping
             if (type.length > 1 && record.address.length === 1) {
-              address.type = ['billing', 'shipping'];
-            }
-            else if (type.length === 1){
+              address.type = ['BILLING', 'SHIPPING'];
+            } else if (type.length === 1) {
               address.type = [type[0].type];
             }
-
           }
 
           return record;

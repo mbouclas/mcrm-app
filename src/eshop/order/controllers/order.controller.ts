@@ -3,6 +3,9 @@ import { IGenericObject } from '~models/general';
 import { OrderEventNames, OrderService } from '~eshop/order/services/order.service';
 import handleAsync from '~helpers/handleAsync';
 import { SessionData } from 'express-session';
+import { OrderNotFound } from '../../exceptions';
+import { Cart } from '~root/eshop/cart/Cart';
+import { v4 } from 'uuid';
 
 
 import {
@@ -14,7 +17,7 @@ import { InvoiceGeneratorService } from "~eshop/order/services/invoice-generator
 
 @Controller('api/order')
 export class OrderController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   async find(@Query() queryParams = {}) {
@@ -65,6 +68,33 @@ export class OrderController {
   @Post()
   async store(@Body() body: IGenericObject) {
     const orderService = new OrderService();
+    const cartService = new CartService();
+
+    const cart = new Cart(v4());
+
+    for (const item of body.metaData.cart.items) {
+      let cartItem = null;
+      try {
+        cartItem = await cartService.createCartItemFromProductId(
+          item.productId,
+          item.quantity,
+          item.variantId,
+          item.metaData,
+          body.user.uuid,
+        );
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+
+      try {
+        cart.add(cartItem, item.overwriteQuantity || false);
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+    }
+
+    await cart.save();
+    await cart.attachCartToUser({ uuid: body.user.uuid });
 
     const rels = [];
 
@@ -103,21 +133,22 @@ export class OrderController {
       }
     }
 
-    const cart = body.metaData.cart;
-
     const [orderError, order] = await handleAsync(
       orderService.store(
         {
-          status: 1,
-          metaData: body.metaData,
-          salesChannel: body.salesChannel,
-          paymentStatus: 1,
-          shippingStatus: 1,
+          total: OrderService.calculateTotalPrice(cart.items),
+          metaData: { ...body.metaData, cart: cart.toObject() },
+          shippingMethod: body.shippingMethod.uuid,
+          paymentMethod: body.paymentMethod.uuid,
+          status: body.status,
         },
         '',
         rels,
       ),
     );
+    if (orderError) {
+      return { success: false, message: 'FAILED_ORDER_CREATE', error: orderError.message };
+    }
 
     try {
       await orderService.attachProductsToOrder(order.uuid, cart.items);
@@ -148,12 +179,41 @@ export class OrderController {
   @Patch(`:uuid`)
   async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     const orderService = new OrderService();
+    const cartService = new CartService();
 
     const orderItem = await orderService.findOne({ uuid });
 
     if (!orderItem) {
       throw new Error("Order doesn't exist");
     }
+
+    const cart = new Cart();
+    await cart.initialize(body.metaData.cart.id, body.user.uuid);
+    cart.clear();
+
+    for (const item of body.metaData.cart.items) {
+      let cartItem = null;
+      try {
+        cartItem = await cartService.createCartItemFromProductId(
+          item.productId,
+          item.quantity,
+          item.variantId,
+          item.metaData,
+          body.user.uuid,
+        );
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+
+      try {
+        cart.add(cartItem, item.overwriteQuantity || false);
+      } catch (e) {
+        return { success: false, reason: 'ProductNotFound' };
+      }
+    }
+
+    await cart.save();
+    await cart.attachCartToUser({ uuid: body.user.uuid });
 
     const rels = [];
 
@@ -185,13 +245,14 @@ export class OrderController {
       }
     }
 
-    const cart = body.metaData.cart;
-
     const order = await orderService.update(
       uuid,
       {
+        total: OrderService.calculateTotalPrice(cart.items),
+        metaData: { ...body.metaData, cart: cart.toObject() },
+        shippingMethod: body.shippingMethod.uuid,
+        paymentMethod: body.paymentMethod.uuid,
         status: body.status,
-        metaData: body.metaData,
       },
       null,
       rels,

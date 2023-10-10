@@ -29,21 +29,19 @@ const productSchema = z.object({
     .string({ required_error: errors.SKU_REQUIRED.code, invalid_type_error: errors.SKU_REQUIRED.code })
     .min(1, errors.SKU_REQUIRED.code),
   price: z
-    .string({ required_error: errors.PRICE_REQUIRED.code, invalid_type_error: errors.PRICE_REQUIRED.code })
-    .min(1, errors.PRICE_REQUIRED.code),
+    .number({ required_error: errors.PRICE_REQUIRED.code, invalid_type_error: errors.PRICE_REQUIRED.code })
+    .min(0.01, errors.PRICE_REQUIRED.code),
   description: z
     .string({ required_error: errors.DESCRIPTION_REQUIRED.code, invalid_type_error: errors.DESCRIPTION_REQUIRED.code })
-    .min(1, errors.DESCRIPTION_REQUIRED.code),
+    .min(5, errors.DESCRIPTION_REQUIRED.code),
 });
 
 @Controller('api/product')
 export class ProductController {
-  constructor() { }
+  constructor() {}
 
   onApplicationBootstrap() {
-    setTimeout(async () => {
-
-    })
+    setTimeout(async () => {});
   }
 
   @Get('')
