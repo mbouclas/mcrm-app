@@ -17,7 +17,16 @@ export const transformErrors = (zodError: z.ZodError): ValidationError[] => {
   return customErrors;
 };
 
+const hasOnlyActiveProperty = (obj) => {
+  const keys = Object.keys(obj);
+  return keys.length === 1 && keys[0] === 'active';
+};
+
 export const validateData = async (data: IGenericObject, schema) => {
+  if (hasOnlyActiveProperty(data)) {
+    return null;
+  }
+
   try {
     await schema.parse(data);
   } catch (e) {
