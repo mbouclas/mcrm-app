@@ -29,7 +29,7 @@ export class SalesChannelModel extends BaseModel {
   @Property({type: 'text', label: 'Slug', varName: 'slug', required: true, isSlug: true, slugFrom: 'title', group: 'hidden'})
   public slug;
 
-  @Property({type: 'text', label: 'Description', varName: 'description', group: 'main'})
+  @Property({type: 'textarea', label: 'Description', varName: 'description', group: 'main'})
   public description: string;
 
   @Property({type: 'boolean', label: 'Active', varName: 'active', required: true, group: 'main'})

@@ -18,6 +18,7 @@ import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-fa
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { AppModule } from '~root/app.module';
+const slug = require('slug');
 
 const debug = require('debug')('mcms:neo:query');
 
@@ -266,6 +267,12 @@ export class BaseNeoService {
       userId,
     });
     let ret;
+
+    this.model.fields.forEach(field => {
+      if (field.isSlug && !record.slug) {
+        record.slug = slug(record[field.slugFrom || 'title'], {lower: true})
+      }
+    });
 
     try {
       ret = await this.updateForStore({ uuid: newUuid, record, userId, relationships });
