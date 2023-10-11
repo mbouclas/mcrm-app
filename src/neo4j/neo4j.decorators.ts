@@ -1,12 +1,18 @@
 import "reflect-metadata";
 import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
-import { AppStateActions } from "~root/state";
+import { AppStateActions, store } from "~root/state";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
 
 
 const decoratedPropertiesKey = Symbol('decoratedProperties');
 export const modelRegistry: Function[] = [];
+
+export function McrmNeoService(modelName: string) {
+  return function (constructor: Function) {
+    constructor['modelName'] = modelName;
+  }
+}
 
 export function McrmModel(modelName: string) {
   return function (constructor: Function) {

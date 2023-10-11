@@ -4,9 +4,10 @@ import { store } from '~root/state';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PaymentMethodModel } from '~eshop/payment-method/models/payment-method.model';
 import { BaseNeoService } from '~shared/services/base-neo.service';
-import { IGenericObject } from '~models/general';
+import { IGenericObject, IPagination } from "~models/general";
 import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export class PaymentModelDto {
   title?: string;
@@ -42,10 +43,30 @@ export class PaymentMethodService extends BaseNeoService {
       filter,
       rels,
     )) as unknown as PaymentMethodModel;
+
+    item.provider = this.getProvider(item.providerName);
     return item;
   }
 
-  async store(record: PaymentModelDto, userId?: string) {
+  async find(params: IGenericObject = {}, rels: string[] = []) {
+    let res: IPagination<PaymentMethodModel>;
+    try {
+      res = await super.find(params, rels) as IPagination<PaymentMethodModel>;
+    } catch (e) {
+      throw e;
+    }
+
+    // get the provider for each one
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      res.data.forEach((item) => {
+        item.provider = this.getProvider(item.providerName);
+      });
+    }
+
+    return res;
+  }
+
+/*  async store(record: PaymentModelDto, userId?: string) {
     const { providerName, settingsFields, ...rest } = record;
     const settingsFieldKeys = Object.keys(settingsFields);
 
@@ -84,11 +105,39 @@ export class PaymentMethodService extends BaseNeoService {
       userId,
     );
     return { ...r, providerSettings: JSON.parse(providerSettings) };
+  }*/
+
+
+  getProvider(providerName: string) {
+    const found = McmsDiContainer.findOne({id: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider`});
+
+    if (!found) {return null;}
+
+    return found.reference;
   }
 
-  async update(uuid: string, record: PaymentModelDto, userId?: string) {
-    const r = await super.update(uuid, record, userId);
+  getProviders(formatted = false) {
+    if (!formatted) {
+      return McmsDiContainer.filter({type: 'paymentMethodProvider'});
+    }
 
-    return r;
+    return McmsDiContainer.filter({type: 'paymentMethodProvider'}).map((provider) => {
+      return PaymentMethodService.getProviderForApiUse(provider.id, false) as unknown as IPaymentMethodProvider
+    });
+  }
+
+
+  static getProviderForApiUse(providerName: string, convertId = true) {
+    const id = convertId ? `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider` : providerName;
+    const provider = McmsDiContainer.findOne({id});
+    if (!provider) {return null;}
+    const shortName = provider.id.replace('Provider', '').toLowerCase();
+
+    return {
+      ...provider.reference.metaData,
+      ...{shortName},
+      settingsSchema: provider.reference['settingsSchema'] ? zodToJsonSchema(provider.reference['settingsSchema']) : {},
+    }
+
   }
 }

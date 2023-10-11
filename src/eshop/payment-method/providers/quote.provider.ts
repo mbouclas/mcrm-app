@@ -10,6 +10,7 @@ import { UploadModule } from "~root/upload/upload.module";
 import { OnEvent } from "@nestjs/event-emitter";
 import { PaymentMethodModule } from "~eshop/payment-method/payment-method.module";
 import { FilesService } from "~files/files.service";
+import { z } from "zod";
 
 export interface IQuoteFileAttachment {
   id: string;
@@ -21,14 +22,20 @@ export interface IQuoteFileAttachment {
   uuid?: string;
 }
 
+const settingsSchema = z.object({
+  allowFileUploads: z.boolean().describe('json:{"label": "Allow file uploads", "placeholder": "Allow file uploads", "hint": "Allow file uploads"}'),
+});
+
 @McmsDi({
   id: 'QuoteProvider',
-  type: 'class',
+  type: 'paymentMethodProvider',
+  description: 'Create a quote from the cart',
+  title: 'Quote',
 })
 export class QuoteProvider extends BasePaymentMethodProvider {
   protected bucketName = 'quotes';
   protected static handleAttachmentEventName = 'quote.attachment';
-
+  static settingsSchema = settingsSchema;
   @OnEvent(QuoteProvider.handleAttachmentEventName)
   async onHandleAttachments({ attachments, settings }) {
     const service = new QuoteProvider(settings);

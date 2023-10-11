@@ -2,16 +2,27 @@ import { IPaymentMethodProvider, IPaymentMethodProviderConfig } from '~eshop/pay
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import Stripe from 'stripe';
+import { z } from "zod";
 
 export interface IStripeProviderConfig extends IPaymentMethodProviderConfig {}
-
+const settingsSchema = z.object({
+  apiKey: z.string().describe('Stripe API Key'),
+  apiSecret: z.string().describe('Stripe API Secret'),
+  displayName: z.string().describe('json:{"label": "Display Name", "placeholder": "Display Name", "hint": "Display Name"}'),
+  deliveryInformation: z.string().describe('json:{"label": "Delivery Information", "placeholder": "Delivery Information", "hint": "Delivery Information"}'),
+  description: z.string().describe('json:{"label": "Description", "placeholder": "Description", "hint": "Description", "type": "textarea"}'),
+});
 @McmsDi({
   id: 'StripeProvider',
-  type: 'class',
+  type: 'paymentMethodProvider',
+  description: 'Stripe payment provider',
+  title: 'Stripe',
 })
 export class StripeProvider implements IPaymentMethodProvider {
   protected stripe: Stripe;
   protected config: IStripeProviderConfig;
+  static settingsSchema = settingsSchema;
+
   protected settingsFields: IDynamicFieldConfigBlueprint[] = [
     {
       varName: 'displayName',

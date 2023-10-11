@@ -1,4 +1,4 @@
-import { filter, findIndex } from "lodash";
+import { filter, findIndex, find } from "lodash";
 import {Container} from "typedi";
 import { IGenericObject } from "~models/general";
 import { BaseModel } from "~models/base.model";
@@ -6,7 +6,7 @@ import { BaseModel } from "~models/base.model";
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;
-    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'hook'|'patch'|'upgrade'|'driver';
+    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'provider'|'hook'|'patch'|'upgrade'|'driver';
     title?: string;
     description?: string;
     reference?: any;
@@ -64,12 +64,33 @@ export class McmsDiContainer {
     static filter(filters: IGenericObject) {
         return filter(McmsDiContainer.all(), filters) as IMcmsDiRegistryItem[];
     }
+
+    static findOne(filters: IGenericObject) {
+        return find(McmsDiContainer.all(), filters) as IMcmsDiRegistryItem;
+    }
 }
 
 
 export const McmsDi = (obj: IMcmsDiRegistryItem): any => {
     return (cls: any) => {
         obj.reference = cls;
+        if (['shippingMethodProvider','paymentMethodProvider','provider','hook','patch','upgrade','driver','middleware','helper'].indexOf(obj.type) !== -1) {
+            if (typeof obj.reference.metaData !== 'object') {
+                obj.reference.metaData = {};
+            }
+
+            obj.reference.metaData = {
+                ...{
+                    description: obj.description || undefined,
+                    title: obj.title || undefined,
+                    usedFor: obj.usedFor || undefined,
+                    category: obj.category || undefined,
+                    id: obj.id || undefined,
+                    type: obj.type || undefined,
+                }
+            };
+        }
+
         McmsDiContainer.add(obj);
     };
 };

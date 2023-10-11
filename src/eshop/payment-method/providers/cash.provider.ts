@@ -9,7 +9,9 @@ export interface ICashProviderConfig extends IPaymentMethodProviderConfig {}
 
 @McmsDi({
   id: 'CashProvider',
-  type: 'class',
+  type: 'paymentMethodProvider',
+  description: 'Cash on delivery',
+  title: 'Cash on delivery',
 })
 export class CashProvider implements IPaymentMethodProvider {
   protected config: ICashProviderConfig;

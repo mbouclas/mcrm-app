@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { McmsDi } from '~helpers/mcms-component.decorator';
 import {
   BaseModel,
   IBaseModelFilterConfig,
@@ -7,16 +6,15 @@ import {
 } from '~models/base.model';
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
+import { McrmModel, Property } from "~neo4j/neo4j.decorators";
+import { IPaymentMethodProvider } from "~eshop/payment-method/models/providers.types";
 
-const modelName = 'PaymentMethod';
-@McmsDi({
-  id: modelName,
-  type: 'model',
-})
+
+
 @Injectable()
+@McrmModel('PaymentMethod')
 export class PaymentMethodModel extends BaseModel implements OnModuleInit {
-  public modelName = modelName;
-  public static modelName = modelName;
+
   public static defaultAggregationSize = 30;
   public uuid: string;
   public title: string;
@@ -24,6 +22,14 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
   async onModuleInit() {}
 
   public static displayedColumns = [];
+
+  @Property({type: 'text', label: 'Provider Name', placeholder: 'Provider Name', varName: 'providerName', required: true, group: 'main'})
+  public providerName: string;
+
+  @Property({type: 'text', label: 'Slug', varName: 'slug', required: true, isSlug: true, slugFrom: 'title', group: 'hidden'})
+  public slug;
+
+  public provider: IPaymentMethodProvider;
 
   public static modelConfig: INeo4jModel = {
     select: 'paymentMethod:PaymentMethod',
@@ -93,7 +99,7 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
       varName: 'settings',
       label: 'Settings',
       placeholder: 'Settings',
-      type: 'text',
+      type: 'json',
       isSortable: true,
       group: 'main',
     },

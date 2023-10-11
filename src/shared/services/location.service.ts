@@ -31,7 +31,7 @@ export class LocationService extends BaseNeoService {
     return ;
   }
 
-  async find(params: IGenericObject = {}): Promise<IPagination<LocationModel>> {
+  async find<LocationModel>(params: IGenericObject = {}): Promise<IPagination<LocationModel>> {
     return ;
   }
 

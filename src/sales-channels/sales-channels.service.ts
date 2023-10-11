@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { store } from "~root/state";
 import { IGenericObject } from "~models/general";
+import { McrmNeoService } from "~neo4j/neo4j.decorators";
 
 export interface ISalesChannel {
   uuid: string;
@@ -13,11 +14,9 @@ export interface ISalesChannel {
 }
 
 @Injectable()
+@McrmNeoService('SalesChannel')
 export class SalesChannelsService extends BaseNeoService {
-  constructor() {
-    super();
-    this.model = store.getState().models.SalesChannel;
-  }
+
 
   async syncToModel(modelName: string, itemId: string, channels: Partial<ISalesChannel>[]) {
     // reset the rels for this model and then add the new ones

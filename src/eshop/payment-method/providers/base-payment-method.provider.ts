@@ -4,6 +4,7 @@ import { UserModel } from "~user/models/user.model";
 import { OrderModel } from "~eshop/order/models/order.model";
 import { OrderService } from "~eshop/order/services/order.service";
 import { InvalidOrderException } from "~eshop/order/exceptions/invalid-order.exception";
+import { ZodObject } from "zod";
 
 export interface IBasePaymentMethodProviderSettings {
   method: PaymentMethodModel,
@@ -13,6 +14,7 @@ export interface IBasePaymentMethodProviderSettings {
 }
 
 export class BasePaymentMethodProvider {
+  static settingsSchema: ZodObject<any>;
   constructor(
     protected settings: IBasePaymentMethodProviderSettings
   ) {

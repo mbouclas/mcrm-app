@@ -55,7 +55,7 @@ export class PersonService extends BaseNeoService {
     return result;
   }
 
-  async find(params: IGenericObject = {}): Promise<IPagination<PersonModel>> {
+  async find<PersonModel>(params: IGenericObject = {}): Promise<IPagination<PersonModel>> {
         const model = this.model;
     const modelConfig = model.modelConfig;
     const modelAlias = modelConfig.as;

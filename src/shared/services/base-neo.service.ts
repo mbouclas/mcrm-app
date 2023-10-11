@@ -18,6 +18,7 @@ import { RecordDeleteFailedException } from '~shared/exceptions/record-delete-fa
 import { RecordUpdateFailedException } from '~shared/exceptions/record-update-failed-exception';
 import { capitalizeFirstLetter } from '~helpers/capitalizeFirstLetter';
 import { AppModule } from '~root/app.module';
+import { store } from "~root/state";
 const slug = require('slug');
 
 const debug = require('debug')('mcms:neo:query');
@@ -52,6 +53,10 @@ export class BaseNeoService {
   constructor() {
     this.neo = new Neo4jService();
     this.eventEmitter = AppModule.eventEmitter;
+
+    if (this.constructor['modelName']) {
+      this.model = store.getState().models[this.constructor['modelName']];
+    }
   }
 
   setModel(model: typeof BaseModel) {
