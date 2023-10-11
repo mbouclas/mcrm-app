@@ -31,6 +31,7 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
 
   public provider: IPaymentMethodProvider;
 
+
   public static modelConfig: INeo4jModel = {
     select: 'paymentMethod:PaymentMethod',
     as: 'paymentMethod',
