@@ -21,7 +21,7 @@ import { z } from 'zod';
 import { validateData } from '~helpers/validateData';
 import { ConditionService } from '~setting/condition/services/condition.service';
 import { IsArray, IsNotEmpty } from "class-validator";
-import { IBulkUpdateRecord } from "~shared/services/base-neo.service";
+import { IBulkUpdateRecord, IBulkUpdateRelationshipRecord } from "~shared/services/base-neo.service";
 
 class PostedBulkStatusDto {
   @IsArray()
@@ -41,17 +41,7 @@ class PostedBulkSalesChannelDto {
   salesChannelId: string;
 }
 
-class PostedBulkCategoryDto {
-  @IsArray()
-  @IsNotEmpty()
-  ids: string[];
 
-  @IsNotEmpty()
-  action: 'add' | 'remove';
-
-  @IsNotEmpty()
-  categoryId: string;
-}
 
 const productSchema = z.object({
   title: z
@@ -89,14 +79,15 @@ export class ProductController {
     return await new ProductService().bulkUpdate(body.records);
   }
 
-  @Post('bulk/category')
-  async bulkCategoryEdit(@Body() body: PostedBulkCategoryDto) {
+  @Patch('bulk/category')
+  async bulkCategoryEdit(@Body() data: Partial<IBulkUpdateRelationshipRecord>[]) {
 
+    return await new ProductService().bulkUpdateRelationships(data, 'HAS_CATEGORY');
   }
 
-  @Post('bulk/sales-channel')
-  async bulkSalesChannelEdit(@Body() body: PostedBulkSalesChannelDto) {
-
+  @Patch('bulk/sales-channel')
+  async bulkSalesChannelEdit(@Body() data: Partial<IBulkUpdateRelationshipRecord>[]) {
+    return await new ProductService().bulkUpdateRelationships(data, 'BELONGS_TO');
   }
 
   @Get('')

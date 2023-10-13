@@ -34,6 +34,13 @@ export interface IBulkUpdateRecord {
   uuid: string;
 }
 
+export interface IBulkUpdateRelationshipRecord {
+  uuid: string;
+  relationshipUuid: string;
+  handleType: 'replace' | 'remove' | 'append';
+  relationshipName: string;
+}
+
 const flattenObj = (record, baseKey, nested) => {
   for (const key in nested) {
     const capitalKey = capitalizeFirstLetter(key);
@@ -897,6 +904,79 @@ MATCH(n1: ${sourceModelName} { ${sourceFilterQuery.key}: '${sourceFilterQuery.va
     }
     catch (e) {
       throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
+  }
+
+  async bulkUpdateRelationships(records: Partial<IBulkUpdateRelationshipRecord>[], relationshipName: string) {
+    // create 3 different queries based on the handler type
+    const queries = {
+      replace: [],
+      remove: [],
+      append: [],
+    }
+
+    records.forEach((record) => {
+      // assign each record to the relevant query
+      queries[record.handleType].push(record);
+    });
+
+    const replaceQuery = `
+    UNWIND $records AS record
+    MATCH (n { uuid: record.uuid })-[r:${relationshipName}]->(m { uuid: record.relatedUuid })
+    DELETE r
+    WITH record
+    MATCH (n { uuid: record.uuid })
+    MATCH (m { uuid: record.relatedUuid })
+    MERGE (n)-[r:${relationshipName}]->(m)
+    ON CREATE SET r.createdAt = datetime(), r.updatedAt = datetime()
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+    const removeQuery = `
+    UNWIND $records AS record
+    MATCH (n { uuid: record.uuid })-[r:${relationshipName}]->(m { uuid: record.relatedUuid })
+    DELETE r;
+    `;
+
+    const appendQuery = `
+    UNWIND $records AS record
+    MATCH (n { uuid: record.uuid })
+    MATCH (m { uuid: record.relatedUuid })
+    MERGE (n)-[r:${relationshipName}]->(m)
+    ON CREATE SET r.createdAt = datetime(), r.updatedAt = datetime()
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *;
+    `;
+
+
+    if (queries.replace.length) {
+      try {
+        await this.neo.write(replaceQuery, { records: queries.replace });
+      }
+      catch (e) {
+        throw new RecordUpdateFailedException(e);
+      }
+    }
+
+    if (queries.remove.length) {
+      try {
+        await this.neo.write(removeQuery, { records: queries.remove });
+      }
+      catch (e) {
+        throw new RecordUpdateFailedException(e);
+      }
+    }
+
+    if (queries.append.length) {
+      try {
+        await this.neo.write(appendQuery, { records: queries.append });
+      }
+      catch (e) {
+        throw new RecordUpdateFailedException(e);
+      }
     }
 
     return { success: true };
