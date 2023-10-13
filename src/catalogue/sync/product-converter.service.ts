@@ -1,26 +1,41 @@
 import { ProductModel } from '../product/models/product.model';
-import { IProductModelEs, IPropertyEs, IVariantEs } from '~catalogue/export/sync-elastic-search.service';
+import { IProductModelEs, IVariantEs } from '~catalogue/export/sync-elastic-search.service';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
 import { IPagination } from '~models/general';
 import { PropertyModel } from '~catalogue/property/models/property.model';
 import * as process from "process";
-import { SimilarProductsSearchService } from "~catalogue/search/similar-products-search.service";
-import { ProductSearchEsService } from "~catalogue/search/product-search-es.service";
-import { ElasticSearchModule } from "~es/elastic-search.module";
-import { ElasticSearchService } from "~es/elastic-search.service";
 import { RecommendedProductsSearchService } from "~catalogue/search/recommended-products-search.service";
+import { BaseProductConverterService } from "~catalogue/sync/base-product-converter.service";
+import { getStoreProperty } from "~root/state";
+import { getHooks } from "~shared/hooks/hook.decorator";
 const slugify = require('slug');
 
-export class ProductConverterService {
-  constructor(protected properties: IPagination<PropertyModel>) {}
+export class ProductConverterService extends BaseProductConverterService {
+  constructor(protected properties: IPagination<PropertyModel>) {
+    super(properties);
+  }
+
+  /**
+   * @Hook beforeStart. This hook is called before the conversion starts
+   * @Hook beforeReturn. This hook is called before the conversion returns the result
+   *
+   * @param product
+   */
   async convert(product: ProductModel) {
     let result: IProductModelEs = {} as IProductModelEs;
+    const hooks = getHooks({ category: 'EsProductConverter' });
+
+    if (hooks && typeof hooks.beforeStart === 'function') {
+      product = await hooks.beforeStart(product);
+    }
+
 
     result.sku = product.sku;
     result.slug = product.slug;
     result.title = product.title;
     result.id = product.uuid;
     result.price = product.price;
+    result.salePrice = product.salePrice;
     result.description = product.description;
     result.description_short = product['description_short'];
     result.createdAt = product["createdAt"];
@@ -193,6 +208,10 @@ export class ProductConverterService {
           description: item.description,
           thumb: item.thumb || null,
         }));
+    }
+
+    if (hooks && typeof hooks.beforeReturn === 'function') {
+      result = await hooks.beforeReturn(product, result);
     }
 
     return result;

@@ -7,6 +7,7 @@ import { PropertyService } from '~catalogue/property/services/property.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { getStoreProperty, store } from '~root/state';
 import { sortBy } from 'lodash';
+import { Property } from "~neo4j/neo4j.decorators";
 
 const modelName = 'Product';
 @McmsDi({
@@ -22,9 +23,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public cartCondition: any[];
   public description: string;
   public price = 0;
+  public salePrice = 0;
   public slug;
   public sku;
   public uuid: string;
+
+
 
   constructor() {
     super();
@@ -475,6 +479,23 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       },
     },
     {
+      varName: 'salePrice',
+      label: 'Sale Price',
+      placeholder: 'Sale Price',
+      type: 'float',
+      isSortable: true,
+      group: 'right',
+      groupIndex: 2,
+      updateRules: {
+        must: [
+          {
+            type: 'role',
+            value: 'ADMIN',
+          },
+        ],
+      },
+    },
+    {
       varName: 'quantity',
       label: 'Quantity',
       placeholder: 'Quantity',
@@ -723,6 +744,14 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isInSimpleQuery: true,
     },
     {
+      varName: 'sku',
+      label: 'SKU',
+      type: 'text',
+      model: 'Product',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+    {
       varName: 'active',
       label: 'Active',
       type: 'boolean',
@@ -742,7 +771,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isInSimpleQuery: false,
     },
     {
-      varName: 'category',
+      varName: 'productCategory',
       filterField: 'uuid',
       label: 'Category',
       type: 'string',

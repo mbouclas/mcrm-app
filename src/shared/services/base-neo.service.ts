@@ -30,6 +30,10 @@ export interface IBaseNeoServiceRelationships {
   relationshipProps?: IGenericObject;
 }
 
+export interface IBulkUpdateRecord {
+  uuid: string;
+}
+
 const flattenObj = (record, baseKey, nested) => {
   for (const key in nested) {
     const capitalKey = capitalizeFirstLetter(key);
@@ -154,7 +158,7 @@ export class BaseNeoService {
     );
 
     const whereQuery = where.length > 0 ? ` WHERE ${where.join(' AND ')}` : '';
-    const { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(
+    let { returnVars, matches, returnAliases, orderBy } = setupRelationShipsQuery(
       model,
       params,
       relationships,
@@ -172,6 +176,10 @@ export class BaseNeoService {
     const total = countRes[0].total;
     const pages = Math.ceil(total / limit);
     const skip = limit * (page - 1);
+
+    if (params['onlyPrimaryModelIds']) {
+      returnVars = [`${modelConfig.as}.uuid as uuid`];
+    }
 
     const query = `MATCH (${modelConfig.select}) ${whereQuery}
         WITH ${modelAlias}
@@ -862,6 +870,36 @@ MATCH(n1: ${sourceModelName} { ${sourceFilterQuery.key}: '${sourceFilterQuery.va
     } catch (e) {
       throw new RecordUpdateFailedException(e);
     }
+  }
+
+  async bulkUpdate(records: Partial<IBulkUpdateRecord>[]) {
+    // get a unique list of keys from the records array
+    const keys: string[] = [];
+    records.forEach((record) => {
+      for (const key in record) {
+        const foundIdx = this.model.fields.findIndex((field) => field.varName === key);
+        if (!keys.includes(key) && key !== 'uuid' && foundIdx > -1) {
+          keys.push(key);
+        }
+      }
+    });
+
+
+    const query = `
+    UNWIND $records AS record
+    MATCH (n { uuid: record.uuid })
+    SET ${keys.map((key) => `n.${key} = record.${key}`).join(',')}
+    RETURN n;
+    `;
+
+    try {
+      await this.neo.write(query, { records });
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(e);
+    }
+
+    return { success: true };
   }
 
   public notify(eventName: string, payload: any) {

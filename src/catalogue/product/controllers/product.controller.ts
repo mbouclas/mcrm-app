@@ -20,6 +20,38 @@ import errors from '../exceptions/errors';
 import { z } from 'zod';
 import { validateData } from '~helpers/validateData';
 import { ConditionService } from '~setting/condition/services/condition.service';
+import { IsArray, IsNotEmpty } from "class-validator";
+import { IBulkUpdateRecord } from "~shared/services/base-neo.service";
+
+class PostedBulkStatusDto {
+  @IsArray()
+  @IsNotEmpty()
+  records: Partial<IBulkUpdateRecord>[];
+}
+
+class PostedBulkSalesChannelDto {
+  @IsArray()
+  @IsNotEmpty()
+  ids: string[];
+
+  @IsNotEmpty()
+  action: 'add' | 'remove';
+
+  @IsNotEmpty()
+  salesChannelId: string;
+}
+
+class PostedBulkCategoryDto {
+  @IsArray()
+  @IsNotEmpty()
+  ids: string[];
+
+  @IsNotEmpty()
+  action: 'add' | 'remove';
+
+  @IsNotEmpty()
+  categoryId: string;
+}
 
 const productSchema = z.object({
   title: z
@@ -42,6 +74,29 @@ export class ProductController {
 
   onApplicationBootstrap() {
     setTimeout(async () => {});
+  }
+
+  @Get('ids')
+  async getIds(@Query() queryParams = {}) {
+    queryParams['onlyPrimaryModelIds'] = true;
+    const res = await new ProductService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
+
+    return res.data.map(m => m.uuid);
+  }
+
+  @Patch('bulk/update')
+  async bulkStatus(@Body() body: PostedBulkStatusDto) {
+    return await new ProductService().bulkUpdate(body.records);
+  }
+
+  @Post('bulk/category')
+  async bulkCategoryEdit(@Body() body: PostedBulkCategoryDto) {
+
+  }
+
+  @Post('bulk/sales-channel')
+  async bulkSalesChannelEdit(@Body() body: PostedBulkSalesChannelDto) {
+
   }
 
   @Get('')

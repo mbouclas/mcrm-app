@@ -146,4 +146,11 @@ module.exports = {
       }
     }
   },
+  sync: {
+    elasticSearch: {
+      converter: null, //Override default converter with a custom one. Must be in the form of a class. Here we add the container ID. Called in SyncEsService
+      searchService: null, // Override default search service with a custom one. Must be in the form of a class. Here we add the container ID. Called in the SearchController
+      similarProductsService: null, // Override default similar products service with a custom one. Must be in the form of a class. Here we add the container ID. Called in the SearchController
+    }
+  }
 }

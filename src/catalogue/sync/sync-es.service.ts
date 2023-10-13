@@ -6,6 +6,11 @@ import { ProductService } from '~catalogue/product/services/product.service';
 import { ProductConverterService } from '~catalogue/sync/product-converter.service';
 import { ProductModel } from '~catalogue/product/models/product.model';
 import { PropertyService } from '~catalogue/property/services/property.service';
+import { getStoreProperty } from "~root/state";
+import { McmsDiContainer } from "~helpers/mcms-component.decorator";
+import { BaseProductConverterService } from "~catalogue/sync/base-product-converter.service";
+import { IPagination } from "~models/general";
+import { BaseModel } from "~models/base.model";
 
 @Injectable()
 export class SyncEsService {
@@ -58,11 +63,27 @@ export class SyncEsService {
     return this;
   }
 
+  getConverter(allProperties: IPagination<BaseModel>) {
+
+    const alternativeConverter = getStoreProperty("configs.store.sync.elasticSearch.converter");
+    // this is a string, try to get it out of the container
+    // Alternatively, we can use hooks directly into the converter service to modify the data
+    if (alternativeConverter) {
+      const converterProvider = McmsDiContainer.findOne({id : alternativeConverter});
+      if (converterProvider) {
+        return new converterProvider.reference(allProperties);
+      }
+    }
+
+    return new ProductConverterService(allProperties);
+  }
+
   async one(uuid: string, syncWithEs = false) {
     const service = new ProductService();
     const allProperties = await new PropertyService().find({ limit: 1000 });
     const product = await service.findOne({ uuid }, this.rels);
-    const item = await new ProductConverterService(allProperties).convert(product);
+    const converter = this.getConverter(allProperties);
+    const item = await converter.convert(product);
     //get similar/related products
     //const similar = await (new SimilarItemsService(this.es)).search(item.id, {})
 
@@ -76,9 +97,10 @@ export class SyncEsService {
   async all(limit = 40, syncWithEs = false): Promise<IProductModelEs[]> {
     let data = [];
     const service = new ProductService();
-    const allProperties = await new PropertyService().find({ limit: 1000 });
 
-    const converter = new ProductConverterService(allProperties);
+    const allProperties = await new PropertyService().find({ limit: 1000 });
+    const converter = this.getConverter(allProperties);
+
 
     const firstQuery = await service.find({ limit }, this.rels);
     for (let idx = 0; idx < firstQuery.data.length; idx++) {

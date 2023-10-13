@@ -12,6 +12,10 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
     const fieldType = modelField.type;
     const modelFieldName = modelField.varName;
 
+    if (!resItem || !resItem[modelFieldName]) {
+      continue;
+    }
+
     if (fieldType === 'boolean') {
       newResItem[modelFieldName] = Boolean(resItem[modelFieldName]);
     }

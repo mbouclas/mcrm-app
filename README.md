@@ -33,3 +33,7 @@ git submodule
 
 * On cart add pull all the rules and see if any of them apply to the cart
 * Need to scan the product first to see if there's a rule for this product
+
+# Overrides
+* Use hooks to override the default behavior of ElasticSearch search, product converter for sync, order creation etc
+* User class overrides in the configs to completely replace the class. As an example check `configs.store.sync.elasticSearch`

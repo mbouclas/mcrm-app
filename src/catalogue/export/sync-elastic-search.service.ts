@@ -56,6 +56,7 @@ export interface IImageEs {
 
 export interface IProductModelEs extends IBaseModelEs  {
   price: number;
+  salePrice: number;
   sku: string;
   thumb?: string;
   properties: IPropertyEs[];

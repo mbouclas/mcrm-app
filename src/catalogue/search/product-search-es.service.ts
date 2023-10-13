@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ElasticSearchService, ISearchArgs } from "~es/elastic-search.service";
 import { IElasticSearchAggregationBucketResult, IElasticSearchFilterMap } from "~es/elastic-search.models";
+import { getHooks } from "~shared/hooks/hook.decorator";
 
 @Injectable()
 export class ProductSearchEsService {
@@ -142,12 +143,20 @@ export class ProductSearchEsService {
   }
 
   async filter(args: ISearchArgs, withAggregations = false) {
+
+    const hooks = getHooks({ category: 'EsSearchService' });
+
     args.page = args.page || 1;
     args.limit = args.limit || 10;
     args.queryParameters = args.queryParameters || {};
     const aggregationSize = args.queryParameters['aggSize'] ? parseInt(args.queryParameters['aggSize']) : 30;
-    // Build the query
 
+    // Override fields, sort, aggregations and filters
+    if (hooks && typeof hooks.beforeStart === 'function') {
+      await hooks.beforeStart(args, withAggregations);
+    }
+
+    // Build the query
     const q = this.es
       .resetFilters()
       .setAutoCompleteFields(this.autoCompleteFields)
@@ -212,6 +221,10 @@ export class ProductSearchEsService {
 
       return item;
     });
+
+    if (hooks && typeof hooks.beforeReturn === 'function') {
+      await hooks.beforeReturn({...res, ...{data}});
+    }
 
     return {...res, ...{data}};
   }

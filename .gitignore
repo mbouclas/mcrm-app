@@ -45,3 +45,4 @@ client-configs/*.ts
 client-code/**/*.ts
 backups/*
 updates/update-log.json
+material/*
