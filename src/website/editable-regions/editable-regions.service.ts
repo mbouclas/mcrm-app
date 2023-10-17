@@ -11,32 +11,38 @@ import {
 import { ModelRestructureService } from "~website/editable-regions/model-restructure.service";
 import {  McmsDi, McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { groupBy } from "lodash";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import { IDynamicFieldConfigBlueprint } from "~models/dynamic-fields.model";
+import { resolve } from "path";
+import { writeFile } from "fs/promises";
+import { loadConfigs } from "~helpers/load-config";
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 
-// Region Item example
-/*[
-  {
-    "model": "Product",
-    "item": {
-      "uuid": "a03f3e4e-f053-4531-b96c-f5e4a3e4d1da",
-      "title": "Mirfat",
-      "slug": "mirfat"
-    },
-    "modelSettings": {
-      "filterKey": "slug",
-      "rels": [
-        "variants"
-      ]
-    }
-  },
-  {
-    "model": "ProductCategory",
-    "item": {
-      "uuid": "cd3300b7-83f2-4658-840c-fb9c096c917d",
-      "title": "Masks & Hygiene",
-      "slug": "masks-hygiene"
-    }
-  }
-]*/
+export interface IEditableRegionSettings extends IGenericObject {
+
+}
+export interface IEditableRegion {
+  name: string;
+  label: string;
+  type: 'group' | 'repeater' | 'executor';
+  description: string;
+  fields?: (IEditableRegionField)[] | null;
+  allowedTypes?: string[] | null;
+  regionSettings: IEditableRegionSettings;
+  settings: IEditableRegionSettings;
+  executor: string;
+  metaData?: IGenericObject;
+}
+export interface IEditableRegionField extends IDynamicFieldConfigBlueprint {
+
+}
+export interface IEditableRegionLayout {
+  name: string;
+  label: string;
+  description: string;
+  type: string;
+  regions?: (IEditableRegion)[] | null;
+}
 
 @McmsDi({
   id: 'EditableRegionsService',
@@ -152,5 +158,76 @@ export class EditableRegionsService extends BaseNeoService {
       console.log(`Error in EditableRegionsService Launch Executor: ${e.message}`);
       return [];
     }
+  }
+
+  async getExecutors() {
+    const executors = McmsDiContainer.filter({type: 'executor', category: 'editableRegions'});
+
+    return executors.map(executor => {
+      return {
+        id: executor.id,
+        description: executor.description,
+        type: executor.type,
+        category: executor.category,
+        settingsSchema: zodToJsonSchema(executor.reference.settingsSchema),
+        metaData: executor.metaData,
+      }
+    });
+  }
+
+  async getLayouts() {
+    const configFile = resolve('client-configs/editableRegions.js');
+
+    // load from disk
+    if (require.cache[configFile]) {
+      // Delete the module from cache
+      delete require.cache[configFile];
+    }
+
+    const res = require(configFile);
+
+    if (!Array.isArray(res['editableRegions'])) {
+      res['editableRegions'] = [];
+    }
+
+    return res['editableRegions'] as IEditableRegionLayout[];
+  }
+
+  async saveLayout(layout: IEditableRegionLayout) {
+    const layouts = await this.getLayouts();
+    const configFile = resolve('client-configs/editableRegions.js');
+    const foundIdx = layouts.findIndex(l => l.name === layout.name);
+    if (foundIdx === -1) {
+      layouts.push(layout);
+    } else {
+      layouts[foundIdx] = layout;
+    }
+
+    const data = {
+      editableRegions: layouts,
+    }
+
+    await writeFile(configFile, 'module.exports = ' + JSON.stringify(data, null, 2));
+    await loadConfigs('client-configs', true);
+
+    return layouts;
+  }
+
+  async saveRegion(filters: {layout: string, region: string}, data: any) {
+    let region: EditableRegionModel;
+    try {
+      region = await this.findOne(filters) as EditableRegionModel;
+    }
+    catch (e) {
+      region = await this.store({layout: filters.layout, region: filters.region, items: {}}) as EditableRegionModel;
+    }
+
+    try {
+      return await this.update(region['uuid'], { items: data });
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(`COULD_NOT_UPDATE_RECORD`, '200.1', `Could not update record: ${e.message}`);
+    }
+
   }
 }

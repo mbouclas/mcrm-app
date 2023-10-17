@@ -6,13 +6,14 @@ import { BaseModel } from "~models/base.model";
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;
-    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'provider'|'hook'|'patch'|'upgrade'|'driver';
+    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'provider'|'hook'|'patch'|'upgrade'|'driver'|'executor';
     title?: string;
     description?: string;
     reference?: any;
     usedFor?: string;
     model?: string;
     category?: string; // used for hooks and other types that you need to differentiate. for example: orders, products, etc. Best practice is to use the model name
+    metaData?: IGenericObject;
 }
 
 export class McmsDiContainer {
@@ -87,6 +88,7 @@ export const McmsDi = (obj: IMcmsDiRegistryItem): any => {
                     category: obj.category || undefined,
                     id: obj.id || undefined,
                     type: obj.type || undefined,
+                    metaData: obj.metaData || undefined,
                 }
             };
         }
