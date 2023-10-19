@@ -93,6 +93,7 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
   searchIndexSettings?: ISearchIndexSettings;
   imageSettings?: IDynamicFieldConfigImageSettingsBluePrint;
   fields?: IDynamicFieldConfigBlueprint[];
+  isReadOnly?: boolean;
   [key: string]: any;
 }
 

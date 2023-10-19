@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
+import { BaseModel, IBaseModelFieldGroup, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { PropertyService } from '~catalogue/property/services/property.service';
@@ -36,9 +36,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     this.loadModelSettingsFromConfig();
   }
 
-  async onModuleInit() { }
+  async onModuleInit() {
+
+  }
 
   public static displayedColumns = ['title', 'category'];
+
 
   public static modelConfig: INeo4jModel = {
     select: 'product:Product',
@@ -340,6 +343,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isSortable: true,
       group: 'right',
       groupIndex: 0,
+      isReadOnly: true,
       searchIndexSettings: {
         isAutoCompleteField: true,
       },
@@ -356,6 +360,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'active',
       label: 'Active',
       placeholder: 'Active',
+      isReadOnly: true,
       type: 'boolean',
       isSortable: true,
       group: 'main',
@@ -371,6 +376,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     {
       varName: 'title',
       label: 'Title',
+      isReadOnly: true,
       placeholder: 'Title',
       type: 'text',
       isSortable: true,
@@ -392,6 +398,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'slug',
       label: 'Slug',
       placeholder: 'Slug',
+      isReadOnly: true,
       type: 'text',
       group: 'hidden',
       isSlug: true,
@@ -409,6 +416,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'description',
       label: 'Description',
       placeholder: 'Description',
+      isReadOnly: true,
       type: 'richText',
       isSortable: false,
       group: 'main',
@@ -427,6 +435,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     {
       varName: 'description_long',
       label: 'Long Description',
+      isReadOnly: true,
       placeholder: 'Long Description',
       type: 'richText',
       isSortable: false,
@@ -447,6 +456,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'price',
       label: 'Price',
       placeholder: 'Price',
+      isReadOnly: true,
       type: 'float',
       isSortable: true,
       group: 'right',
@@ -482,6 +492,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'salePrice',
       label: 'Sale Price',
       placeholder: 'Sale Price',
+      isReadOnly: true,
       type: 'float',
       isSortable: true,
       group: 'right',
@@ -516,6 +527,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'thumb',
       label: 'Thumbnail',
       placeholder: 'Thumbnail',
+      isReadOnly: true,
       type: 'image',
       imageSettings: {
         multiple: true,
@@ -545,6 +557,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       varName: 'updatedAt',
       label: 'Updated At',
       placeholder: 'Updated At',
+      isReadOnly: true,
       type: 'date',
       isSortable: true,
       group: 'hidden',
@@ -611,7 +624,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'title',
           label: 'Title',
           placeholder: 'Title',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -619,7 +632,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'description',
           label: 'Description',
           placeholder: 'Description',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -627,7 +640,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'keywords',
           label: 'Keywords',
           placeholder: 'Keywords',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -635,7 +648,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'og_title',
           label: 'Og:Title',
           placeholder: 'Oh:Title',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -643,7 +656,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'og_image',
           label: 'Og:Image',
           placeholder: 'Og:Image',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -651,7 +664,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           varName: 'og_description',
           label: 'Og:Description',
           placeholder: 'Og:Description',
-          type: 'string',
+          type: 'text',
           group: 'hidden',
           default: false,
         },
@@ -810,4 +823,32 @@ export class ProductModel extends BaseModel implements OnModuleInit {
     defaultOrderBy: 'createdAt',
     defaultWay: 'DESC',
   };
+
+  public static fieldGroups: IBaseModelFieldGroup[] = [
+    {
+      name: 'main',
+      label: 'Main',
+      type: 'group',
+      description: 'Main fields',
+    },
+    {
+      name: 'right',
+      label: 'Right',
+      type: 'group',
+      description: 'Right fields',
+    },
+    {
+      name: 'seo',
+      label: 'Seo',
+      type: 'group',
+      description: 'Seo fields',
+    },
+    {
+      name: 'extra',
+      label: 'Extra Fields',
+      type: 'group',
+      description: 'Extra fields',
+    }
+  ];
+
 }

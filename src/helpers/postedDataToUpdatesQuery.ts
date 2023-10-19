@@ -72,6 +72,10 @@ export function postedDataToUpdatesQuery(
           );
         }
 
+        if (field.type === 'repeater') {
+          return `${modelAlias}.${fieldName} = '${JSON.stringify(postedFields[field.varName])}'`;
+        }
+
         if (!field.isSlug && !field.setDefaultTranslationInModel) {
           return `${modelAlias}.${fieldName} = $${fieldName}`;
         }

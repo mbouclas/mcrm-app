@@ -34,6 +34,7 @@ export class BootService extends BaseNeoService {
           name: allModels[key].name,
           fields: parseModelFields(allModels[key].fields),
           relationships: allModels[key].modelConfig.relationships,
+          fieldGroups: allModels[key].fieldGroups || [],
         };
       });
 

@@ -39,6 +39,10 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
       }
     }
 
+    if (fieldType === 'repeater') {
+      newResItem[modelFieldName] = safeParseJSON(resItem[modelFieldName]);
+    }
+
     if (fieldType === 'json' || fieldType === 'image') {
       if (!resItem[modelFieldName]) {
         continue;

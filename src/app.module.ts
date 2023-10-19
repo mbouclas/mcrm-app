@@ -46,6 +46,7 @@ import { UpdateModule } from './update/update.module';
 import { PdfModule } from './pdf/pdf.module';
 import { ModelManagerModule } from './model-manager/model-manager.module';
 import { SalesChannelsModule } from './sales-channels/sales-channels.module';
+import { Area51Module } from './area51/area51.module';
 
 const Lang = require('mcms-node-localization');
 export let Translate;
@@ -92,6 +93,7 @@ export const Test = { token: null };
     PdfModule,
     ModelManagerModule,
     SalesChannelsModule,
+    Area51Module,
   ],
   exports: [SharedModule],
   controllers: [AppController],

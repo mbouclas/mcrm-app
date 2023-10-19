@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { McmsDi } from '~helpers/mcms-component.decorator';
-import { BaseModel, IBaseModelFilterConfig, INeo4jModel } from '~models/base.model';
+import { BaseModel, IBaseModelFieldGroup, IBaseModelFilterConfig, INeo4jModel } from "~models/base.model";
 import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { sortBy } from 'lodash';
@@ -416,4 +416,19 @@ export class PageModel extends BaseModel implements OnModuleInit {
     defaultOrderBy: 'createdAt',
     defaultWay: 'DESC',
   };
+
+  public static fieldGroups: IBaseModelFieldGroup[] = [
+    {
+      name: 'main',
+      label: 'Main',
+      type: 'group',
+      description: 'Main fields',
+    },
+    {
+      name: 'right',
+      label: 'Right',
+      type: 'group',
+      description: 'Right fields',
+    },
+  ];
 }

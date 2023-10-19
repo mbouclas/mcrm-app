@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { readFile, writeFile } from "fs/promises";
+import {  writeFile } from "fs/promises";
 import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 import { resolve } from "path";
 import {  z } from "zod";
 import { InvalidFieldStructureException } from "~root/model-manager/exceptions/invalid-field-structure.exception";
-import { SharedEventNames, SharedModule } from "~shared/shared.module";
 import { loadConfigs } from "~helpers/load-config";
+import { IBaseModel } from "~models/general";
+import { IBaseModelFieldGroup } from "~models/base.model";
 
 @Injectable()
 export class ModelManagerService {
@@ -92,5 +93,31 @@ export class ModelManagerService {
 
 
     return schema.parse(field);
+  }
+
+  async syncFieldGroups(modelName: string, groups: Partial<IBaseModelFieldGroup>[]) {
+    modelName = modelName.replace('Model', '');
+    const configFile = resolve('client-configs/models.js');
+
+    // read the models file
+    if (require.cache[configFile]) {
+      // Delete the module from cache
+      delete require.cache[configFile];
+    }
+
+    const data = require(configFile);
+
+    if (!data.models[modelName]) {
+      data.models[modelName] = {
+        fields: [],
+        filterFields: [],
+      };
+    }
+
+    data.models[modelName]['fieldGroups'] = groups;
+
+    await writeFile(configFile, 'module.exports = ' + JSON.stringify(data, null, 2));
+    await loadConfigs('client-configs', true);
+
   }
 }

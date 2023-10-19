@@ -60,6 +60,17 @@ export interface INeo4jModelRelationshipConfig {
   match?: 'exact'|'optional'
 }
 
+export interface IBaseModelFieldGroup {
+  name: string;
+  label: string;
+  type: 'group' | 'repeater';
+  description: string;
+  fields?: (string)[] | null;// just the varName of the field
+  groupSettings?: IGenericObject;
+  settings?: IGenericObject;
+  metaData?: IGenericObject;
+}
+
 export class BaseModel {
   protected readonly logger = new Logger(BaseModel.name);
   public static modelName: string;
@@ -75,11 +86,16 @@ export class BaseModel {
     defaultOrderBy: 'createdAt',
     defaultWay: 'DESC',
   };
-
+  public static fieldGroups: IBaseModelFieldGroup[] = [
+  ];
 
   public static injectRelationships:
     | IGenericObject<IRelationshipToInject>
     | string;
+
+  constructor() {
+    this.assignModelFieldsToGroups()
+  }
 
   getFields() {
     return (this.constructor as typeof BaseModel).fields;
@@ -132,6 +148,34 @@ export class BaseModel {
     }
 
     return fields[0];
+  }
+
+  public static groupModelFields() {
+    console.log(this.fields)
+  }
+
+  assignModelFieldsToGroups() {
+    const model = this.constructor as typeof BaseModel;
+
+    if (!model.fieldGroups || !Array.isArray(model.fieldGroups)) {
+      model.fieldGroups = [];
+      return;
+    }
+
+/*    model.fieldGroups.forEach((group) => {
+      if (!Array.isArray(group.fields)) {
+        group.fields = [];
+      }
+
+      group.fields = model.fields
+        .filter((field) => field.varName === group.name)
+        .map((field) => {
+          return field.varName;
+        });
+
+    });*/
+
+
   }
 
   /**

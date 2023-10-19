@@ -103,6 +103,7 @@ export class ModelsService extends BaseNeoService {
         }), 'order');
       }
 
+
       // There's no file for this model. It only exists on the db
       if (model.isDynamic) {
         let m = (new ModelGeneratorService(model)).staticClass; //This won't work cause there's one BaseModel class and changing the statics in a loop just uses 1 class. We need a truly dynamic class
@@ -153,6 +154,10 @@ export class ModelsService extends BaseNeoService {
       fileModel['modelConfig']['relationships'] = Object.assign({}, dbModel['relationships'], fileModel['modelConfig']['relationships']);
     }
 
+
+    if (Array.isArray(dbModel['fieldGroups']) && dbModel['fieldGroups'].length > 0) {
+      fileModel['fieldGroups'] = unionBy(dbModel['fieldGroups'], fileModel['fieldGroups'], 'name')
+    }
 
     // Merge some properties
     this.jsonStringProperties.forEach(prop => {
