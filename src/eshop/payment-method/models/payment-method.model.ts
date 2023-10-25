@@ -114,7 +114,24 @@ export class PaymentMethodModel extends BaseModel implements OnModuleInit {
     },
   ];
 
-  public static filterFields: IQueryBuilderFieldBlueprint[] = [];
+  public static filterFields: IQueryBuilderFieldBlueprint[] = [
+    {
+      varName: 'title',
+      label: 'Title',
+      type: 'text',
+      model: 'PaymentMethod',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
+    {
+      varName: 'status',
+      label: 'Status',
+      type: 'boolean',
+      model: 'PaymentMethod',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+  ];
 
   public static filterConfig: IBaseModelFilterConfig = {
     filterParamName: 'q',

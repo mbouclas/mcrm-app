@@ -7,6 +7,12 @@ import { BaseNeoService } from '~shared/services/base-neo.service';
 import { IGenericObject, IPagination } from '~models/general';
 import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
+import { UserModel } from "~user/models/user.model";
+import { AuthService } from "~root/auth/auth.service";
+import crypto from "crypto";
+import { UserService } from "~user/services/user.service";
+import { RoleModel } from "~user/role/models/role.model";
+import { RoleService } from "~user/role/services/role.service";
 
 
 export class CustomerModelDto {
@@ -83,5 +89,51 @@ export class CustomerService extends BaseNeoService {
     const r = await super.update(uuid, record, userId);
 
     return r;
+  }
+
+  async createCustomer(customer: Partial<UserModel>, role?: string) {
+    const authService = new AuthService();
+    const hashedPassword = await authService.hasher.hashPassword(customer.password);
+    const userService = new UserService();
+
+    const confirmToken = crypto
+      .createHash("sha256")
+      .update(customer.email)
+      .digest("hex");
+
+    let user;
+
+    try {
+
+    user = await userService.store({
+      ...customer,
+      password: hashedPassword,
+      confirmToken,
+      type: "guest",
+      active: false
+    });
+
+
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to register user",
+      reason: e.message
+    };
+  }
+
+  // attach user to default role
+    const defaultRole = getStoreProperty('configs.store.users.newUserDefaultRole');
+    let roleToApply: Partial<RoleModel>;
+    if (role) {
+      roleToApply = await new RoleService().findOne({name: role});
+    }
+
+    try {
+      await userService.attachModelToAnotherModel(UserModel,RoleModel, {uuid: user.uuid}, {name: roleToApply ? roleToApply.name : defaultRole.name}, 'role');
+    }
+    catch (e) {
+      console.log(e)
+    }
   }
 }

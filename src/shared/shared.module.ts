@@ -1,4 +1,4 @@
-import {  Module, OnModuleInit } from "@nestjs/common";
+import { Logger, Module, OnModuleInit } from "@nestjs/common";
 import { Neo4jModule } from "~neo4j/neo4j.module";
 import * as redisStore from 'cache-manager-redis-store';
 import { ElasticSearchModule } from "~es/elastic-search.module";
@@ -13,6 +13,7 @@ import { ExecutorsService } from "~shared/services/executors.service";
 import { CacheModule } from '@nestjs/cache-manager';
 import type { RedisClientOptions } from 'redis';
 import { AppModule } from "~root/app.module";
+
 
 export enum SharedEventNames {
   CONFIG_LOADED = 'config.loaded',
@@ -69,6 +70,7 @@ export class SharedModule implements OnModuleInit {
   static eventEmitter: EventEmitter2;
   static moduleRef: ModuleRef;
   static lazyModuleLoader: LazyModuleLoader;
+  static readonly logger = new Logger(SharedModule.name);
   constructor(
     private m: ModuleRef,
     private lazyModuleLoader: LazyModuleLoader,

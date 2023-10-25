@@ -5,6 +5,7 @@ import { IGate } from '~admin/models/gates';
 import { OnEvent } from '@nestjs/event-emitter';
 import { IBaseFilter } from '~models/general';
 import { store } from '~root/state';
+import { UserModel } from "~user/models/user.model";
 
 @Injectable()
 export class GateService extends BaseNeoService {
@@ -50,6 +51,12 @@ export class GateService extends BaseNeoService {
     const userLevel = Math.max(...user['role'].map((role) => role.level));
 
     return allGates.filter((gate: IGate) => {
+      return gate.level <= userLevel;
+    });
+  }
+
+  static userGates(userLevel: number, gates: IGate[]) {
+    return gates.filter((gate: IGate) => {
       return gate.level <= userLevel;
     });
   }

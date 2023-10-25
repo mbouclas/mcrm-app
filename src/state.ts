@@ -1,6 +1,7 @@
 import { AppStateModel } from "~models/appState.model";
 import create from "zustand/vanilla";
 import { BaseModel } from "~models/base.model";
+import { keyBy, merge as Merge, values } from "lodash";
 
 export const store = create<AppStateModel>(() => ({
   finishedBooting: false,
@@ -35,10 +36,37 @@ export const AppStateActions = {
       return;
     }
 
-    configs[name] = { ...configs[name], ...config };
+    // configs[name] = { ...configs[name], ...config };
+    configs[name] = deepMerge(configs[name], config);
+
+    //
+
     store.setState({ configs });
   },
 };
+
+function deepMerge(obj1, obj2) {
+  // If obj2 is an array or not an object, return it.
+  if (Array.isArray(obj2) || typeof obj2 !== 'object') {
+    return obj2;
+  }
+
+  const output = Object.assign({}, obj1);
+
+  Object.keys(obj2).forEach(key => {
+    if (typeof obj2[key] !== 'object' || obj2[key] === null || Array.isArray(obj2[key])) {
+      output[key] = obj2[key];
+    } else {
+      if (!obj1[key]) {
+        output[key] = obj2[key];
+      } else {
+        output[key] = deepMerge(obj1[key], obj2[key]);
+      }
+    }
+  });
+
+  return output;
+}
 
 export function getStoreProperty(key: string, obj?: any) {
   if (!key.includes('.') && !obj) {

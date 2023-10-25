@@ -777,6 +777,7 @@ export class BaseNeoService {
 
   async attachModelToAnotherModel(
     sourceModel: typeof BaseModel,
+    destinationModel: typeof BaseModel,
     sourceFilter: IGenericObject,
     destinationFilter: IGenericObject,
     relationshipName: string,
@@ -789,8 +790,8 @@ export class BaseNeoService {
     const createSetRelationship = this.relationshipQuery(relationshipProps);
 
     const query = `
-    MATCH (n1 {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
-    MATCH (n2 {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
+    MATCH (n1:${sourceModel.modelName} {${sourceFilterQuery.key}:'${sourceFilterQuery.value}'})
+    MATCH (n2:${destinationModel.modelName} {${destinationFilterQuery.key}:'${destinationFilterQuery.value}'})
     MERGE (n1)${relationship.type === 'normal' ? '-' : '<-'}[r:${relationship.rel}]${
       relationship.type === 'normal' ? '->' : '-'
     }(n2)

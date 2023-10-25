@@ -70,6 +70,10 @@ export class ExecutorsService {
   }
 
   static async executeHook(hook: string, methodParameters: any[]) {
+    if (!hook || hook === '' || hook.length === 0) {
+      return
+    }
+
     try {
       const hookExecutor = ExecutorsService.executorFromString(hook, false, true, methodParameters);
       return hookExecutor;

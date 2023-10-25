@@ -334,11 +334,11 @@ export class OrderService extends BaseNeoService {
         let q = '';
         if (item.variantId) {
           q += `MATCH (v${index}:ProductVariant {uuid: '${item.variantId}'}) `;
-          q += `MERGE (o)-[r${index}:HAS_ITEM]->(v${index}) 
-        ON CREATE SET r${index}.quantity = ${item.quantity}, r${index}.createdAt = timestamp()
-        ON MATCH SET r${index}.quantity = ${item.quantity}, r${index}.updatedAt = timestamp()
+          q += `MERGE (o)-[r${index}V:HAS_ITEM]->(v${index}) 
+        ON CREATE SET r${index}V.quantity = ${item.quantity}, r${index}V.createdAt = timestamp()
+        ON MATCH SET r${index}V.quantity = ${item.quantity}, r${index}V.updatedAt = timestamp()
+        WITH * \n
         `;
-          return q;
         }
 
         q += `MATCH (p${index}:Product {uuid: '${item.productId}'}) `;
@@ -356,7 +356,7 @@ export class OrderService extends BaseNeoService {
     try {
       await this.neo.write(query);
     } catch (e) {
-      throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e.getErrors());
+      throw new InvalidOrderException('ORDER_STORE_ERROR', '900.1', e);
     }
 
     return true;
@@ -432,7 +432,7 @@ export class OrderService extends BaseNeoService {
     });
     // fix any "broken" prices
     const toRemove = [];
-    console.log(products.data)
+
     // remove any products that are not available
     items.forEach((item, idx) => {
       const found = products.data.find((p) => p['uuid'] === item.productId) as ProductModel;

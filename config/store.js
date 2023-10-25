@@ -29,6 +29,12 @@ module.exports = {
     },
   ],
   users: {
+    newUserDefaultRole: {
+      name: 'customer',
+      displayName: 'Customer',
+      description: 'Customer role',
+      level: 1,
+    },
     registerGuests: false,
     hooks: {
       beforeUserValidation: '',

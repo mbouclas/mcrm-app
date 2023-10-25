@@ -4,7 +4,7 @@ import { PaymentMethodService } from "~eshop/payment-method/services/payment-met
 import {  IPagination } from "~models/general";
 import { BaseModel } from "~models/base.model";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
-import { getStoreProperty, store } from "~root/state";
+import { store } from "~root/state";
 import { SessionData } from "express-session";
 import { OrderEventNames, OrderService } from "~eshop/order/services/order.service";
 import { ICheckoutStore } from "~eshop/models/checkout";
@@ -13,8 +13,9 @@ import { capitalize } from "lodash";
 import type { BasePaymentMethodProvider } from "~eshop/payment-method/providers/base-payment-method.provider";
 import { BaseShippingMethodProvider } from "~eshop/shipping-method/providers/base-shipping-method.provider";
 import { AddressService } from "~eshop/address/services/address.service";
-import { ExecutorsService } from "~shared/services/executors.service";
 import { RealIP } from "~helpers/real-ip.decorator";
+import { getHooks } from "~shared/hooks/hook.decorator";
+import BaseHttpException from "~shared/exceptions/base-http-exception";
 
 
 export interface IStoreInitialQuery {
@@ -62,17 +63,28 @@ export class StoreController {
       return {success: false, message: 'User not set', error: 'USER_NOT_SET'};
     }
 
-    const hooks = getStoreProperty("configs.store.order.hooks");
+    // const hooks = getStoreProperty("configs.store.order.hooks");
+    const hooks = getHooks({ category: 'Order' });
 
     let userId = session.user.uuid,
       user = session.user,
     validatedOrder;
     try {
-      await ExecutorsService.executeHook(hooks.beforeOrderValidation, [body, session, ip, userId, user]);
+      if (hooks && typeof hooks.beforeOrderValidation === 'function') {
+        await hooks.beforeOrderValidation(body, session, ip, userId, user);
+      }
     }
     catch (e) {
       console.log(e)
+      throw new BaseHttpException({
+        error: e.getMessage() || e.message,
+        reason: 'Validation errors',
+        code: e.getCode() || 'BEFORE_ORDER_VALIDATION_HOOK_ERROR',
+        statusCode: 500,
+        validationErrors: e.getErrors() || e,
+      })
     }
+
 
     try {
       validatedOrder = await (new OrderService()).processStoreOrder(body);
@@ -87,6 +99,22 @@ export class StoreController {
     cart.items = await OrderService.validateCartItems(cart.items);
 
     const orderService=  new OrderService();
+
+    try {
+      if (hooks && typeof hooks.beforeOrderSave === 'function') {
+        await hooks.beforeOrderSave(cart, body, session, ip, userId, user);
+      }
+    }
+    catch (e) {
+      console.log(e)
+      throw new BaseHttpException({
+        error: e.getMessage() || e.message,
+        reason: 'Validation errors',
+        code: e.getCode() || 'BEFORE_ORDER_SAVE_HOOK_ERROR',
+        statusCode: 500,
+        validationErrors: e.getErrors() || e,
+      })
+    }
 
     let order,
       orderModel = {
@@ -105,12 +133,28 @@ export class StoreController {
       console.log(e)
     }
 
+    try {
+      if (hooks && typeof hooks.afterOrderSave === 'function') {
+        await hooks.afterOrderSave(order, cart, body, session, ip, userId, user);
+      }
+    }
+    catch (e) {
+      console.log(e)
+      throw new BaseHttpException({
+        error: e.getMessage() || e.message,
+        reason: 'Validation errors',
+        code: e.getCode() || 'AFTER_ORDER_SAVE_HOOK_ERROR',
+        statusCode: 500,
+        validationErrors: e.getErrors() || e,
+      })
+    }
+
     // Attach the products
     try {
       await orderService.attachProductsToOrder(order.uuid, cart.items);
     }
     catch (e) {
-      console.log('Error attaching products', e.getMessage(), e.getErrors());
+      console.log('Error attaching products', e);
     }
     // Attach the payment method
     // Attach the shipping method
@@ -185,6 +229,22 @@ export class StoreController {
     }
 
     (new OrderService).notify(OrderEventNames.orderAttachedToNodes, order);
+
+    try {
+      if (hooks && typeof hooks.afterDone === 'function') {
+        await hooks.afterDone(order, cart, body, session, ip, userId, user);
+      }
+    }
+    catch (e) {
+      console.log(e)
+      throw new BaseHttpException({
+        error: e.getMessage() || e.message,
+        reason: 'Validation errors',
+        code: e.getCode() || 'AFTER_DONE_HOOK_ERROR',
+        statusCode: 500,
+        validationErrors: e.getErrors() || e,
+      })
+    }
 
     return {success: true, message: 'Order processed',  order: order.uuid};
   }

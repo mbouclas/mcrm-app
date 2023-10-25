@@ -33,6 +33,9 @@ import { ExecutorsService } from "~shared/services/executors.service";
 import { AuthInterceptor } from "~root/auth/interceptors/auth.interceptor";
 import { OrderService } from "~eshop/order/services/order.service";
 import { UserOrderInterceptor } from "~eshop/order/interceptors/user-order.interceptor";
+import { UserModel } from "~user/models/user.model";
+import { RoleModel } from "~user/role/models/role.model";
+import { CustomerService } from "~eshop/customer/services/customer.service";
 const crypto = require('crypto');
 
 
@@ -139,7 +142,6 @@ export class RegularUserController {
   @Post("/register")
   @UseInterceptors(OtpInterceptor)
   async register(@Body() data: RegisterGuestDto) {
-    const userService = new UserService();
     const hooks = getStoreProperty("configs.store.users.hooks");
     let existingUser;
 
@@ -175,13 +177,6 @@ export class RegularUserController {
       console.log(e)
     }
 
-    const authService = new AuthService();
-    const hashedPassword = await authService.hasher.hashPassword(data.password);
-
-    const confirmToken = crypto
-      .createHash("sha256")
-      .update(data.email)
-      .digest("hex");
 
     try {
       await ExecutorsService.executeHook(hooks.beforeUserCreate, [data]);
@@ -192,22 +187,17 @@ export class RegularUserController {
 
     let user;
     try {
-      user = await userService.store({
-        ...data,
-        password: hashedPassword,
-        confirmToken,
-        type: "guest",
-        active: false
-      });
-
-
-    } catch (e) {
+      user = await (new CustomerService()).createCustomer(data)
+    }
+    catch (e) {
+      console.log(e)
       return {
         success: false,
         message: "Failed to register user",
         reason: e.message
       };
     }
+
 
     try {
       await ExecutorsService.executeHook(hooks.afterUserCreate, [data]);

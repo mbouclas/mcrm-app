@@ -5,6 +5,8 @@ import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { IQueryBuilderFieldBlueprint } from '~shared/models/queryBuilder';
 import { IAddress } from '~eshop/models/checkout';
 import { IGate } from '~admin/models/gates';
+import { UserService } from "~user/services/user.service";
+import { GateService } from "~root/auth/gate.service";
 
 const modelName = 'User';
 @McmsDi({
@@ -49,6 +51,33 @@ export class UserModel extends BaseModel {
         match: 'exact',
         isCollection: false,
         rel: 'HAS_ROLE',
+        postProcessing: async (record: Record<any, any>, model: UserModel) => {
+          if (!record.levelRel) {
+            return record;
+          }
+
+          record.levelRel = UserService.userMaxRole(record as UserModel);
+          record.maxLevel = record.levelRel.level;
+          return record;
+        }
+      },
+      gates: {
+        model: 'Gate',
+        modelAlias: 'gates',
+        exactAliasQuery: true,
+        alias: 'gatesRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'HAS_GATE',
+        postProcessing: async (record: Record<any, any>, model: UserModel) => {
+          // This is a virtual relationship, we don't expect any results as there's no connection between user and gate
+          // record.gates = await new GateService().all(true, { uuid: record['uuid'] });
+          if (record.maxLevel) {
+            record.gates = GateService.userGates(record.maxLevel, await new GateService().all(true));
+          }
+
+          return record;
+        }
       },
       address: {
         model: 'Address',
@@ -235,6 +264,18 @@ export class UserModel extends BaseModel {
       order: 2,
     },
     {
+      varName: 'type',
+      placeholder: 'User Type',
+      label: 'User Type',
+      type: 'text',
+      relName: '',
+      isInSimpleQuery: false,
+      filterType: 'exact',
+      model: 'User',
+      filterField: '',
+      order: 0,
+    },
+    {
       varName: 'active',
       placeholder: 'Is Active',
       label: 'Is Active',
@@ -273,7 +314,17 @@ export class UserModel extends BaseModel {
       isInSimpleQuery: false,
       doNotReturnValues: true,
     },
-
+    {
+      varName: 'role',
+      filterField: 'name',
+      label: 'Role',
+      type: 'string',
+      relName: 'roleFilterRel',
+      relType: 'inverse',
+      model: 'Role',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
     {
       varName: 'createdAt',
       label: 'Created At',
