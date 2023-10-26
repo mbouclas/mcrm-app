@@ -34,12 +34,8 @@ export class UserController {
   // @UseGuards(LevelGuard)
   // @UseGuards(GateGuard)
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
-    try {
-      queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`;
-      return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
-    } catch (e) {
-      throw new NotFound();
-    }
+    queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`;
+    return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
   @Get(':uuid')

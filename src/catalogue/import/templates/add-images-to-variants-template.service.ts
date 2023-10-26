@@ -1,5 +1,8 @@
 import { BaseImportService } from "~catalogue/import/services/base-import.service";
-import { McrmImportTemplate } from "~catalogue/import/decorators/import-template-registry.decorator";
+import {
+  ImportTemplateField,
+  McrmImportTemplate
+} from "~catalogue/import/decorators/import-template-registry.decorator";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { ProductService } from "~catalogue/product/services/product.service";
 
@@ -10,34 +13,16 @@ import { ProductService } from "~catalogue/product/services/product.service";
   type: 'products'
 })
 export class AddImagesToVariantsTemplateService extends BaseImportService {
-  fieldMap: IImportProcessorFieldMap[] = [
-    {
-      name: "sku",
-      importFieldName: "REFERENCE",
-      rename: false,
-      required: true,
-      type: "text"
-    },
-    {
-      name: "variantId",
-      importFieldName: "variantID",
-      rename: false,
-      required: true,
-      type: "variantId"
-    },
-    {
-      name: "image",
-      importFieldName: "image",
-      rename: false,
-      required: true,
-      type: "text"
-    }
-  ];
+  @ImportTemplateField({name: 'sku', importFieldName: 'REFERENCE', required: true, type: 'text'})
+  public sku: string;
 
-  constructor() {
-    super();
-    this.processor.setFieldMap(this.fieldMap);
-  }
+  @ImportTemplateField({name: 'variantId', importFieldName: 'variantID', required: true, type: 'variantId', rename: false})
+  public variantId: string;
+
+  @ImportTemplateField({name: 'image', importFieldName: 'image', required: true, type: 'text'})
+  public image: string;
+
+
 
   async process(file: Partial<Express.Multer.File>) {
     // run the processor against the database

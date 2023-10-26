@@ -1,5 +1,8 @@
 import { BaseImportService } from "~catalogue/import/services/base-import.service";
-import { McrmImportTemplate } from "~catalogue/import/decorators/import-template-registry.decorator";
+import {
+  ImportTemplateField,
+  McrmImportTemplate
+} from "~catalogue/import/decorators/import-template-registry.decorator";
 import { Injectable } from "@nestjs/common";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
@@ -13,34 +16,12 @@ import { IImportProcessorFieldMap } from "~catalogue/import/services/base-proces
 })
 @Injectable()
 export class ChangeProductStatusTemplateService extends BaseImportService {
-  fieldMap: IImportProcessorFieldMap[] = [
-    {
-      name: "sku",
-      importFieldName: "REFERENCE",
-      rename: false,
-      required: true,
-      type: "text"
-    },
-    {
-      name: "variantId",
-      importFieldName: "variantID",
-      rename: false,
-      required: true,
-      type: "variantId"
-    },
-    {
-      name: "active",
-      importFieldName: "active",
-      rename: false,
-      required: true,
-      type: "boolean"
-    }
-  ];
+  @ImportTemplateField({name: 'sku', importFieldName: 'REFERENCE', required: true, type: 'text'})
+  public sku: string;
 
-  constructor() {
-    super();
-    this.processor.setFieldMap(this.fieldMap);
-  }
+  @ImportTemplateField({name: 'active', importFieldName: 'active', required: true, type: 'boolean'})
+  public active: boolean;
+
 
   async process(file: Partial<Express.Multer.File>) {
     // run the processor against the database

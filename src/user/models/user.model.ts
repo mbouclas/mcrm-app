@@ -52,7 +52,7 @@ export class UserModel extends BaseModel {
         isCollection: false,
         rel: 'HAS_ROLE',
         postProcessing: async (record: Record<any, any>, model: UserModel) => {
-          if (!record.levelRel) {
+          if (!record.levelRel || !Array.isArray(record.role)) {
             return record;
           }
 

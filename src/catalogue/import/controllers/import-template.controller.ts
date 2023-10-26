@@ -13,7 +13,7 @@ export class ImportTemplateController {
   @Get('')
   async find(@Query() queryParams = {}) {
 
-      return ImportTemplateRegistry.all();
+      return ImportTemplateRegistry.all(true);
 
   }
 

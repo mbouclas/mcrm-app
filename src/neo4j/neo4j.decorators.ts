@@ -25,7 +25,7 @@ export function McrmModel(modelName: string) {
       constructor['filterFields'] = [];
     }
 
-    const allProperties = getPropertiesWithMetadata(constructor);
+    const allProperties = getPropertiesWithMetadata(constructor, decoratedPropertiesKey);
 
     for (const property in allProperties) {
       if (allProperties.hasOwnProperty(property)) {
@@ -88,8 +88,8 @@ export function FilterField(params: IQueryBuilderFieldBlueprint) {
 }
 
 
-export function getPropertiesWithMetadata(target: Function) {
-  const properties = getDecoratedProperties(target);
+export function getPropertiesWithMetadata(target: Function, decoratedPropertiesKey: Symbol) {
+  const properties = getDecoratedProperties(target, decoratedPropertiesKey);
   const allMetadata: { [property: string]: { [key: string]: any } } = {};
 
   for (const property of properties) {
@@ -99,7 +99,7 @@ export function getPropertiesWithMetadata(target: Function) {
   return allMetadata;
 }
 
-export function getDecoratedProperties(target: Function): string[] {
+export function getDecoratedProperties(target: Function, decoratedPropertiesKey: Symbol): string[] {
   return Reflect.getOwnMetadata(decoratedPropertiesKey, target.prototype) || [];
 }
 

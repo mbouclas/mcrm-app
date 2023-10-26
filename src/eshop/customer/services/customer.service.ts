@@ -9,11 +9,11 @@ import { McmsDiContainer } from '../../../helpers/mcms-component.decorator';
 import { IPaymentMethodProvider } from '~eshop/payment-method/models/providers.types';
 import { UserModel } from "~user/models/user.model";
 import { AuthService } from "~root/auth/auth.service";
-import crypto from "crypto";
 import { UserService } from "~user/services/user.service";
 import { RoleModel } from "~user/role/models/role.model";
 import { RoleService } from "~user/role/services/role.service";
-
+import { UserExistsException } from "~user/exceptions/user-exists.exception";
+const crypto = require('crypto');
 
 export class CustomerModelDto {
   userId?: string;
@@ -95,6 +95,17 @@ export class CustomerService extends BaseNeoService {
     const authService = new AuthService();
     const hashedPassword = await authService.hasher.hashPassword(customer.password);
     const userService = new UserService();
+    let found;
+    try {
+      found = await userService.findOne({email: customer.email});
+    }
+    catch (e) {
+
+    }
+
+    if (found) {
+      throw new UserExistsException('USER_EXISTS', '9005.1', {email: customer.email});
+    }
 
     const confirmToken = crypto
       .createHash("sha256")
@@ -110,7 +121,7 @@ export class CustomerService extends BaseNeoService {
       password: hashedPassword,
       confirmToken,
       type: "guest",
-      active: false
+      active: customer['active'] || false
     });
 
 
@@ -135,5 +146,11 @@ export class CustomerService extends BaseNeoService {
     catch (e) {
       console.log(e)
     }
+
+    // add address to user
+    if (customer.address) {
+    }
+
+    return user;
   }
 }

@@ -2,9 +2,13 @@ import { Body, Controller, Get, Param, Patch, Post, Query, Req, Session } from "
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { FailedUpdate, NotFound } from '../exceptions';
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsOptional } from "class-validator";
 import { IAddress } from "~eshop/models/checkout";
 import { AddressService } from "~eshop/address/services/address.service";
+import { RoleModel } from "~user/role/models/role.model";
+import { CustomerService } from "~eshop/customer/services/customer.service";
+import { UserModel } from "~user/models/user.model";
+import BaseHttpException from "~shared/exceptions/base-http-exception";
 
 export class AddressSyncDto {
   @IsNotEmpty()
@@ -16,6 +20,17 @@ export class AddressSyncDto {
   @IsNotEmpty()
   type: 'SHIPPING'|'BILLING' | 'OTHER'
 }
+
+
+class PostedCustomerDto {
+  @IsNotEmpty()
+  user: Partial<UserModel>
+
+  @IsOptional()
+  role: string
+
+}
+
 @Controller('api/customer')
 export class CustomerController {
   @Get('')
@@ -64,5 +79,24 @@ export class CustomerController {
 
 
     return data;
+  }
+
+  @Post("create")
+  async create(@Body() body: PostedCustomerDto) {
+    const customerService = new CustomerService();
+
+    try {
+      return await customerService.createCustomer(body.user, body.role);
+    }
+    catch (e) {
+      console.log(e)
+      throw new BaseHttpException({
+        error: e.getMessage() || e.message,
+        reason: 'Validation errors',
+        code: e.getCode() || 'CUSTOMER_CREATE_FAILED',
+        statusCode: 500,
+        validationErrors: e.getErrors() || e,
+      })
+    }
   }
 }

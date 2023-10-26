@@ -2,7 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { BaseImportService } from "~catalogue/import/services/base-import.service";
 import { ProductService } from "~catalogue/product/services/product.service";
 import {  IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
-import { McrmImportTemplate } from "~catalogue/import/decorators/import-template-registry.decorator";
+import {
+  ImportTemplateField,
+  McrmImportTemplate
+} from "~catalogue/import/decorators/import-template-registry.decorator";
 import { ErrorDuringImportException } from "~catalogue/import/exceptions/error-during-import.exception";
 import { Job } from "bullmq";
 
@@ -15,29 +18,16 @@ import { Job } from "bullmq";
 })
 @Injectable()
 export class ChangeProductVariantStatusTemplate extends BaseImportService {
-  fieldMap: IImportProcessorFieldMap[] = [
-    {
-      name: "sku",
-      importFieldName: "REFERENCE",
-      rename: false,
-      required: true,
-      type: "text"
-    },
-    {
-      name: "variantId",
-      importFieldName: "variantID",
-      rename: false,
-      required: true,
-      type: "variantId"
-    },
-    {
-      name: "active",
-      importFieldName: "active",
-      rename: false,
-      required: true,
-      type: "boolean"
-    }
-  ];
+  @ImportTemplateField({name: 'sku', importFieldName: 'REFERENCE', required: true, type: 'text', rename: false})
+  public sku: string;
+
+  @ImportTemplateField({name: 'variantId', importFieldName: 'variantID', required: true, type: 'variantId', rename: false})
+  public variantId: string;
+
+  @ImportTemplateField({name: 'active', importFieldName: 'active', required: true, type: 'boolean', rename: false})
+  public active: boolean;
+
+
   jobEventName = 'changeProductVariantStatusJob';
   constructor() {
     super();

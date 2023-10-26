@@ -60,6 +60,7 @@ export class BaseImportService {
   description: string;
   jobEventName = 'importJob';
   fieldMap: IImportProcessorFieldMap[] = [];
+  static fieldMap: IImportProcessorFieldMap[] = [];
   processor: BaseProcessorService = new BaseProcessorService();
   settings: IBaseImportServiceSettings = {
     delimiter: ',',
@@ -84,6 +85,11 @@ export class BaseImportService {
 
       this.processor.setFieldMap(args.fieldMap);
     }
+
+    if (Array.isArray((new.target).fieldMap)) {
+      this.fieldMap = [...(new.target).fieldMap, ...this.fieldMap];
+    }
+
 
     if (Array.isArray(this.fieldMap) && this.fieldMap.length > 0) {
       this.processor.setFieldMap(this.fieldMap);

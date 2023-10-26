@@ -1,11 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { createReadStream, existsSync } from "fs";
 import { IBaseProcessorResult, IBaseTransformerResult } from "~catalogue/import/services/base-import.service";
+import { IGenericObject } from "~models/general";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 const slug = require('slug');
 const csv = require('csv-parser');
 
 export interface IImportProcessorFieldMap {
   name: string;
+  description?: string;
   importFieldName: string;
   rename?: boolean;
   required?: boolean;
@@ -17,6 +20,8 @@ export interface IImportProcessorFieldMap {
   matchTargetValue?: string;
   slugifyValue?: boolean;
   priceOnRequestFlag?: string;
+  settings?: IGenericObject;
+  fieldSettingsConfig?: IDynamicFieldConfigBlueprint[];
 }
 
 export interface IBaseTransformerSchema {
@@ -125,6 +130,11 @@ export class BaseProcessorService {
       if (field.type === 'variantId') {
         data['variantId'] = rowData[key];
         data['variantSlug'] = slug(rowData[key], {trim: true, lower: true});
+      }
+
+      if (field.type === 'tag') {
+        const separator = field.settings?.separator || ';';
+        data['tag'] = rowData[key].split(separator).map(t => t.trim());
       }
 
       if (field.isSlugFor) {
