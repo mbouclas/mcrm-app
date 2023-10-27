@@ -58,6 +58,7 @@ export class AuthService {
   }
 
   async logout(token: string) {
+    token = token.replace('Bearer ', '');
     try {
       await this.cache.del(`token-${token}`);
     }

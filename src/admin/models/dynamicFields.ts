@@ -94,6 +94,7 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
   imageSettings?: IDynamicFieldConfigImageSettingsBluePrint;
   fields?: IDynamicFieldConfigBlueprint[];
   isReadOnly?: boolean;
+  saveAsJson?: boolean;
   [key: string]: any;
 }
 

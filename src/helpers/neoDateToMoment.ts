@@ -40,13 +40,13 @@ export const parseDate = (neo4jDateTime: DateTime): Date => {
     const { year, month, day, hour, minute, second, nanosecond } = neo4jDateTime;
 
     const date = new Date(
-        year.toInt(),
-        month.toInt() - 1, // neo4j dates start at 1, js dates start at 0
-        day.toInt(),
-        hour.toInt(),
-        minute.toInt(),
-        second.toInt(),
-        nanosecond.toInt() / 1000000, // js dates use milliseconds
+      year.toInt(),
+      month.toInt() - 1, // neo4j dates start at 1, js dates start at 0
+      day.toInt(),
+      hour ? hour.toInt() : 0,
+      minute ? minute?.toInt() : 0,
+      second ? second.toInt() : 0,
+      nanosecond ? nanosecond.toInt() / 1000000 : 0 // js dates use milliseconds
     );
 
     return date;

@@ -61,9 +61,25 @@ export class Oauth2Controller {
     }
   }
 
-  @Delete('/logout/:token')
-  async logout(@Req() req: ExpressRequest, @Res() res: ExpressResponse) {
+  @Delete('/logout')
+  async logout(@Req() req: ExpressRequest) {
+    const token = req.header('Authorization');
 
+    if (!token) {
+      return { success: false, message: "Failed to logout user", reason: "100.11" };
+    }
+
+    req.session.user = {};
+
+    try {
+      await (new AuthService()).logout(token);
+    }
+    catch (e) {
+      console.log(e)
+      return { success: false, message: "Failed to logout user", reason: e.message };
+    }
+
+    return {success: true};
   }
 
   @Post('/register')

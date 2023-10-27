@@ -142,6 +142,7 @@ export class BaseNeoService {
 
     this.logger(query);
     const records = await this.neo.readWithCleanUp(query, {});
+
     let result = this.neo.mergeRelationshipsToParent(records[0], this.model);
 
     if (!result || (Array.isArray(result) && result.length === 0)) {

@@ -7,6 +7,7 @@ import { OrderService } from './services/order.service';
 import { OrderMailEvents } from "~eshop/order/event-handlers/order.mail.events";
 import { OrderListeners } from "~eshop/order/listeners/order.listeners";
 import { InvoiceGeneratorService } from './services/invoice-generator.service';
+import { OrderStatsController } from './controllers/order-stats.controller';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { InvoiceGeneratorService } from './services/invoice-generator.service';
     OrderListeners,
     InvoiceGeneratorService,
   ],
-  controllers: [OrderController]
+  controllers: [OrderController, OrderStatsController]
 })
 
 export class OrderModule {}

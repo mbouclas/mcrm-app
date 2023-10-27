@@ -20,7 +20,8 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
       newResItem[modelFieldName] = Boolean(resItem[modelFieldName]);
     }
 
-    if (fieldType === 'nested') {
+    // Handles nested fields that are saved in the db as fiend.propertyName
+    if (fieldType === 'nested' && !modelField.saveAsJson) {
       newResItem[modelFieldName] = {};
 
       for (const nestedFieldKey in modelField.fields) {
@@ -37,6 +38,11 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
       if (!Object.keys(newResItem[modelFieldName]).length) {
         delete newResItem[modelFieldName];
       }
+    }
+
+    // Handles nested fields that are saved in the db as a json string
+    if (fieldType === 'nested' && modelField.saveAsJson) {
+      newResItem[modelFieldName] = safeParseJSON(resItem[modelFieldName]);
     }
 
     if (fieldType === 'repeater') {

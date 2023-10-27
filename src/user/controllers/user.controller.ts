@@ -9,8 +9,8 @@ import {
   Delete,
   Session,
   SetMetadata,
-  UseGuards,
-} from '@nestjs/common';
+  UseGuards, UseInterceptors
+} from "@nestjs/common";
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { ISessionData } from '~shared/models/session.model';
@@ -23,6 +23,7 @@ import { RecordNotFoundException } from '~root/shared/exceptions/record-not-foun
 import BaseHttpException from '~root/shared/exceptions/base-http-exception';
 import { FailedUpdate, FailedDelete, FailedCreate, NotFound } from '../exceptions';
 import errors from '../exceptions/errors';
+import { SanitizeUserForApiInterceptor } from "~user/interceptors/sanitize-user-for-api.interceptor";
 
 @Controller('api/user')
 export class UserController {
@@ -33,12 +34,14 @@ export class UserController {
   // @UseGuards(RoleGuard)
   // @UseGuards(LevelGuard)
   // @UseGuards(GateGuard)
+  @UseInterceptors(SanitizeUserForApiInterceptor)
   async find(@Query() queryParams = {}, @Session() session: ISessionData) {
     queryParams['level'] = `::${UserService.userMaxLevel(session.user)}`;
     return await new UserService().find(queryParams, Array.isArray(queryParams['with']) ? queryParams['with'] : []);
   }
 
   @Get(':uuid')
+  @UseInterceptors(SanitizeUserForApiInterceptor)
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}, @Session() session: ISessionData) {
     queryParams['level'] = `::${UserService.userMaxRole(session.user)}`;
     try {

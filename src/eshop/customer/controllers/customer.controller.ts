@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, Session } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, Session, UseInterceptors } from "@nestjs/common";
 import { UserService } from '~user/services/user.service';
 import { IGenericObject } from '~root/models/general';
 import { FailedUpdate, NotFound } from '../exceptions';
@@ -9,6 +9,7 @@ import { RoleModel } from "~user/role/models/role.model";
 import { CustomerService } from "~eshop/customer/services/customer.service";
 import { UserModel } from "~user/models/user.model";
 import BaseHttpException from "~shared/exceptions/base-http-exception";
+import { SanitizeUserForApiInterceptor } from "~user/interceptors/sanitize-user-for-api.interceptor";
 
 export class AddressSyncDto {
   @IsNotEmpty()
@@ -34,6 +35,7 @@ class PostedCustomerDto {
 @Controller('api/customer')
 export class CustomerController {
   @Get('')
+  @UseInterceptors(SanitizeUserForApiInterceptor)
   async find(@Query() queryParams = {}) {
 
     try {
@@ -44,6 +46,7 @@ export class CustomerController {
   }
 
   @Get(':uuid')
+  @UseInterceptors(SanitizeUserForApiInterceptor)
   async findOne(@Param('uuid') uuid: string, @Query() queryParams = {}) {
     try {
       return new UserService().findOne({ uuid }, queryParams['with'] || []);

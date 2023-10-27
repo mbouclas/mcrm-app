@@ -1,4 +1,4 @@
-import neo4j, { Result, Driver, int, Transaction, isInt, isDateTime } from 'neo4j-driver';
+import neo4j, { Result, Driver, int, Transaction, isInt, isDateTime, isDate } from "neo4j-driver";
 import { Injectable, Inject, OnApplicationShutdown } from '@nestjs/common';
 import { Neo4jConfig } from './neo4j-config.interface';
 import { NEO4J_CONFIG, NEO4J_DRIVER } from './neo4j.constants';
@@ -118,6 +118,10 @@ export class Neo4jService implements OnApplicationShutdown {
     for (const key in obj) {
       const item = obj[key];
 
+      if (isDate(item)) {
+        continue;
+      }
+
       if (Array.isArray(item)) {
         obj[key] = item.map((i) => {
           if (isNode(i)) {
@@ -135,6 +139,8 @@ export class Neo4jService implements OnApplicationShutdown {
       if (!Array.isArray(item) && isRelationship(item)) {
         obj[key] = Neo4jService.parseNeoProperties(item.properties);
       }
+
+
 
       if (isInt(item)) {
         obj[key] = item.toNumber();
@@ -184,6 +190,9 @@ export class Neo4jService implements OnApplicationShutdown {
       return r.properties ? Neo4jService.parseNeoProperties(r.properties) : Neo4jService.parseNeoProperties(r);
     } else if (isInt(r)) {
       return r.toNumber();
+    }
+    else if (isDate(r) || isDateTime(r)) {
+      return parseDate(r);
     }
     // This is for the case where we return nested objects. e.g [{category: {}}] instead of [{something: sd}]
     else if (keys.length === 1) {

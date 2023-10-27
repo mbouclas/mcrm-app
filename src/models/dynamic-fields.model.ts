@@ -50,6 +50,7 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = any> {
   step?: number;
   group?: string;
   order?: number;
+  saveAsJson?: boolean;
   settings?: {
     //Specific settings
     allowDeSelect?: boolean; //Allow radio button to be de selected Checkbox default to true, radio button default to false

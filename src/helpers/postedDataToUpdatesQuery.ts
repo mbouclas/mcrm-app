@@ -62,7 +62,7 @@ export function postedDataToUpdatesQuery(
           return `${modelAlias}.${fieldName} = $${fieldName}`;
         }
 
-        if (field.type === 'nested') {
+        if (field.type === 'nested' && !field.saveAsJson) {
           return postedDataToUpdatesQuery(
             field.fields,
             postedFields[field.varName],
@@ -70,6 +70,10 @@ export function postedDataToUpdatesQuery(
             null,
             field.varName,
           );
+        }
+
+        if (field.type === 'nested' && field.saveAsJson) {
+          return `${modelAlias}.${fieldName} = '${JSON.stringify(postedFields[field.varName])}'`;
         }
 
         if (field.type === 'repeater') {

@@ -6,13 +6,13 @@ import {z} from 'zod';
 import { BaseNeoService } from "~shared/services/base-neo.service";
 
 const settingsSchema = z.object({
-  isDefault: z.boolean().describe('Is this the default sales channel'),
-  entryPoint: z.string().optional().describe('The entry point for the sales channel'),
-  urls: z.array(z.object({
-    url: z.string().optional().describe('The url for the sales channel'),
-    currency: z.string().optional().describe('The currency for the sales channel'),
-    language: z.string().optional().describe('The language for the sales channel'),
-  })).optional().describe('The urls for the sales channel'),
+  entryPoint: z.string().optional().describe('json:{"label": "Entry point", "placeholder": "Entry point", "hint": "The entry point for the sales channel", "type": "text"}'),
+  urls: z.object({
+    url: z.string().optional().describe('json:{"label": "Url", "placeholder": "Url", "hint": "The url for the sales channel", "type": "text"}'),
+    previewUrl: z.string().optional().describe('json:{"label": "Preview Url", "placeholder": "Preview Url", "hint": "The preview url for the sales channel", "type": "text"}'),
+    currency: z.string().optional().describe('json:{"label": "Currency", "placeholder": "Currency", "hint": "The currency for the sales channel", "type": "text"}'),
+    language: z.string().optional().describe('json:{"label": "Language", "placeholder": "Language", "hint": "The language for the sales channel", "type": "text"}'),
+  }).optional().describe('json:{"label": "Url Settings", "placeholder": "Url Settings", "hint": "The url settings for the sales channel", "type": "nested", "isReadOnly": true}'),
 });
 
 @McrmModel('SalesChannel')
@@ -23,23 +23,24 @@ export class SalesChannelModel extends BaseModel {
       await this.install();
     });
   }
-  @Property({type: 'text', label: 'Title', varName: 'title', required: true, group: 'main'})
+  @Property({type: 'text', label: 'Title', varName: 'title', required: true, group: 'main', isReadOnly: true})
   public title: string;
 
-  @Property({type: 'text', label: 'Slug', varName: 'slug', required: true, isSlug: true, slugFrom: 'title', group: 'hidden'})
+  @Property({type: 'text', label: 'Slug', varName: 'slug', required: true, isSlug: true, slugFrom: 'title', group: 'hidden', isReadOnly: true})
   public slug;
 
   @Property({type: 'textarea', label: 'Description', varName: 'description', group: 'main'})
   public description: string;
 
-  @Property({type: 'boolean', label: 'Active', varName: 'active', required: true, group: 'main'})
+  @Property({type: 'boolean', label: 'Active', varName: 'active', required: true, group: 'main', isReadOnly: true})
   public active: string;
 
-  @Property({type: 'boolean', label: 'Default', varName: 'default', required: true, group: 'main'})
+  @Property({type: 'boolean', label: 'Default', varName: 'default', required: true, group: 'main', isReadOnly: true})
   public default: boolean;
 
-  @Property({type: 'json', label: 'Settings', varName: 'settings', group: 'secondary', schema: settingsSchema})
+  @Property({type: 'nested', label: 'Settings', placeholder: 'Settings', varName: 'settings', group: 'secondary', schema: settingsSchema, saveAsJson: true, isReadOnly: true})
   public settings: string;
+
 
   public static modelConfig: INeo4jModel = {
     select: 'sc:SalesChannel',
