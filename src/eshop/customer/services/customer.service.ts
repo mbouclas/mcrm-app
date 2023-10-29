@@ -13,6 +13,7 @@ import { UserService } from "~user/services/user.service";
 import { RoleModel } from "~user/role/models/role.model";
 import { RoleService } from "~user/role/services/role.service";
 import { UserExistsException } from "~user/exceptions/user-exists.exception";
+import { UserGroupService } from "~eshop/user-group/user-group.service";
 const crypto = require('crypto');
 
 export class CustomerModelDto {
@@ -149,6 +150,18 @@ export class CustomerService extends BaseNeoService {
 
     // add address to user
     if (customer.address) {
+    }
+
+    const defaultUserGroup = await new UserGroupService().getDefaultGroup();
+
+    if (defaultUserGroup || Array.isArray(customer.userGroup)) {
+      const groups = Array.isArray(customer.userGroup) ? customer.userGroup : [defaultUserGroup['uuid']];
+      try {
+        await new UserService().assignUserGroup(user.uuid, groups);
+      }
+      catch (e) {
+        console.log(`Error assigning user to groups: ${e.message}`, e);
+      }
     }
 
     return user;

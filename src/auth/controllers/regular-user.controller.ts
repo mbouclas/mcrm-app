@@ -36,6 +36,7 @@ import { UserOrderInterceptor } from "~eshop/order/interceptors/user-order.inter
 import { UserModel } from "~user/models/user.model";
 import { RoleModel } from "~user/role/models/role.model";
 import { CustomerService } from "~eshop/customer/services/customer.service";
+import { UserGroupService } from "~eshop/user-group/user-group.service";
 const crypto = require('crypto');
 
 
@@ -197,7 +198,6 @@ export class RegularUserController {
         reason: e.message
       };
     }
-
 
     try {
       await ExecutorsService.executeHook(hooks.afterUserCreate, [data]);

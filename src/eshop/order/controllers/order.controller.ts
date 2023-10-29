@@ -458,6 +458,7 @@ export class OrderController {
         shippingMethod: body.shippingMethod.uuid,
         paymentMethod: body.paymentMethod.uuid,
         notes: body.metaData.cart?.metaData?.notes,
+        addedByAdmin: true,
         metaData: {...orderMetaData, ...{ip, cart: virtualCart.toObject(), billingInformation: body.metaData.billingInformation, shippingInformation: body.metaData.shippingInformation}},
       };
     // Write the order first

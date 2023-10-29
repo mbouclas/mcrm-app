@@ -14,7 +14,26 @@ export class OrderStatsService extends BaseNeoService {
     this.topGrossingProducts,
     this.topGrossingProductsByCategory,
     this.topGrossingProductVariants,
+    this.topGrossingSalesChannels,
   ];
+
+  protected convertDateString(dateString: string) {
+    const parts = dateString.split('-');
+    return `${dateString}T00:00:00`;;
+  }
+
+  protected buildDateRangeQuery(fromDate: string = null, toDate: string = null) {
+    const res = [];
+    if (fromDate) {
+      res.push(`o.createdAt >= datetime('${this.convertDateString(fromDate)}')`);
+    }
+
+    if (toDate) {
+      res.push(`o.createdAt <= datetime('${this.convertDateString(toDate)}')`);
+    }
+
+    return res.length > 0 ? `WHERE ${res.join(' AND ')}` : '';
+  }
 
   async getAggregateStats() {
     // get total number of orders, total sales, total customers, total products
@@ -34,10 +53,11 @@ export class OrderStatsService extends BaseNeoService {
     return res[0];
   }
 
-  async salesByDate(days = 30) {
+  async salesByDate(limit = 30, fromDate: string = null, toDate: string = null) {
+
     const query = `
     MATCH (o:Order)
-  WHERE o.createdAt >= datetime() - duration({days: ${days}})
+  ${this.buildDateRangeQuery(fromDate, toDate)}
 RETURN date(o.createdAt) AS saleDate, COUNT(o) AS totalSales
   ORDER BY saleDate;
     `;
@@ -79,10 +99,10 @@ RETURN
     return await this.neo.readWithCleanUp(query);
   }
 
-  async salesByCategory(limit = 5, days = 30) {
+  async salesByCategory(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (o:Order)-[:HAS_ITEM]->(p:Product)-[:HAS_CATEGORY]->(c:ProductCategory)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+     ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH c, COUNT(o) AS orderCount
     ORDER BY orderCount DESC
     LIMIT ${limit}
@@ -119,10 +139,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async salesByProduct(limit = 5, days = 30) {
+  async salesByProduct(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
       MATCH (o:Order)-[:HAS_ITEM]->(p:Product)
-      WHERE o.createdAt >= datetime() - duration({days: ${days}})
+      ${this.buildDateRangeQuery(fromDate, toDate)}
       WITH p, COUNT(o) AS orderCount
       ORDER BY orderCount DESC
       LIMIT ${limit}
@@ -132,10 +152,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async salesByCustomer(limit = 5, days = 30) {
+  async salesByCustomer(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (u:User)-[:HAS_CREATED]->(o:Order)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH u, COUNT(o) AS orderCount
     ORDER BY orderCount DESC
     LIMIT ${limit}
@@ -145,10 +165,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async topGrossingUsers(limit = 5, days = 30) {
+  async topGrossingUsers(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (u:User)-[:HAS_CREATED]->(o:Order)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH u, SUM(o.total) AS totalAmount
     ORDER BY totalAmount DESC
     LIMIT ${limit}
@@ -159,10 +179,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async topGrossingCategories(limit = 5, days = 30) {
+  async topGrossingCategories(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (o:Order)-[:HAS_ITEM]->(p:Product)-[:HAS_CATEGORY]->(c:ProductCategory)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH c, SUM(o.total) AS totalSales
     ORDER BY totalSales DESC
     LIMIT ${limit}
@@ -172,10 +192,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async topGrossingProducts(limit = 5, days = 30) {
+  async topGrossingProducts(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (o:Order)-[:HAS_ITEM]->(p:Product)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH p, SUM(o.total) AS totalSales
     ORDER BY totalSales DESC
     LIMIT ${limit}
@@ -186,10 +206,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async topGrossingProductsByCategory(limit = 5, days = 30) {
+  async topGrossingProductsByCategory(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (o:Order)-[:HAS_ITEM]->(p:Product)-[:HAS_CATEGORY]->(c:ProductCategory)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH c, p, SUM(o.total) AS totalSales
     ORDER BY c, totalSales DESC
     WITH c, COLLECT({product: p, totalSales: totalSales}) AS products
@@ -201,10 +221,10 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
-  async topGrossingProductVariants(limit = 5, days = 30) {
+  async topGrossingProductVariants(limit = 5, fromDate: string = null, toDate: string = null) {
     const query = `
     MATCH (o:Order)-[:HAS_ITEM]->(p:Product)-[:HAS_VARIANTS]->(v:ProductVariant)
-    WHERE o.createdAt >= datetime() - duration({days: ${days}})
+    ${this.buildDateRangeQuery(fromDate, toDate)}
     WITH v, p, COUNT(o) AS salesCount, SUM(o.total) AS totalSales
     ORDER BY totalSales DESC
     LIMIT ${limit}
@@ -215,23 +235,38 @@ RETURN salesData,
     return await this.neo.readWithCleanUp(query);
   }
 
+  async topGrossingSalesChannels(limit = 5, fromDate: string = null, toDate: string = null) {
+    const query = `
+    MATCH (o:Order)
+    ${this.buildDateRangeQuery(fromDate, toDate)}
+    WITH o.salesChannel AS channel, COUNT(o) AS totalSales, SUM(o.total) AS totalAmount
+    ORDER BY totalAmount DESC
+    LIMIT ${limit}
+    MATCH (s:SalesChannel {uuid: channel})
+    RETURN channel as channelId, s as channel, totalAmount, totalSales
+
+    `;
+
+    return await this.neo.readWithCleanUp(query);
+  }
+
   /**
    * Runs all processors with defaults params
    * @param items
    */
-  async loader(items = ['*']) {
+  async loader(items = ['*'], limit = 5, fromDate = null, toDate = null) {
     const promises: {[key: string]: any} = {};
     // load all
     if (items.length === 1 && items[0] === '*') {
       for (const processor of this.processors) {
-        promises[processor.name] = await processor.bind(this)();
+        promises[processor.name] = await processor.bind(this)(limit, fromDate, toDate);
       }
     } else {
       // load specific
       for (const item of items) {
         const processor = this.processors.find((p) => p.name === item);
         if (processor) {
-          promises[processor.name] = await processor.bind(this)();
+          promises[processor.name] = await processor.bind(this)(limit, fromDate, toDate);
         }
       }
     }

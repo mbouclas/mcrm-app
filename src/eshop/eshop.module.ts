@@ -16,9 +16,10 @@ import { PickUpProvider } from "~eshop/shipping-method/providers/pickUp.provider
 import { ElasticSearchService } from "~es/elastic-search.service";
 import * as process from "process";
 import { getStoreProperty } from "~root/state";
-import { BaseNeoService } from "~shared/services/base-neo.service";
 import { RoleService } from "~user/role/services/role.service";
 import { AttachGuestRoleToGuestTypeUsersPatch } from "~root/update/attach-guest-role-to-guest-type-users.patch";
+import { UserGroupModule } from './user-group/user-group.module';
+
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AttachGuestRoleToGuestTypeUsersPatch } from "~root/update/attach-guest-
     PaymentMethodModule,
     ShippingMethodModule,
     AddressModule,
+    UserGroupModule,
   ],
   providers: [
     QuoteProvider,

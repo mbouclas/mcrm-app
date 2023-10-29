@@ -2,7 +2,6 @@ import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Injectable } from "@nestjs/common";
 import { UserService } from "~user/services/user.service";
 import { SharedModule } from "~shared/shared.module";
-import { AppModule } from "~root/app.module";
 
 @McmsDi({
   id: 'AttachGuestRoleToGuestTypeUsersPatch',

@@ -26,6 +26,7 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public uuid: string;
   public paymentInfo: string;
   public shippingInfo: string;
+  public addedByAdmin: boolean;
 
   async onModuleInit() { }
 
@@ -267,6 +268,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
           },
         ],
       },
+    },
+    {
+      varName: 'addedByAdmin',
+      label: 'Added By Admin',
+      placeholder: 'Added By Admin',
+      type: 'boolean',
+      isSortable: true,
+      group: 'extra',
     },
     {
       varName: 'metaData',
@@ -554,6 +563,14 @@ export class OrderModel extends BaseModel implements OnModuleInit {
       model: 'Order',
       filterType: 'exact',
       isInSimpleQuery: true,
+    },
+    {
+      varName: 'addedByAdmin',
+      label: 'Added By Admin',
+      type: 'boolean',
+      model: 'Order',
+      filterType: 'exact',
+      isInSimpleQuery: false,
     },
     {
       varName: 'total',

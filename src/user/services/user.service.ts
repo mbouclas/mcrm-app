@@ -15,6 +15,7 @@ import { RecordUpdateFailedException } from "~shared/exceptions/record-update-fa
 import { RecordNotFoundException } from "~shared/exceptions/record-not-found.exception";
 import { tokenGenerator } from "~helpers/tokenGenerator";
 import { ChangeLogService } from "~change-log/change-log.service";
+import { UserGroupModel } from "~eshop/user-group/user-group.model";
 
 export class UserModelDto {
   tempUuid?: string;
@@ -346,5 +347,31 @@ export class UserService extends BaseNeoService {
 
 
     return foundGates.length > 0;
+  }
+
+  async assignUserGroup(userId: string, groups: Partial<UserGroupModel>[]) {
+    await this.neo.write(`
+        MATCH (:User {uuid: $userId})-[r1:BELONGS_TO]->(:UserGroup)
+    DELETE r1 return *`, {userId});
+
+    const query = `
+    MATCH (u:User {uuid: $userId})
+    UNWIND $groups AS group
+    MATCH (g:UserGroup {uuid: group.uuid})
+    MERGE (u)-[r:BELONGS_TO]->(g)
+    ON CREATE SET r.createdAt = datetime()
+    ON MATCH SET r.updatedAt = datetime()
+    RETURN *
+    `;
+
+    try {
+      await this.neo.write(query, {userId, groups});
+    }
+    catch (e) {
+      console.log(e);
+      throw new RecordUpdateFailedException(e.message, '100.11', {userId, groups, error: e});
+    }
+
+    return {success: true};
   }
 }

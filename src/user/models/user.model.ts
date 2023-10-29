@@ -7,6 +7,7 @@ import { IAddress } from '~eshop/models/checkout';
 import { IGate } from '~admin/models/gates';
 import { UserService } from "~user/services/user.service";
 import { GateService } from "~root/auth/gate.service";
+import { UserGroupModel } from "~eshop/user-group/user-group.model";
 
 const modelName = 'User';
 @McmsDi({
@@ -29,6 +30,7 @@ export class UserModel extends BaseModel {
   public type?: 'user' | 'guest';
   public address?: IAddress[] = [];
   public gates?: IGate[] = [];
+  public userGroup?: UserGroupModel[] = [];
 
   public static modelConfig: INeo4jModel = {
     select: 'user:User',
@@ -96,6 +98,15 @@ export class UserModel extends BaseModel {
         type: 'normal',
         isCollection: true,
         rel: 'HAS_CREATED',
+      },
+      userGroup: {
+        model: 'UserGroup',
+        modelAlias: 'userGroup',
+        exactAliasQuery: true,
+        alias: 'userGroupRelationship',
+        type: 'normal',
+        isCollection: true,
+        rel: 'BELONGS_TO',
       },
       isCustomer: {
         model: 'Order',

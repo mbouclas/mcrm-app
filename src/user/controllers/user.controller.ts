@@ -24,6 +24,7 @@ import BaseHttpException from '~root/shared/exceptions/base-http-exception';
 import { FailedUpdate, FailedDelete, FailedCreate, NotFound } from '../exceptions';
 import errors from '../exceptions/errors';
 import { SanitizeUserForApiInterceptor } from "~user/interceptors/sanitize-user-for-api.interceptor";
+import { UserGroupService } from "~eshop/user-group/user-group.service";
 
 @Controller('api/user')
 export class UserController {
@@ -195,6 +196,8 @@ export class UserController {
     } catch (e) {
       throw new FailedCreate();
     }
+
+
 
     return user;
   }

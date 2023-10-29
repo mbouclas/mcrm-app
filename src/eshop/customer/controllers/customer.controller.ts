@@ -32,6 +32,11 @@ class PostedCustomerDto {
 
 }
 
+class PostedAssignUserGroupsDto{
+  @IsNotEmpty()
+  groups: string[]
+}
+
 @Controller('api/customer')
 export class CustomerController {
   @Get('')
@@ -82,6 +87,15 @@ export class CustomerController {
 
 
     return data;
+  }
+
+  @Post(':uuid/user-group')
+  async assignUserGroup(@Param('uuid') uuid: string, @Body() groups: string[]) {
+    try {
+      return await new UserService().assignUserGroup(uuid, groups.map(g => ({uuid: g})));
+    } catch (e) {
+      throw new FailedUpdate();
+    }
   }
 
   @Post("create")
