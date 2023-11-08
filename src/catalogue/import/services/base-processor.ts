@@ -7,21 +7,23 @@ const slug = require('slug');
 const csv = require('csv-parser');
 
 export interface IImportProcessorFieldMap {
-  name: string;
-  description?: string;
-  importFieldName: string;
-  rename?: boolean;
+  name: string;// the slug of the property. for example color or material
+  description?: string;// the description of the property. for example color or material
+  importFieldName: string;// This is the field to match on the DB. For example slug
+  rename?: boolean; //whether to rename the field or not
   required?: boolean;
-  type?: 'text'|'number'|'float'|'boolean'|'category'|'property'|'image'|'variantId'|'productId'|'price'|'tag';
+  isPrimaryKey?: boolean;// whether this field is the primary key or not. Use it to blindly get the value of the field. For example sku for products
+  type?: 'text'|'number'|'float'|'boolean'|'category'|'property'|'image'|'variantId'|'productId'|'price'|'tag'|'sku';
   relationships?: string[];//graph rels. If present they must be the ones present on the model
   validations?: Function[],// list of validations to run, each entry is a function
-  isSlugFor?: string;
-  matchSourceValue?: string;
-  matchTargetValue?: string;
-  slugifyValue?: boolean;
-  priceOnRequestFlag?: string;
-  settings?: IGenericObject;
-  fieldSettingsConfig?: IDynamicFieldConfigBlueprint[];
+  isSlugFor?: string;// the property that this slug is for. For example title is a slug for slug
+  matchSourceValue?: string;// The key to match on the source input. For example property "code" if we want to match on colors. Default is slug
+  matchTargetValue?: string;// The key to match on the target. For example property "name" if we want to match on colors. Default is slug
+  slugifyValue?: boolean;// Whether to slugify the value or not. For example the CSV may have a color name in the format "Red" and we want to slugify it to "red"
+  priceOnRequestFlag?: string;// If the value matches this string, the price will be set to whatever the default price is
+  settings?: IGenericObject;//Settings for this field. For example the separator for tags. This holds the values of the fieldSettingsConfig form
+  fieldSettingsConfig?: IDynamicFieldConfigBlueprint[];// These are used to render the field settings form
+  displayUsing?: string; // Use another field as a reference to display this one. E.g. categories are an array of ids, using the field productCategory we can display the name of the category.
 }
 
 export interface IBaseTransformerSchema {
@@ -58,7 +60,7 @@ export class BaseProcessorService {
       let idx = 0;
 
       createReadStream(file.path)
-        .pipe(csv())
+        .pipe(csv({}))
         .on('data', (data) => {
           const processedRow = this.transformRow(data, idx === 0);
 
@@ -99,6 +101,8 @@ export class BaseProcessorService {
 
       if (field.required && !rowData[key]) {
         isInvalid = true;
+        console.log(`Field ${key} is required`, rowData);
+
         invalidFields.push({key, value: rowData});
         return;
       }
@@ -106,11 +110,11 @@ export class BaseProcessorService {
       data[field.name] = rowData[key];
 
       if (field.type === 'boolean') {
-        data[field.name] = rowData[key].toLowerCase() === 'true';
+        data[field.name] = ['true', '1', 'yes', 'y', 'on'].includes(rowData[key].toLowerCase());
       }
 
       if (field.type === 'image') {
-        data['image'] = rowData[key];
+        data['image'] = JSON.stringify({url: rowData[key]});
       }
 
       if (field.type === 'number') {
@@ -134,7 +138,7 @@ export class BaseProcessorService {
 
       if (field.type === 'tag') {
         const separator = field.settings?.separator || ';';
-        data['tag'] = rowData[key].split(separator).map(t => t.trim());
+        data['tag'] = (rowData[key]) ? rowData[key].split(separator).map(t => t.trim()) : [];
       }
 
       if (field.isSlugFor) {

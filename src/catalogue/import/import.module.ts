@@ -19,6 +19,10 @@ import {
   AddImagesToVariantsTemplateService
 } from "~catalogue/import/templates/add-images-to-variants-template.service";
 import { UpdateProductsTemplate } from "~catalogue/import/templates/update-products.template";
+import { ImportProductsWithVariantsTemplate } from "~catalogue/import/templates/import-products-with-variants.template";
+import { ImportProductsTemplate } from "~catalogue/import/templates/import-products.template";
+import { AddImagesToProductsTemplate } from "~catalogue/import/templates/add-images-to-products.template";
+import { UpdateProductStatusTemplate } from "~catalogue/import/templates/update-product-status.template";
 
 @Module({
   providers: [
@@ -34,6 +38,10 @@ import { UpdateProductsTemplate } from "~catalogue/import/templates/update-produ
     ChangeProductVariantStatusTemplate,
     AddImagesToVariantsTemplateService,
     UpdateProductsTemplate,
+    ImportProductsWithVariantsTemplate,
+    ImportProductsTemplate,
+    AddImagesToProductsTemplate,
+    UpdateProductStatusTemplate,
   ],
   imports: [
     MulterModule.registerAsync({

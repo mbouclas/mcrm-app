@@ -29,6 +29,7 @@ export function postedDataToUpdatesQuery(
     }
   });
 
+
   const targetFields = fields.filter(
     (field) =>
       !field.translatable ||

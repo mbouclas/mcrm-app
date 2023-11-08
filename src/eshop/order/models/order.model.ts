@@ -10,6 +10,7 @@ import { CartModel } from '~eshop/models/Cart.model';
 import { ProductService } from '~catalogue/product/services/product.service';
 import { ProductVariantService } from '~catalogue/product/services/product-variant.service';
 import { AddressService } from '~eshop/address/services/address.service';
+import { Property } from "~neo4j/neo4j.decorators";
 
 const modelName = 'Order';
 @McmsDi({
@@ -27,6 +28,8 @@ export class OrderModel extends BaseModel implements OnModuleInit {
   public paymentInfo: string;
   public shippingInfo: string;
   public addedByAdmin: boolean;
+
+
 
   async onModuleInit() { }
 

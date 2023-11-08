@@ -4,24 +4,31 @@ import { IImportProcessorFieldMap } from "~catalogue/import/services/base-proces
 import { Job } from "bullmq";
 import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
 import { CacheService } from "~shared/services/cache.service";
-import { groupBy, sortBy } from "lodash";
-import { IImportSchema, ImportService, IProcessorResult } from "~catalogue/import/services/import.service";
+import { IImportSchema} from "~catalogue/import/services/import.service";
 import { ImageService } from "~image/image.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 import { HttpService } from "@nestjs/axios";
 import { createWriteStream } from 'fs';
 import { join, resolve } from "path";
-import { uuid } from "uuidv4";
 import * as path from "path";
-import { store } from "~root/state";
 import { ProductService } from "~catalogue/product/services/product.service";
 import { OnEvent } from "@nestjs/event-emitter";
+import { IGenericObject } from "~models/general";
+import { BaseNeoService } from "~shared/services/base-neo.service";
+import { extractFiltersFromObject, extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
 const crypto = require('crypto')
 
 export interface IImportPhotosFromEventSchema {
-  productId?: string;
-  variantId?: string;
+  model: string
+  input: IImageImportSchema[];
+}
+
+export interface IImageImportSchema {
+  sku: string;
+  itemFilter?: IGenericObject;
   image: string;
+  model: string;
+  type: 'main'|'additional';
 }
 
 export class ImportProductPhotosService implements OnApplicationBootstrap {
@@ -56,7 +63,7 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
   }
 
   @OnEvent(ImportProductPhotosService.importPhotosStartEventName)
-  async onImportPhotosStart(data: IImportSchema[]) {
+  async onImportPhotosStart(data: IImageImportSchema[]) {
     const s = new ImportProductPhotosService(new HttpService());
     try {
       await s.processData(data);
@@ -184,29 +191,44 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     });
   }
 
-  private async processData(res: IImportSchema[]) {
-    const s = new ImportProductPhotosService(new HttpService());
-    // Group the products by SKU. This needs to be extracted from each item in the array
-    const group = groupBy(res, 'sku');
-
-    const products = Object.keys(group).map(sku => ({
-      sku,
-      variants: sortBy(group[sku], 'variantId'),
-    }));
-
-    // Comes from config catalogue.import.overwriteImages in /config
-    const overwriteImages = store.getState().configs.catalogue['import']['overwriteImages'];
-
-    for (let idx = 0; products.length > idx; idx++) {
+  private async processData(input: Partial<IImageImportSchema>[]) {
+    for (let idx = 0; input.length > idx; idx++) {
+      const item = input[idx];
       try {
-        // Comes from config catalogue.import.overwriteImages in /config
-        await s.handleProductPhotos(products[idx], overwriteImages);
-        this.logger.log(`Processed photos for product ${products[idx].sku}`);
-      } catch (e) {
-        console.log(`Error processing photos for product ${products[idx].sku}`, e);
+        await this.handlePhoto(item);
+      }
+      catch (e) {
+        console.log(`Error processing photo ${item.image}`, e);
       }
     }
 
     console.log('All photos processed');
+  }
+
+  async handlePhoto(item: Partial<IImageImportSchema>) {
+    const imageService = new ImageService();
+    let imageUrl: string;
+    try {
+      const json = JSON.parse(item.image);
+      imageUrl = json.url;
+    }
+    catch (e) {
+      imageUrl = item.image;
+    }
+
+    // we won't be checking for existing images as this is not our responsibility
+    //download the image
+    const image = await imageService.downloadImageFromUrl(imageUrl, null, true);
+    console.log(image)
+    const {key, value} = extractSingleFilterFromObject(item.itemFilter);
+    const queryResult = await new BaseNeoService().neo.readWithCleanUp(`
+    MATCH(n:${item.model} {${key}:'${value}'}) return n.uuid as id
+    `, {});
+
+    const id = queryResult[0].id
+
+     await imageService.linkToObject({uuid: image.imageId}, item.model, id, item.type || 'main', {fromImport: true});
+    return image;
+
   }
 }

@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from '~shared/services/base-neo.service';
 import { store } from '~root/state';
 import { OnEvent } from '@nestjs/event-emitter';
+import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
+import { getHooks } from "~shared/hooks/hook.decorator";
+import { IGenericObject } from "~models/general";
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
+import { SharedModule } from "~shared/shared.module";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 
 @Injectable()
 export class ProductVariantService extends BaseNeoService {
@@ -12,6 +18,31 @@ export class ProductVariantService extends BaseNeoService {
 
   @OnEvent('app.loaded')
   async onAppLoaded() { }
+
+  async update(uuid: string, record: Partial<ProductVariantModel>) {
+    const hooks = getHooks({ category: 'ProductVariant' });
+    if (hooks && typeof hooks.updateBefore === 'function') {
+      await hooks.updateBefore(record);
+    }
+    let r;
+    try {
+      r = await super.update(uuid, record);
+
+      if (hooks && typeof hooks.updateAfter === 'function') {
+        r = await hooks.updateAfter(r);
+      }
+
+      const product = await new ProductService().findOne({ sku: record.sku }, ['*']);
+
+      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, product);
+
+      return r;
+    }
+    catch (e) {
+      console.log(`ERROR UPDATING PRODUCTVariant:`, e);
+      throw new RecordUpdateFailedException(e);
+    }
+  }
 
   async getVariantsByNames(variantNames: string[]) {
     const query = `

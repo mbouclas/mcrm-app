@@ -20,6 +20,7 @@ import { BaseImportService } from "~catalogue/import/services/base-import.servic
 import { ImportTemplateRegistry } from "~catalogue/import/decorators/import-template-registry.decorator";
 import { HttpImportException } from "~catalogue/import/exceptions/http-import.exception";
 import { BaseNeoService } from "~shared/services/base-neo.service";
+import { IGenericObject } from "~models/general";
 
 export class AnalyzerQueryParamsDTO {
   template: string;
@@ -28,6 +29,17 @@ export class AnalyzerQueryParamsDTO {
 class ValidateUploadedFileDTO {
   @IsNotEmpty()
   template: string;
+}
+
+export interface IFileUploadMetaData {
+  module: string;
+  type: 'file'|'image';
+  id?: string;
+  data?: IGenericObject;
+}
+
+class FileUploadDto {
+  metaData: string;
 }
 
 @Controller('api/import')
@@ -42,11 +54,29 @@ export class ImportController {
         console.log('-=======', e)
       }
     }, 1000);*/
+
+/*    setTimeout(async () => {
+      const data = {"file":{"filename":"f5040211d0d2effa522c9ab11cba5a10","mimetype":"text/csv","settings":{},"path":"I:\\Work\\mcms-node\\mcrm\\upload\\f5040211d0d2effa522c9ab11cba5a10"},"template":"UpdateProductStatusTemplate","handler":{"jobEventName":"importJob","fieldMap":[{"name":"sku","importFieldName":"sku","required":true,"type":"sku","description":"The SKU of the product to update"},{"name":"active","importFieldName":"active","required":false,"type":"boolean","description":"The new active status of the product. true = active, false = inactive"}],"processor":{"fieldMap":[{"name":"sku","importFieldName":"sku","required":true,"type":"sku","description":"The SKU of the product to update"},{"name":"active","importFieldName":"active","required":false,"type":"boolean","description":"The new active status of the product. true = active, false = inactive"}],"results":[],"invalidRows":[]},"settings":{}},"settings":{}};
+      const template = 'UpdateProductStatusTemplate';
+      const container = ImportTemplateRegistry.get({id: template});
+      const settings = {}
+
+      const handler = new container.reference(settings) as BaseImportService;
+      const job = await ImportQueueService.queue.add(handler.jobEventName, { file: data.file, template, handler, settings });
+      console.log(job.id)
+    }, 1000);*/
   }
 
   @Post('validate')
   @UseInterceptors(FileInterceptor('file'))
-  async validateUploadedFile(@UploadedFile() file: Express.Multer.File,@Param('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO ) {
+  async validateUploadedFile(@UploadedFile() file: Express.Multer.File,@Query('limit') limit = 10, @Query() queryParams: AnalyzerQueryParamsDTO, @Body() body: FileUploadDto ) {
+    let metaData: IFileUploadMetaData;
+    try {
+      metaData = JSON.parse(body.metaData);
+    }
+    catch (e) {}
+
+    const settings: IGenericObject = metaData?.data?.settings || {};
 
     const container = ImportTemplateRegistry.get({id: queryParams.template});
 
@@ -55,10 +85,15 @@ export class ImportController {
     }
 
 
-    const handler = new container.reference() as BaseImportService;
+    const handler = new container.reference({ settings }) as BaseImportService;
 
     const res = await handler.analyze(file);
-    return {...res, file : { filename: file.filename, mimetype: file.mimetype }, fieldMap: handler.processor.getFieldMap(), ...{data: res.data.slice(0, 10)}};
+    res.data = res.data.slice(0, limit);
+    if (res.invalidRows.length > 50) {
+      res['invalidRowsCount'] = res.invalidRows.length;
+      res.invalidRows = res.invalidRows.slice(0, 50);
+    }
+    return {...res, file : { filename: file.filename, mimetype: file.mimetype }, fieldMap: handler.processor.getFieldMap(), ...{data: res.data}};
   }
 
   @Post('upload')
@@ -71,7 +106,8 @@ export class ImportController {
   }
 
   @Post('start')
-  async start(@Body() file: Express.Multer.File, @Query('template') template: string, @Query('immediate') immediateExecution = false) {
+  async start(@Body() file: Express.Multer.File, @Query('template') template: string, @Query('immediate') immediateExecution = false, @Body() body: {settings?: IGenericObject}) {
+
     // On the upload we're missing the path for security reasons. Let's find the file based on the filename
     const dest = resolve(require('path').resolve('./'), './upload');
     file.path = resolve(dest,file.filename);
@@ -83,8 +119,10 @@ export class ImportController {
       throw new Error(`Could not find container for ${template}`);
     }
 
+    const settings = typeof body.settings === 'object' ? body.settings : {};
 
-    const handler = new container.reference() as BaseImportService;
+
+    const handler = new container.reference(settings) as BaseImportService;
 
     if (immediateExecution) {
       try {
@@ -112,8 +150,9 @@ export class ImportController {
       }
     }
 
+
     // Push it to the worker
-    const job = await ImportQueueService.queue.add(handler.jobEventName, { file, template, handler });
+    const job = await ImportQueueService.queue.add(handler.jobEventName, { file, template, handler, settings });
     return {success: true, jobId: job.id};
   }
 

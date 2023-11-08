@@ -3,39 +3,31 @@ import {
   ImportTemplateField,
   McrmImportTemplate
 } from "~catalogue/import/decorators/import-template-registry.decorator";
-import { ProductService } from "~catalogue/product/services/product.service";
-import { ImageService } from "~image/image.service";
 import { Injectable } from "@nestjs/common";
-const crypto = require('crypto')
+import crypto from "crypto";
+import { ImageService } from "~image/image.service";
+import { ProductService } from "~catalogue/product/services/product.service";
 
-export interface IInputImage {
+interface IInputImage {
   sku: string;
-  variantId: string;
   image: string;
   hash?: string;
   imageId?: string;
 }
 
 @McrmImportTemplate({
-  id: 'AddImagesToVariantsTemplate',
-  name: 'Add Images to Variants',
-  description: 'Adds images to variants based on an input CSV file',
+  id: 'AddImagesToProductsTemplate',
+  name: 'Add Images to Products',
+  description: 'Adds images to products based on an input CSV file',
   type: 'images',
-  metaData: {
-    default: true,
-  }
 })
 @Injectable()
-export class AddImagesToVariantsTemplateService extends BaseImportService {
+export class AddImagesToProductsTemplate extends BaseImportService {
   @ImportTemplateField({name: 'sku', importFieldName: 'sku', required: true, type: 'text'})
   public sku: string;
 
-  @ImportTemplateField({name: 'variantId', importFieldName: 'variantId', required: true, type: 'variantId', rename: false})
-  public variantId: string;
-
   @ImportTemplateField({name: 'image', importFieldName: 'image', required: true, type: 'image'})
   public image: string;
-
 
   async processArray(images: IInputImage[], model: string, primaryKey: string) {
     // run a query to figure out which images are in the DB and which are not
@@ -104,7 +96,7 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
     const service = new ProductService();
     const query = `
     UNWIND $rows as row
-    MATCH (n:ProductVariant {variantId: row.variantId})
+    MATCH (n:Product {sku: row.sku})
     SET n.thumb = row.image, n.updatedAt = datetime()
     RETURN n;
     `;
@@ -113,7 +105,7 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
       await service.neo.write(query, {rows: res.data});
     }
     catch (e) {
-      console.log(`Error executing product variant image update query`, e);
+      console.log(`Error executing product image update query`, e);
     }
 
     return {

@@ -183,6 +183,7 @@
      },
      "variants": {
        "type": "nested",
+       "dynamic": true,
        "properties": {
          "uuid": {
            "type": "keyword"
@@ -219,6 +220,10 @@
          "sku": {
            "type": "text"
          }
+       },
+       "thumb": {
+         "type": "object",
+         "dynamic": true
        }
      },
      "price": {

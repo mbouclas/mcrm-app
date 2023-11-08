@@ -3,6 +3,7 @@ import { McrmModel, Property } from "~neo4j/neo4j.decorators";
 import { Injectable } from "@nestjs/common";
 import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
 import { BaseNeoService } from "~shared/services/base-neo.service";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 
 @McrmModel('UserGroup')
 @Injectable()
@@ -20,18 +21,23 @@ export class UserGroupModel extends BaseModel {
   @Property({type: 'boolean', label: 'Default', varName: 'default', required: true, group: 'main', isReadOnly: true})
   public default: boolean;
 
+  @Property({type: 'markdown', label: 'Description', varName: 'description', required: true, isReadOnly: true})
+  public description: string;
+
   public static modelConfig: INeo4jModel = {
     select: 'ug:UserGroup',
     as: 'ug',
     relationships: {}
   };
 
+  public static fields: IDynamicFieldConfigBlueprint[] = [];
+
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
     {
       varName: 'title',
       label: 'Title',
       type: 'text',
-      model: 'SalesChannel',
+      model: 'UserGroup',
       filterType: 'partial',
       isInSimpleQuery: true,
     },
@@ -39,7 +45,7 @@ export class UserGroupModel extends BaseModel {
       varName: 'active',
       label: 'Active',
       type: 'boolean',
-      model: 'SalesChannel',
+      model: 'UserGroup',
       filterType: 'exact',
       isInSimpleQuery: false,
     },
@@ -47,7 +53,7 @@ export class UserGroupModel extends BaseModel {
       varName: 'default',
       label: 'Default',
       type: 'boolean',
-      model: 'SalesChannel',
+      model: 'UserGroup',
       filterType: 'exact',
       isInSimpleQuery: false,
     },

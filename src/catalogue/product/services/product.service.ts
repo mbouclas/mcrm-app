@@ -3,9 +3,8 @@ import { ChangeLogService } from '~change-log/change-log.service';
 import { store } from '~root/state';
 import { OnEvent } from '@nestjs/event-emitter';
 import { IsNotEmpty } from 'class-validator';
-import { ITag, TagService } from '~tag/services/tag.service';
+import { ITag } from '~tag/services/tag.service';
 import { ProductCategoryModel } from '~catalogue/product/models/product-category.model';
-import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
 import { PropertyService } from '~catalogue/property/services/property.service';
 import { BaseModel } from '~models/base.model';
 import { groupBy } from 'lodash';
@@ -22,7 +21,7 @@ import { ProductVariantService } from '~catalogue/product/services/product-varia
 import { McmsDi } from '~helpers/mcms-component.decorator';
 import { getHooks } from '~shared/hooks/hook.decorator';
 import { SharedModule } from '~shared/shared.module';
-
+const slug = require('slug');
 export class ProductModelDto {
   tempUuid?: string;
   uuid?: string;
@@ -138,8 +137,12 @@ export class ProductService extends BaseNeoService {
       throw e;
     }
 
-    const images = await this.imageService.getItemImages('Product', item['uuid']);
-    item['thumb'] = images.find((img) => img.type === 'main') || null;
+
+    if (!item['thumb'] || !item['thumb']?.url) {
+      const images = await this.imageService.getItemImages('Product', item['uuid']);
+      item['thumb'] = images.find((img) => img.type === 'main') || null;
+    }
+
 
     if (hooks && typeof hooks.findOneAfter === 'function') {
       item = await hooks.findOneAfter(item);
@@ -204,7 +207,7 @@ export class ProductService extends BaseNeoService {
         r = await hooks.updateAfter(r);
       }
 
-      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, r);
+      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, record);
 
       return r;
     } catch (e) {
@@ -255,12 +258,15 @@ export class ProductService extends BaseNeoService {
       all.push(grouped[key].map((g) => g.name));
     }
 
-    const variants = combine(all as any, ' ::: ', product['sku']);
+    const variants = combine(all as any, ' ::: ');
+
+    const existingVariantCountQuery = await (new ProductVariantService()).find({sku: product['sku']});
+    let existingVariantCount = existingVariantCountQuery.total;
+
     for (let idx = 0; variants.length > idx; idx++) {
       const variant = variants[idx];
-
       if (!duplicateVariants.hasOwnProperty(variant) || duplicateVariants[variant] === false) {
-        await this.generateVariant(product, variant, `${product['sku']}.${idx}`);
+        await this.generateVariant(product, variant, `${product['sku']}.${existingVariantCount++}`, values);
       }
     }
 
@@ -299,9 +305,10 @@ export class ProductService extends BaseNeoService {
    * @param variantName
    * @param variantId
    */
-  async generateVariant(product: BaseModel, variantName: string, variantId: string) {
+  async generateVariant(product: BaseModel, variantName: string, variantId: string, propertyValues: IGenericObject[]) {
     // attach an isVariant property and a rel to the parent product. The variant needs a rel to that value only. All other rels need to be inherited
-    const query = `MATCH (product:Product {uuid: $uuid})
+    const query = `
+    MATCH (product:Product {uuid: $uuid})
     MERGE (variant:ProductVariant {name:$variantName}) SET 
       variant.price = product.price, 
       variant.title = product.title, 
@@ -309,7 +316,8 @@ export class ProductService extends BaseNeoService {
       variant.thumb = product.thumb,
       variant.sku = product.sku,
       variant.variantId = $variantId,
-      variant.active = true, variant.createdAt = datetime()
+      variant.active = true, 
+      variant.createdAt = datetime()
     WITH product,variant
     MERGE (product)-[r:HAS_VARIANTS]->(variant)
     ON CREATE SET r.updatedAt = datetime(), r.createdAt = datetime()
@@ -318,11 +326,41 @@ export class ProductService extends BaseNeoService {
     return *;
     `;
 
-    const res = this.neo.write(query, {
+
+    await this.neo.write(query, {
       variantName,
       variantId,
       uuid: product['uuid'],
     });
+
+    const res = await (new ProductVariantService()).findOne({ variantId });
+
+    const variantUuid = res['uuid'];
+    // add relationship to the property value and the property
+    const relQuery = `
+    UNWIND $propertyValues as propertyValue
+    MATCH (variant:ProductVariant {uuid: $variantUuid})
+    MATCH (propValue:PropertyValue {uuid:propertyValue.uuid})<-[:HAS_VALUE]-(property:Property {uuid: propertyValue.propertyUuid})
+    MERGE (variant)-[r:HAS_PROPERTY_VALUE]->(propValue)
+    ON CREATE SET  r.updatedAt = datetime(), r.createdAt = datetime()
+    ON MATCH SET   r.updatedAt = datetime()
+    WITH variant, propertyValue, property
+    MERGE (variant)-[r2:HAS_PROPERTY]->(property)
+    ON CREATE SET  r2.updatedAt = datetime(), r2.createdAt = datetime()
+    ON MATCH SET   r2.updatedAt = datetime()
+    return *;
+    `;
+console.log(relQuery, variantUuid, propertyValues.map(p => ({uuid: p.uuid, propertyUuid: p.property.uuid})))
+
+    try {
+      await this.neo.write(relQuery, {
+        variantUuid,
+        propertyValues: propertyValues.map(p => ({uuid: p.uuid, propertyUuid: p.property.uuid})),
+      });
+    }
+    catch (e) {
+      console.log(`Error creating variant relationships: ${e}`);
+    }
 
     return res;
   }

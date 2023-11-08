@@ -347,6 +347,14 @@ export class UserModel extends BaseModel {
       rangeToFieldName: 'createdAtTo',
       isInSimpleQuery: false,
     },
+    {
+      varName: 'userGroup',
+      label: 'User Group',
+      type: 'string',
+      model: 'UserGroup',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
   ];
 
   public static filterConfig: IBaseModelFilterConfig = {

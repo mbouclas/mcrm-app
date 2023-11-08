@@ -203,17 +203,26 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         rel: 'HAS_IMAGE',
         alias: 'thumbRelationship',
         model: 'Image',
-        modelAlias: 'thumb',
+        modelAlias: 'thumbRel',
         type: 'normal',
         isCollection: true,
         addRelationshipData: true,
         defaultProperty: 'name',
         postProcessing: async (record: Record<any, any>, model: ProductModel) => {
-          if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
+          if (typeof record.thumb === 'object' && !Array.isArray(record.thumb)) {
             return record;
           }
 
-          record.thumb = record.thumb
+          if (!record.thumb && Array.isArray(record.thumbRel) && record.thumbRel.length > 0) {
+            record.thumb = {};
+          }
+
+          if (!Array.isArray(record.thumbRel) || record.thumbRel.length === 0) {
+            record.thumbRel = [];
+          }
+
+
+          record.thumb = record.thumbRel
             .filter((image) => image.relationship && image.relationship.type === 'main')
             .map((image) => ({
               ...image.model,
@@ -227,8 +236,21 @@ export class ProductModel extends BaseModel implements OnModuleInit {
               },
             }));
 
-          if (record.thumb.length === 0) {
+          if (Array.isArray(record.thumb) && record.thumb.length > 0) {
             record.thumb = record.thumb[0];
+            delete record.thumbRel;
+            return record
+          }
+
+          if (!record.thumb || !Array.isArray(record.thumbRel) || record.thumbRel.length === 0) {
+            record.thumb = {};
+            return record;
+          }
+
+          // legacy support for string thumbs
+          if (record.thumb && typeof record.thumb === 'string' && record.thumb.indexOf('{"url":') === -1) {
+            record.thumb = {url: record.thumb};
+            return record;
           }
 
           return record;
@@ -417,19 +439,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       label: 'Description',
       placeholder: 'Description',
       isReadOnly: true,
-      type: 'richText',
+      type: 'markdown',
       isSortable: false,
       group: 'main',
+      hint: 'Short description of the product',
       searchIndexSettings: {
         isAutoCompleteField: true,
-      },
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: '2',
-          },
-        ],
       },
     },
     {
@@ -437,19 +452,12 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       label: 'Long Description',
       isReadOnly: true,
       placeholder: 'Long Description',
-      type: 'richText',
+      type: 'markdown',
+      hint: 'Full description of the product',
       isSortable: false,
       group: 'main',
       searchIndexSettings: {
         isAutoCompleteField: true,
-      },
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: '2',
-          },
-        ],
       },
     },
     {
@@ -461,6 +469,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isSortable: true,
       group: 'right',
       groupIndex: 1,
+      hint: 'Price of the product (excl. TAX)',
       searchIndexSettings: {
         isAutoCompleteField: false,
         aggregationFieldSettings: {
@@ -495,16 +504,15 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isReadOnly: true,
       type: 'float',
       isSortable: true,
-      group: 'right',
-      groupIndex: 2,
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: 'ADMIN',
-          },
-        ],
-      },
+    },
+    {
+      varName: 'cost',
+      label: 'Cost',
+      placeholder: 'Cost',
+      isReadOnly: true,
+      type: 'float',
+      isSortable: true,
+      hint: 'Cost of the product',
     },
     {
       varName: 'quantity',
@@ -514,14 +522,37 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       isSortable: true,
       group: 'right',
       groupIndex: 2,
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: '2',
-          },
-        ],
-      },
+      isReadOnly: true,
+    },
+    {
+      varName: 'stock',
+      label: 'Stock',
+      placeholder: 'Stock',
+      type: 'number',
+      isSortable: true,
+      group: 'right',
+      groupIndex: 2,
+      isReadOnly: true,
+    },
+    {
+      varName: 'lowStock',
+      label: 'Low Stock',
+      placeholder: 'Low Stock',
+      type: 'number',
+      isSortable: true,
+      group: 'right',
+      groupIndex: 2,
+      isReadOnly: true,
+    },
+    {
+      varName: 'trackInventory',
+      label: 'Track Inventory',
+      placeholder: 'Track Inventory',
+      type: 'boolean',
+      isSortable: false,
+      default: true,
+      groupIndex: 2,
+      isReadOnly: true,
     },
     {
       varName: 'thumb',
@@ -544,14 +575,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       },
       group: 'right',
       groupIndex: 3,
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: '2',
-          },
-        ],
-      },
     },
     {
       varName: 'updatedAt',
@@ -561,14 +584,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       type: 'date',
       isSortable: true,
       group: 'hidden',
-      updateRules: {
-        must: [
-          {
-            type: 'role',
-            value: '2',
-          },
-        ],
-      },
     },
     {
       varName: 'fromImport',
@@ -586,39 +601,13 @@ export class ProductModel extends BaseModel implements OnModuleInit {
         ],
       },
     },
-    /*{
-      varName: 'deliverability',
-      label: 'Deliverability',
-      placeholder: 'Deliverability',
-      type: 'nested',
-      group: 'extra',
-      default: false,
-      fields: [
-        {
-          varName: 'stock',
-          label: 'Stock',
-          placeholder: 'Stock',
-          type: 'number',
-          group: 'hidden',
-          default: false,
-        },
-        {
-          varName: 'clearanceSale',
-          label: 'ClearanceSale',
-          placeholder: 'ClearanceSale',
-          type: 'boolean',
-          group: 'hidden',
-          default: false,
-        },
-      ],
-    },*/
     {
       varName: 'seo',
       label: 'Seo',
       placeholder: 'Seo',
       type: 'nested',
       group: 'seo',
-      default: false,
+      saveAsJson: true,
       fields: [
         {
           varName: 'title',
@@ -627,6 +616,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
+          settings: {bindTo: 'title'},
         },
         {
           varName: 'description',
@@ -635,6 +625,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
+          settings: {bindTo: 'description'},
         },
         {
           varName: 'keywords',
@@ -651,6 +642,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
+          settings: {bindTo: 'title'},
         },
         {
           varName: 'og_image',
@@ -667,24 +659,24 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
+          settings: {bindTo: 'description'},
         },
       ],
     },
 
-    /*{
-      varName: 'measuresAndPackaging',
+    {
+      varName: 'fulfillment',
       label: 'Measures And Packaging',
       placeholder: 'Measures And Packaging',
       type: 'nested',
       group: 'extra',
-      default: false,
+      saveAsJson: true,
       fields: [
         {
           varName: 'width',
           label: 'Width',
           placeholder: 'With',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
@@ -692,7 +684,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           label: 'Height',
           placeholder: 'Height',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
@@ -700,7 +691,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           label: 'Length',
           placeholder: 'Length',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
@@ -708,43 +698,168 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           label: 'Weight',
           placeholder: 'Weight',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
           varName: 'sellingUnit',
-          label: 'SellingUnit',
-          placeholder: 'SellingUnit',
+          label: 'Selling Unit',
+          placeholder: 'Selling Unit',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
           varName: 'scaleUnit',
-          label: 'ScaleUnit',
-          placeholder: 'ScaleUnit',
+          label: 'Scale Unit',
+          placeholder: 'Scale Unit',
           type: 'number',
           group: 'hidden',
           default: false,
         },
         {
           varName: 'packagingUnit',
-          label: 'PackagingUnit',
-          placeholder: 'PackagingUnit',
+          label: 'Packaging Unit',
+          placeholder: 'Packaging Unit',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
         {
-          varName: 'basicUnit',
-          label: 'BasicUnit',
-          placeholder: 'BasicUnit',
+          varName: 'baseUnit',
+          label: 'Base Unit',
+          placeholder: 'Base Unit',
           type: 'number',
-          group: 'hidden',
           default: false,
         },
       ],
-    },*/
+    },
+    {
+      varName: 'shippingDetails',
+      label: 'Shipping Details',
+      placeholder: 'Shipping Details',
+      type: 'nested',
+      group: 'shippingDetails',
+      saveAsJson: true,
+      fields: [
+        {
+          varName: 'fixedShippingPrice',
+          label: 'Fixed Shipping Price',
+          placeholder: 'Fixed Shipping Price',
+          type: 'number',
+        },
+        {
+          varName: 'freeShipping',
+          label: 'Free Shipping',
+          placeholder: 'Free Shipping',
+          type: 'boolean',
+          default: false,
+        }
+      ],
+    },
+    {
+      varName: 'storefront',
+      label: 'Storefront',
+      placeholder: 'Storefront',
+      type: 'nested',
+      group: 'storefront',
+      saveAsJson: true,
+      fields: [
+        {
+          varName: 'searchKeywords',
+          label: 'Search Keywords',
+          placeholder: 'Search Keywords',
+          type: 'text',
+        },
+        {
+          varName: 'warrantyInfo',
+          label: 'Warranty Info',
+          placeholder: 'Warranty Info',
+          type: 'markdown',
+        },
+        {
+          varName: 'availabilityText',
+          label: 'Availability Text',
+          placeholder: 'Availability Text',
+          type: 'markdown',
+          hint: 'A few words telling the customer how long it will take to ship this product. For example: "Ships in 1-2 business days."',
+        },
+        {
+          varName: 'condition',
+          label: 'Condition',
+          placeholder: 'Condition',
+          type: 'select',
+          options: [
+            {
+              label: 'New',
+              value: 'new',
+              default: true,
+            },
+            {
+              label: 'Used',
+              value: 'used',
+            },
+            {
+              label: 'Refurbished',
+              value: 'refurbished',
+            },
+            {
+              label: 'Open Box',
+              value: 'openBox',
+            },
+          ],
+        },
+        {
+          varName: 'showConditionOnStorefront',
+          label: 'Show Condition on storefront',
+          placeholder: 'Show Condition on storefront',
+          type: 'boolean',
+          default: false,
+        },
+      ]
+    },
+    {
+      varName: 'purchasability',
+      label: 'Purchasability',
+      placeholder: 'Purchasability',
+      type: 'nested',
+      group: 'purchasability',
+      saveAsJson: true,
+      fields: [
+        {
+          varName: 'purchasability',
+          label: 'Purchasability',
+          placeholder: 'Purchasability',
+          type: 'radio',
+          options: [
+            {
+              label: 'This product can be purchased in my online store',
+              value: 'online',
+              default: true,
+            },
+            {
+              label: 'This product is coming soon but I want to take pre-orders',
+              value: 'preorders',
+              default: false,
+            },
+            {
+              label: 'This product cannot be purchased in my online store',
+              value: 'offline',
+              default: false,
+            },
+          ]
+        },
+        {
+          varName: 'minimumPurchaseQuantity',
+          label: 'Minimum Purchase Quantity',
+          placeholder: 'Minimum Purchase Quantity',
+          type: 'number',
+        },
+        {
+          varName: 'maximumPurchaseQuantity',
+          label: 'Maximum Purchase Quantity',
+          placeholder: 'Maximum Purchase Quantity',
+          type: 'number',
+        },
+      ],
+    }
   ];
 
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
@@ -830,18 +945,63 @@ export class ProductModel extends BaseModel implements OnModuleInit {
       label: 'Main',
       type: 'group',
       description: 'Main fields',
+      fields: ['title', 'sku'],
     },
     {
-      name: 'right',
-      label: 'Right',
+      name: 'descriptions',
+      label: 'Descriptions',
       type: 'group',
-      description: 'Right fields',
+      description: 'Pricing fields',
+      fields: ['description', 'description_long'],
+    },
+    {
+      name: 'pricing',
+      label: 'Pricing',
+      type: 'group',
+      description: 'Pricing fields',
+      fields: ['price', 'salePrice', 'cost'],
+    },
+    {
+      name: 'inventory',
+      label: 'Inventory',
+      type: 'group',
+      description: 'Inventory fields',
+      fields: ['stock', 'lowStock', 'trackInventory'],
     },
     {
       name: 'seo',
       label: 'Seo',
       type: 'group',
       description: 'Seo fields',
+      fields: ['seo'],
+    },
+    {
+      name: 'fulfillment',
+      label: 'Fulfillment',
+      type: 'group',
+      description: 'Fulfillment fields',
+      fields: ['fulfillment'],
+    },
+    {
+      name: 'storefront',
+      label: 'Storefront',
+      type: 'group',
+      description: 'Storefront fields',
+      fields: ['storefront'],
+    },
+    {
+      name: 'purchasability',
+      label: 'Purchasability',
+      type: 'group',
+      description: 'Purchasability fields',
+      fields: ['purchasability'],
+    },
+    {
+      name: 'shippingDetails',
+      label: 'Shipping Details',
+      type: 'group',
+      description: 'Shipping Details fields',
+      fields: ['shippingDetails'],
     },
     {
       name: 'extra',

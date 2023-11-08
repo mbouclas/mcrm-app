@@ -1,10 +1,11 @@
 import { IGenericObject } from "~models/general";
-import { filter, findIndex, find } from "lodash";
+import { filter, findIndex, find, sortBy, reverse } from "lodash";
 import { Container } from "typedi";
 import { IMcmsDiRegistryItem } from "~helpers/mcms-component.decorator";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import { getPropertiesWithMetadata } from "~neo4j/neo4j.decorators";
+import { IDynamicFieldConfigBlueprint } from "~models/dynamic-fields.model";
 
 const decoratedPropertiesKey = Symbol('importTemplatesDecoratedProperties');
 
@@ -15,6 +16,8 @@ export interface IMcrmImportTemplateRegistryItem {
   reference?: any;
   description?: string;
   settings?: IGenericObject;
+  settingsSchema?: IGenericObject;
+  settingsFieldMap?: IDynamicFieldConfigBlueprint[];
   metaData?: IGenericObject;
 }
 export class ImportTemplateRegistry {
@@ -59,14 +62,14 @@ export class ImportTemplateRegistry {
     return find(ImportTemplateRegistry.all(), filters) as IMcmsDiRegistryItem;
   }
 
-  static all(forApiUse = false) {
+  static all(forApiUse = false, sortField = 'title') {
     if (!forApiUse) {
       return this.registry;
     }
 
-    return this.registry.map((item) => {
+    return sortBy(this.registry.map((item) => {
       return ImportTemplateRegistry.getProviderForApiUse(item.id, false)
-    });
+    }), sortField);
   }
 
   static getProviderForApiUse(providerName: string, convertId = true) {
@@ -78,8 +81,10 @@ export class ImportTemplateRegistry {
     return {
       ...provider.reference.metaData,
       ...{shortName},
-      fieldMap: provider.reference['fieldMap'] || [],
+      fieldMap: sortBy(provider.reference['fieldMap'], 'name')|| [],
       settingsSchema: provider.reference['settingsSchema'] ? zodToJsonSchema(provider.reference['settingsSchema']) : {},
+      settingsFieldMap: provider.reference['settingsFieldMap'] || [],
+      settings: provider.reference['settings'] || {},
     }
 
   }
@@ -112,6 +117,8 @@ export const McrmImportTemplate = (obj: IMcrmImportTemplateRegistryItem) => {
         description: obj.description || undefined,
         title: obj.name || undefined,
         settings: obj.settings || undefined,
+        settingsSchema: obj.settingsSchema,
+        settingsFieldMap: obj.settingsFieldMap,
         id: obj.id || undefined,
         type: obj.type || undefined,
         metaData: obj.metaData || undefined,
@@ -125,6 +132,8 @@ export const McrmImportTemplate = (obj: IMcrmImportTemplateRegistryItem) => {
       type: obj.type,
       description: obj.description,
       settings: obj.settings,
+      settingsSchema: obj.settingsSchema,
+      settingsFieldMap: obj.settingsFieldMap,
       metaData: obj.metaData,
     });
   };

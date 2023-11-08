@@ -7,9 +7,12 @@ import { ErrorRestoringDbException } from "~catalogue/import/exceptions/error-re
 import { ImportQueueService } from "~catalogue/import/services/import-queue.service";
 import { Job, Processor, Queue } from "bullmq";
 import { ImportTemplateRegistry } from "~catalogue/import/decorators/import-template-registry.decorator";
+import { getStoreProperty } from "~root/state";
+import { IGenericObject } from "~models/general";
 
 export interface IBaseImportServiceSettings {
   delimiter: ','|'|'|';'|' ';
+  [key: string]: any;
 }
 
 export interface IBaseProcessorSchema {
@@ -26,10 +29,13 @@ export interface IBaseProcessorInvalidRows {
 }
 
 export interface IBaseProcessorResult {
-  data: IBaseProcessorSchema[];
+  data: Partial<IBaseProcessorSchema>[];
   isInvalid: boolean;
   invalidRows: IBaseProcessorInvalidRows[];
+  invalidRowsCount?: number;
   validRows: number;
+  skippedRows?: number;
+  metaData?: IGenericObject;
 }
 
 export interface IBaseImportServiceArgs {
@@ -52,6 +58,7 @@ export interface IBaseProcessResult {
 export interface IBaseImportJob {
   file: Partial<Express.Multer.File>;
   template: string;
+  settings?: IGenericObject;
 }
 
 export class BaseImportService {
@@ -62,18 +69,47 @@ export class BaseImportService {
   fieldMap: IImportProcessorFieldMap[] = [];
   static fieldMap: IImportProcessorFieldMap[] = [];
   processor: BaseProcessorService = new BaseProcessorService();
-  settings: IBaseImportServiceSettings = {
-    delimiter: ',',
-  };
+  settings: Partial<IBaseImportServiceSettings> = {};
 
+
+  async processArray(...args: any[]): Promise<any> {
+
+  }
 
   async onApplicationBootstrap() {
+    // lets see if there's any overrides for the fields
+    setTimeout(() => {
+      const overrides = getStoreProperty('configs.catalogue.import.templates');
+      const found = overrides.find((item) => item.id === this.constructor.name);
+
+      if (!found) { return; }
+
+      if (!Array.isArray(this.fieldMap)) {
+        return;
+      }
+
+      // add the field map to the decorator
+      const instance = ImportTemplateRegistry.findOne({id: this.constructor.name});
+
+      found.fieldMap.forEach((field) => {
+        // see if the field exists
+        const idx = instance.reference.fieldMap.findIndex((item) => item.name === field.name);
+        if (idx === -1) {
+          instance.reference.fieldMap.push(field);
+        }
+        else {
+          instance.reference.fieldMap[idx] = field;
+        }
+      });
+
+    }, 500)
+
     if (this['worker'] && typeof this['worker'] === 'function') {
       ImportQueueService.addWorker(this['worker'], ImportQueueService.queueName);
     }
   }
 
-  constructor(@Optional() args?: IBaseImportServiceArgs) {
+  constructor(@Optional() args?: Partial<IBaseImportServiceArgs>) {
     if (args) {
       for (const key in args) {
         this[key] = args[key];
@@ -94,6 +130,7 @@ export class BaseImportService {
     if (Array.isArray(this.fieldMap) && this.fieldMap.length > 0) {
       this.processor.setFieldMap(this.fieldMap);
     }
+
 
   }
 
@@ -151,7 +188,7 @@ export class BaseImportService {
   async worker(job: Job<Partial<IBaseImportJob>>) {
     console.log(`Processing job ${job.id}`);
 
-    const handler = this.getHandler(job.data.template);
+    const handler = (new BaseImportService()).getHandler(job.data.template);
 
     try {
       await handler.process(job.data.file);

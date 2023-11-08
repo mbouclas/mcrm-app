@@ -4,6 +4,7 @@ import { BaseModel, INeo4jModel } from "~models/base.model";
 import { IQueryBuilderFieldBlueprint } from "~shared/models/queryBuilder";
 import {z} from 'zod';
 import { BaseNeoService } from "~shared/services/base-neo.service";
+import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 
 const settingsSchema = z.object({
   entryPoint: z.string().optional().describe('json:{"label": "Entry point", "placeholder": "Entry point", "hint": "The entry point for the sales channel", "type": "text"}'),
@@ -48,6 +49,7 @@ export class SalesChannelModel extends BaseModel {
     relationships: {}
   };
 
+  public static fields: IDynamicFieldConfigBlueprint[] = [];
   public static filterFields: IQueryBuilderFieldBlueprint[] = [
     {
       varName: 'title',

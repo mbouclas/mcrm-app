@@ -442,6 +442,7 @@ export class BaseNeoService {
     const addressStr = '';
 
     const fields = this.model.fields;
+
     const toUpdateQuery = postedDataToUpdatesQuery(fields, record, this.model.modelConfig.as);
 
     if (record.tempUuid) {

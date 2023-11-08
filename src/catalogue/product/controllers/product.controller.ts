@@ -29,6 +29,11 @@ class PostedBulkStatusDto {
   records: Partial<IBulkUpdateRecord>[];
 }
 
+class PostedNewProductDto {
+  @IsNotEmpty()
+  title: string;
+}
+
 class PostedBulkSalesChannelDto {
   @IsArray()
   @IsNotEmpty()
@@ -149,40 +154,10 @@ export class ProductController {
   }
 
   @Post('')
-  async create(@Body() body: IGenericObject) {
-    await validateData(body, productSchema);
-
+  async create(@Body() body: PostedNewProductDto) {
     try {
-      const rels = [];
+      return await new ProductService().store(body);
 
-      if (body.manufacturer) {
-        rels.push({
-          id: body.manufacturer.uuid,
-          name: 'manufacturer',
-        });
-      }
-
-      if (body.productCategory) {
-        for (const category of body.productCategory) {
-          rels.push({
-            id: category.uuid,
-            name: 'productCategory',
-          });
-        }
-      }
-
-      if (body.tag) {
-        for (const tag of body.tag) {
-          rels.push({
-            id: tag.uuid,
-            name: 'tag',
-          });
-        }
-      }
-
-      const page = await new ProductService().store(body, null, rels);
-
-      return page;
     } catch (e) {
       throw new FailedCreate();
     }

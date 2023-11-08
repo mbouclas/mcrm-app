@@ -24,19 +24,20 @@ export function McrmModel(modelName: string) {
     if (!Array.isArray(constructor['filterFields'])) {
       constructor['filterFields'] = [];
     }
-
     const allProperties = getPropertiesWithMetadata(constructor, decoratedPropertiesKey);
 
     for (const property in allProperties) {
       if (allProperties.hasOwnProperty(property)) {
         const field = allProperties[property];
         field['name'] = property;
-        constructor['fields'].push(field);
+        const idx = constructor['fields'].findIndex(f => f.varName === property);
+        if (idx === -1) {
+          constructor['fields'].push(field);
+        }
       }
     }
 
     modelRegistry.push(constructor);
-
 
     McmsDiContainer.add({
       type: 'model',
@@ -63,7 +64,14 @@ export function Property(params: IDynamicFieldConfigBlueprint) {
     if (!existingDecoratedProperties) {
       existingDecoratedProperties = [];
     }
-    existingDecoratedProperties.push(propertyKey);
+
+    const idx = existingDecoratedProperties.findIndex(p => p === propertyKey);
+
+    if (idx === -1) {
+      existingDecoratedProperties.push(propertyKey);
+    }
+
+
     Reflect.defineMetadata(decoratedPropertiesKey, existingDecoratedProperties, target);
   };
 }

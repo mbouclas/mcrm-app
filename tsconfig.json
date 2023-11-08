@@ -40,7 +40,8 @@
       "~sales-channels/*": ["src/sales-channels/*"],
       "~es/*": ["src/elastic-search/*"],
       "~dashboard/*": ["src/dashboard/*"],
-      "~models/*": ["src/models/*"]
+      "~models/*": ["src/models/*"],
+        "~updates/*": ["updates/*"],
     }
   }
 }

@@ -6,7 +6,7 @@ import { groupBy, sortBy } from 'lodash';
 import { ProductCategoryModel } from '~catalogue/product/models/product-category.model';
 import { PropertyModel } from '~catalogue/property/models//property.model';
 import { ProductCategoryService } from '~catalogue/product/services/product-category.service';
-import { PropertyService } from '~catalogue/property/services/property.service';
+import { IPropertyValueWithProperty, PropertyService } from "~catalogue/property/services/property.service";
 import { ProductService } from '~catalogue/product/services/product.service';
 import { store } from '~root/state';
 import { CacheService } from '~shared/services/cache.service';
@@ -74,7 +74,7 @@ export class ImportService implements OnApplicationBootstrap {
   public static processImageJobEventName = 'import:process:image';
   protected categories: ProductCategoryModel[] = [];
   protected properties: PropertyModel[] = [];
-  protected propertyValues: PropertyValueModel[] = [];
+  protected propertyValues: IPropertyValueWithProperty[] = [];
   protected static readonly importResultCacheKey = 'import-job-';
   private static defaultFieldMap: IImportProcessorFieldMap[] = []; // Will be loaded from the client-config with config as a fallback
 
@@ -118,7 +118,7 @@ export class ImportService implements OnApplicationBootstrap {
     // setTimeout(async () => await ImportQueueService.queue.add(ImportService.jobEventName, dummyFile), 1200);
   }
 
-  @OnEvent('app.loaded')
+/*  @OnEvent('app.loaded')
   async onAppLoaded() {
     const config = store.getState().configs['catalogue']['import'];
     const defaultTemplate = config['templates'].find((t) => t.default) as ICatalogueImportTemplate;
@@ -127,7 +127,7 @@ export class ImportService implements OnApplicationBootstrap {
     if (defaultTemplate.fieldMap) {
       ImportService.defaultFieldMap = defaultFieldMap;
     }
-  }
+  }*/
 
   /**
    * Example of how to add something for this worker to pick it up
@@ -213,7 +213,7 @@ export class ImportService implements OnApplicationBootstrap {
     const s = new PropertyService();
     const res = await s.getAllPropertyValues();
 
-    this.propertyValues = res as PropertyValueModel[];
+    this.propertyValues = res as IPropertyValueWithProperty[];
   }
 
   async analyzeFile(file: Express.Multer.File, limit?: number, fieldMap?: IImportProcessorFieldMap[]) {

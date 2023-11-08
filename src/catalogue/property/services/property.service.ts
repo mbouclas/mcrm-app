@@ -5,6 +5,17 @@ import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject
 import { store } from '~root/state';
 import { OnEvent } from '@nestjs/event-emitter';
 
+export interface IPropertyValueWithProperty {
+  uuid: string;
+  slug: string;
+  code: string;
+  propertyId: string;
+  propertySlug: string;
+  propertyName: string;
+  value: string;
+  type: string;
+}
+
 @Injectable()
 export class PropertyService extends BaseNeoService {
   constructor() {
@@ -91,10 +102,11 @@ export class PropertyService extends BaseNeoService {
       });
   }
 
-  async getAllPropertyValues() {
+  async getAllPropertyValues(): Promise<IPropertyValueWithProperty[]> {
     const res = await this.neo.readWithCleanUp(`
-    MATCH (value:PropertyValue) return value`);
+    MATCH (n:PropertyValue)<-[r:HAS_VALUE]-(l:Property) RETURN n.uuid as uuid, n.slug as slug, n.code as code, l.uuid as propertyId, l.slug as propertySlug, l.type as type,
+    l.title as propertyName, n.name as value`);
 
-    return res.map((record) => record.value);
+    return res;
   }
 }

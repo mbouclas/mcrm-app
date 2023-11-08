@@ -24,12 +24,13 @@ export class ProductEvents {
 
   @OnEvent(ProductEventNames.productUpdated)
   async onProductUpdated(item: ProductModel) {
+
     const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
     try {
       await s.one(item.uuid, true);
     }
     catch (e) {
-      console.log(`PRODUCT_UPDATE EVENT: Error syncing product ${item.slug} with ES`, e.message);
+      console.log(`PRODUCT_UPDATE EVENT: Error syncing product ${item.slug} with ES`, e);
     }
   }
 

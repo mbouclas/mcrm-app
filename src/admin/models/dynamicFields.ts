@@ -70,6 +70,7 @@ export interface IDynamicFieldConfigBlueprint<ISettingsType = {}> {
   label: string;
   type: string;
   placeholder?: string;
+  hint?: string;
   default?: any;
   translatable?: boolean;
   required?: boolean;

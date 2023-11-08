@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { BaseNeoService } from "~shared/services/base-neo.service";
-import { IBaseFilter } from "~models/general";
+import { IBaseFilter, IGenericObject } from "~models/general";
 import { McmsDi, McmsDiContainer } from "~helpers/mcms-component.decorator";
 import * as slugify from 'slug';
-import { OnEvent } from "@nestjs/event-emitter";
 import { INeo4jModel } from "~models/base.model";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 import { extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
@@ -250,5 +249,59 @@ export class TagService extends BaseNeoService {
     catch (e) {
       throw new RecordUpdateFailedException(e.toString());
     }
+  }
+
+  /**
+   * This method will add tags to a model in bulk. If the tag exists it will simply link to the model. If it doesn't exist it will create it and then link it
+   * @param model
+   * @param modelFilter
+   * @param tags
+   */
+  async bulkAddTagsToModel(model: string, modelFilter: IGenericObject, tags: string[]) {
+    const filter = extractSingleFilterFromObject(modelFilter);
+    const input = tags.map(tag => {
+      return {
+        name: tag,
+        slug: slugify(tag, {lower: true})
+      }
+    });
+
+    const upsertQuery = `
+    UNWIND $tags as tag
+    MERGE (t:Tag {slug: tag.slug})
+    ON CREATE SET t.createdAt = datetime(), t.slug = tag.slug, t.name = tag.name, t.model = $model
+    ON MATCH SET t.updatedAt = datetime()
+    return *;
+    `;
+
+    try {
+      await this.neo.write(upsertQuery, {
+        tags: input,
+        model
+      });
+    }
+    catch (e) {
+      console.log(`Error executing tag upsert query`, e);
+    }
+
+    const linkQuery = `
+      UNWIND $tags as tag
+      MATCH (model:${model} {${filter.key}:'${filter.value}'})
+      MATCH (t:Tag {slug: tag.slug})
+      MERGE (model)-[r:HAS_TAGS]->(t)
+      ON CREATE SET r.createdAt = datetime(), r.updatedAt = datetime()
+      ON MATCH SET r.updatedAt = datetime()
+    `;
+
+    try {
+      await this.neo.write(linkQuery, {
+        tags: input,
+      });
+    }
+    catch (e) {
+      console.log(`Error executing tag link query`, e);
+    }
+
+    return {success: true}
   }
 }

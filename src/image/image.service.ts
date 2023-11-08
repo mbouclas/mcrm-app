@@ -7,11 +7,15 @@ import { IImageProcessingProvider } from "~image/models/providers.types";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { IFileUploadHandlerResult } from "~root/upload/uploader.service";
 import { ICloudinaryProviderConfig } from "~image/providers/cloudinary.provider";
-import { basename } from "path";
+import { basename, join, resolve } from "path";
 import { SharedModule } from "~shared/shared.module";
 import { ImageModel } from "~image/models/image.model";
 import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
-
+import { createWriteStream } from "fs";
+import { HttpService } from "@nestjs/axios";
+import * as stream from "stream";
+const { promisify } = require('util');
+const pipeline = promisify(stream.pipeline);
 const crypto = require("crypto");
 
 export enum ImageEventNames {
@@ -22,6 +26,14 @@ export enum ImageEventNames {
   IMAGE_DELETED_FROM_LOCAL = "image.deleted_from_local",
   IMAGE_DELETED_FROM_REMOTE = "image.deleted_from_remote",
 }
+
+export interface IDownloadFromImageFromUrlResponse {
+  filename: string;
+  url: string,
+  hash: string;
+  imageId?: string; //in case it's saved on the DB
+}
+
 
 @Injectable()
 export class ImageService extends BaseNeoService implements OnModuleInit {
@@ -264,5 +276,42 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
       console.log(e);
       throw new RecordUpdateFailedException(e.message);
     }
+  }
+
+  /**
+   *
+   * @param url
+   * @param filename
+   * @param makeItPermanent //Saves it on cloudinary and the DB. If false returns the original url
+   */
+  async downloadImageFromUrl(url: string, filename: string = null, makeItPermanent = false): Promise<IDownloadFromImageFromUrlResponse> {
+
+    filename = filename || resolve(join( './', 'upload', basename(url)));
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`unexpected response ${response.statusText}`);
+    }
+
+    await pipeline(response.body, createWriteStream(filename));
+
+    const hash = crypto.createHash('md5').update(url).digest("hex");
+
+    if (!makeItPermanent) {
+      return { filename, url, hash };
+
+    }
+
+    try {
+      const res = await this.handle(filename, 'remote', {
+        fromImport: true, originalFilename: basename(url),
+        originalLocation: hash,
+      });
+
+      return { filename, url: res.url, hash, imageId: res.id };
+    }
+    catch (e) {
+      console.log(`Error uploading image to cloudinary`, e);
+    }
+
   }
 }

@@ -112,15 +112,39 @@ export class ProductConverterService extends BaseProductConverterService {
 
           return variant.active;
         })
+        .filter((variant) => variant.active)
         .map((variant) => {
+          let image, thumb;
+          if (variant.thumb && typeof variant.thumb === 'string') {
+            image = variant.thumb;
+          }
+          else if (variant.thumb && typeof variant.thumb === 'object') {
+            image = variant.thumb.url;
+          }
+          else {
+            image = null;
+          }
+
+          if (variant.thumb && typeof variant.thumb === 'string') {
+            thumb = {url: variant.thumb};
+          }
+          else if (variant.thumb && typeof variant.thumb === 'object') {
+            thumb = variant.thumb;
+          }
+          else {
+            thumb = null;
+          }
+
+
         const item = {
           uuid: variant.uuid,
-          title: variant.name.length > 0 ? variant.name : product.title,
+          title: variant.name && variant.name.length > 0 ? variant.name : product.title,
           slug: `${product.slug}-${slugify(variant.variantId, { lower: true })}`,
           price: variant.price,
           sku: variant.sku,
           variantId: variant.variantId,
-          image: variant.thumb || null,
+          image,
+          thumb,
         } as unknown as IVariantEs;
 
         this.properties.data.forEach((property) => {
