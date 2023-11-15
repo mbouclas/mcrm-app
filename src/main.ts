@@ -1,3 +1,5 @@
+import { NotFoundExceptionFilter } from "~root/exceptions/not-found-exception.fiter";
+
 require('dotenv').config();
 import { createDriver } from '~neo4j/neo4j.util';
 import { Liquid } from 'liquidjs';
@@ -90,6 +92,7 @@ async function bootstrap() {
   });
   // app.enableCors();
 
+  app.useGlobalFilters(new NotFoundExceptionFilter())
 
   app.use(helmet({ contentSecurityPolicy: {useDefaults: true, directives : {
         defaultSrc: ["'self'"],
