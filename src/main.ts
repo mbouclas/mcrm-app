@@ -91,7 +91,14 @@ async function bootstrap() {
   // app.enableCors();
 
 
-  app.use(helmet({ contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false }));
+  app.use(helmet({ contentSecurityPolicy: {useDefaults: true, directives : {
+        defaultSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        imgSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        frameSrc: ["'self'"],
+      }} }));
   app.use(compression());
   const oneMonth = 1000 * 60 * 60 * 24 * 30;
   app.use(
