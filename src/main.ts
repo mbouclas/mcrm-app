@@ -22,7 +22,7 @@ import { Neo4jService } from '~root/neo4j/neo4j.service';
 const RedisStore = require("connect-redis").default
 export const projectRoot = resolve(join(__dirname, '../../'));
 const viewsDir = resolve(join(__dirname, '../../', 'views'));
-const publicDir = resolve(join(__dirname, '../../', 'public'));
+export const publicDir = resolve(join(__dirname, '../../', 'public'));
 const uploadDir = resolve(join(__dirname, '../../', 'upload'));
 declare const module: any;
 const tokenExpiry = process.env.OAUTH_TOKEN_EXPIRY ? parseInt(process.env.OAUTH_TOKEN_EXPIRY) : 60 * 60 * 23;
