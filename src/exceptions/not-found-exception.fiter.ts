@@ -10,6 +10,6 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
 
-    response.send(resolve(publicDir, 'index.html'));
+    response.redirect('/');
   }
 }
