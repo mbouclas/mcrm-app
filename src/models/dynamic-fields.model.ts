@@ -1,5 +1,7 @@
+import { BaseModel } from './base.model';
 import { IGenericObject } from './general';
-import { BaseModel } from './generic.model';
+
+
 
 export interface IDynamicFieldConfigSettingsBluePrint {}
 

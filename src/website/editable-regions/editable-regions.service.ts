@@ -137,6 +137,14 @@ export class EditableRegionsService extends BaseNeoService {
   }
 
   groupBy(groupByKey: string, data: EditableRegionModel[]) {
+    const rawRegions = store.getState().configs.editableRegions['editableRegions'];
+    data = data.map(region => {
+      const layout = rawRegions.find(l => l.layout === region.name);
+      const foundRegion = layout.regions.find(r => r.name === region.region);
+
+      return {...region, ...foundRegion};
+    })
+
     return groupBy(data, groupByKey);
   }
 

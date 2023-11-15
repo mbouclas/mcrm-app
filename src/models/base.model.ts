@@ -6,6 +6,13 @@ import { findIndex } from 'lodash';
 import { IItemSelectorConfig } from '~models/item-selector';
 import { Logger } from '@nestjs/common';
 import { getStoreProperty } from "~root/state";
+import { z, ZodError } from "zod";
+import { NoValidationSchemaFoundException } from "~models/exceptions/no-validation-schema-found.exception";
+import { MissingRequiredModelFieldsException } from "~models/exceptions/missing-required-model-fields.exception";
+import { transformErrors } from "~helpers/validateData";
+import { setupModelFromFields } from "~helpers/data";
+const slug = require('slug');
+
 export interface IBaseModelFilterConfig {
   results_per_page?: number;
   allowMultiple?: boolean;
@@ -76,6 +83,9 @@ export class BaseModel {
   public static modelName: string;
   public modelName: string;
   public name;
+  public uuid?: string;
+  public slug?: string;
+
   public static modelConfig: INeo4jModel;
   public static fields: IDynamicFieldConfigBlueprint[] = [];
   public slugPattern = '';
@@ -94,7 +104,21 @@ export class BaseModel {
     | string;
 
   constructor() {
-    this.assignModelFieldsToGroups()
+    this.assignModelFieldsToGroups();
+
+    setTimeout(() => {
+      this.loadModelSettingsFromConfig();
+    }, 1000);
+
+
+  }
+
+  public set(obj: IGenericObject) {
+    for (let key in obj) {
+      this[key] = obj[key];
+    }
+
+    return this;
   }
 
   getFields() {
@@ -184,8 +208,54 @@ export class BaseModel {
   loadModelSettingsFromConfig() {
     const modelSettings = getStoreProperty(`configs.general.modelSettings.${this.modelName}`);
     for (const key in modelSettings) {
-      this[key] = modelSettings[key];
+      this[key] = modelSettings[key];// assign as instance property
+      this.constructor[key] = modelSettings[key];// assign as static property
+    }
+  }
+
+  toModel(obj: IGenericObject) {
+    if (!this.constructor['validationSchema']) {
+      throw new NoValidationSchemaFoundException('NO_VALIDATION_SCHEMA_FOUND', '999.998', {modelName: this.constructor['modelName']});
     }
 
+    try {
+      this.constructor['validationSchema'].parse(obj)
+    }
+    catch (e) {
+      if (e instanceof ZodError) {
+        throw new MissingRequiredModelFieldsException('MISSING_REQUIRED_MODEL_FIELDS', '999.999', {modelName: this.constructor['modelName'], errors: transformErrors(e)});
+      }
+    }
+
+
+    for (const key in this.constructor['validationSchema'].shape) {
+      if (obj.hasOwnProperty(key)) {
+        this[key] = obj[key];
+      }
+    }
+
+    return this;
+  }
+
+  toObject() {
+    const obj = setupModelFromFields({}, this.constructor['fields']);
+
+    this.constructor['fields'].forEach((field) => {
+      if (this[field.varName]) {
+        obj[field.varName] = this[field.varName];
+      }
+    });
+
+    return obj;
+  }
+
+  slugifyProperty(from: string, property: string) {
+    this[property] = slug(this[from], {lower: true});
+
+    return this;
+  }
+
+  static toSlug(str: string) {
+    return slug(str, {lower: true});
   }
 }

@@ -14,6 +14,7 @@ import { RoleModel } from "~user/role/models/role.model";
 import { RoleService } from "~user/role/services/role.service";
 import { UserExistsException } from "~user/exceptions/user-exists.exception";
 import { UserGroupService } from "~eshop/user-group/user-group.service";
+import { UserGroupModel } from "~eshop/user-group/user-group.model";
 const crypto = require('crypto');
 
 export class CustomerModelDto {
@@ -157,7 +158,7 @@ export class CustomerService extends BaseNeoService {
     if (defaultUserGroup || Array.isArray(customer.userGroup)) {
       const groups = Array.isArray(customer.userGroup) ? customer.userGroup : [defaultUserGroup['uuid']];
       try {
-        await new UserService().assignUserGroup(user.uuid, groups);
+        await new UserService().assignUserGroup(user.uuid, groups as Partial<UserGroupModel>[]);
       }
       catch (e) {
         console.log(`Error assigning user to groups: ${e.message}`, e);

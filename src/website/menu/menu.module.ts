@@ -4,6 +4,7 @@ import { MenuItemService } from "~website/menu/menu-item.service";
 import { MenuModel } from "~website/menu/models/menu.model";
 import { MenuItemModel } from "~website/menu/models/menu-item.model";
 import { PermalinkBuilderService } from "~website/menu/permalink-builder.service";
+import { MenuItemController } from './menu-item.controller';
 
 @Module({
   providers: [
@@ -12,6 +13,6 @@ import { PermalinkBuilderService } from "~website/menu/permalink-builder.service
     MenuItemModel,
     PermalinkBuilderService,
   ],
-  controllers: [MenuController]
+  controllers: [MenuController, MenuItemController]
 })
 export class MenuModule {}

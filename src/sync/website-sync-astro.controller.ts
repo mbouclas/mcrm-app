@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { EditableRegionsService } from "~website/editable-regions/editable-regions.service";
+import { store } from "~root/state";
 
 @Controller('sync/astro/website')
 export class WebsiteSyncAstroController {
@@ -11,6 +12,7 @@ export class WebsiteSyncAstroController {
     if (!groupBy) {
       return res.data;
     }
+
 
     return service.groupBy('layout', res.data);
   }

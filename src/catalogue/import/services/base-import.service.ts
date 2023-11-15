@@ -80,6 +80,8 @@ export class BaseImportService {
     // lets see if there's any overrides for the fields
     setTimeout(() => {
       const overrides = getStoreProperty('configs.catalogue.import.templates');
+      if (!overrides) { return; }
+
       const found = overrides.find((item) => item.id === this.constructor.name);
 
       if (!found) { return; }

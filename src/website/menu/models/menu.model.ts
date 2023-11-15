@@ -1,4 +1,3 @@
-import { BaseTreeModel } from "~models/generic.model";
 import { McmsDi } from "~helpers/mcms-component.decorator";
 import { Injectable } from "@nestjs/common";
 import { BaseModel, INeo4jModel } from "~models/base.model";
@@ -6,15 +5,12 @@ import { IDynamicFieldConfigBlueprint } from "~admin/models/dynamicFields";
 import { MenuItemModel } from "~website/menu/models/menu-item.model";
 import { MenuItemService } from "~website/menu/menu-item.service";
 import { sortBy } from "lodash";
-const modelName = 'Menu';
-@McmsDi({
-  id: modelName,
-  type: 'model',
-})
+import { McrmModel } from "~neo4j/neo4j.decorators";
+
+@McrmModel('Menu')
 @Injectable()
 export class MenuModel extends BaseModel {
-  public modelName = modelName;
-  public static modelName = modelName;
+
 
 
   public static modelConfig: INeo4jModel = {
@@ -22,7 +18,7 @@ export class MenuModel extends BaseModel {
     as: 'menu',
     relationships: {
       items: {
-        rel: 'HAS_ITEM',
+        rel: 'HAS_CHILD',
         alias: 'menuItemRelationship',
         model: 'MenuItem',
         modelAlias: 'menuItem',
@@ -30,7 +26,7 @@ export class MenuModel extends BaseModel {
         isCollection: true,
       },
       itemTree: {
-        rel: 'HAS_ITEM',
+        rel: 'HAS_CHILD',
         alias: 'menuItemRelationship',
         model: 'MenuItem',
         modelAlias: 'menuItem',
@@ -64,9 +60,7 @@ export class MenuModel extends BaseModel {
       label: 'Title',
       placeholder: 'Title',
       type: 'text',
-      translatable: true,
       required: true,
-      setDefaultTranslationInModel: true,
       isSlug: true,
       group: 'main',
     },
@@ -84,7 +78,6 @@ export class MenuModel extends BaseModel {
       label: 'Description',
       placeholder: 'Description',
       type: 'text',
-      translatable: true,
       group: 'main',
     },
     {
@@ -92,7 +85,6 @@ export class MenuModel extends BaseModel {
       label: 'Caption',
       placeholder: 'Caption',
       type: 'text',
-      translatable: true,
       group: 'main',
     },
     {
@@ -100,7 +92,6 @@ export class MenuModel extends BaseModel {
       label: 'Meta Data',
       placeholder: 'Meta Data',
       type: 'json',
-      translatable: true,
       group: 'main',
     },
   ];

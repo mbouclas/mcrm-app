@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { IGenericObject } from '~models/general';
 import { PageCategoryService } from '~cms/page/services/page-category.service';
-import { DeleteType } from '~root/shared/services/base-neo-tree.service';
+import { TreeDeleteType } from '~root/shared/services/base-neo-tree.service';
 import { NotFound, FailedCreate, FailedDelete, FailedMove, FailedUpdate } from '../exceptions/pageCategoryExceptions';
 
 @Controller('api/page-category')
@@ -81,7 +81,7 @@ export class PageCategoryController {
   @Delete(':id')
   async delete(@Param('id') uuid: string, @Query() queryParams) {
     try {
-      const deleteType = DeleteType[queryParams.deleteType as keyof typeof DeleteType];
+      const deleteType = TreeDeleteType[queryParams.deleteType as keyof typeof TreeDeleteType];
 
       await new PageCategoryService().deleteNode(uuid, deleteType);
 

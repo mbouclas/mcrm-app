@@ -1,14 +1,84 @@
-import { Controller, Get } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 import { MenuItemService } from "~website/menu/menu-item.service";
 import { MenuService } from "~website/menu/menu.service";
+import { MenuModel } from "~website/menu/models/menu.model";
+import { MenuItemController } from "~website/menu/menu-item.controller";
+import { IGenericObject } from "~models/general";
+import { PermalinkBuilderService } from "~website/menu/permalink-builder.service";
+import BaseHttpException from "~shared/exceptions/base-http-exception";
 
 @Controller('api/menu')
 export class MenuController {
+
+/*
+  onApplicationBootstrap() {
+    setTimeout(async () => {
+      // const itemService = new MenuItemService();
+      // const s = await itemService.getRootTree();
+      const service = new MenuService();
+      const s = await service.findOne({ slug: 'top-menu' }, ['*']);
+      console.log(s)
+    });
+  }
+*/
+
   @Get('tree')
   async tree() {
     const itemService = new MenuItemService();
     return await itemService.getRootTree();
   }
+
+  @Get('')
+  async getMenus() {
+    const service = new MenuService();
+    return await service.find({}, ['*']);
+  }
+
+  @Get(':id')
+  async getMenu(@Param('id') id: string) {
+    const res = await new MenuService().findOne({ uuid: id });
+    res['menuItem'] = await new MenuItemController().tree(id);
+
+    return res;
+  }
+
+  @Patch(':id')
+  async updateMenu(@Param('id') id: string, @Body() body: Partial<MenuModel>)
+  {
+    console.log(body)
+    return await new MenuService().update(id, body);
+  }
+
+  @Post()
+  async createMenu(@Body() body: Partial<MenuModel>) {
+    return await new MenuService().store(body);
+  }
+
+  @Delete(':id')
+  async deleteMenu(@Param('id') id: string) {
+    return await new MenuService().delete(id);
+  }
+
+  @Post('make-permalink')
+  async makePermalinkFromObject(@Body() body: {model: string, data: IGenericObject}) {
+    try {
+      return {
+        permalink: new PermalinkBuilderService().build(body.model, body.data)
+      };
+    }
+    catch (e) {
+      throw new BaseHttpException({
+        code: e.getCode(),
+        statusCode: 500,
+        error: e,
+        reason: e.getMessage()
+      });
+    }
+  }
+
+
+
+
 
   @Get('queries')
   async queries() {

@@ -48,9 +48,10 @@ export class ProductCategoryService extends BaseNeoTreeService {
       throw e;
     }
 
-    const images = await this.imageService.getItemImages('ProductCategory', item['uuid']);
-    item['thumb'] = images.find((img) => img.type === 'main') || null;
-
+    if (!item['thumb'] || !item['thumb']?.url) {
+      const images = await this.imageService.getItemImages('ProductCategory', item['uuid']);
+      item['thumb'] = images.find((img) => img.type === 'main') || null;
+    }
     return item;
   }
 

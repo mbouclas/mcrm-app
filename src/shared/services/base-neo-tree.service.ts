@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { BaseNeoService } from '~shared/services/base-neo.service';
+import { BaseNeoService, IBaseNeoServiceRelationships } from "~shared/services/base-neo.service";
 import { IBaseFilter, IGenericObject } from '~models/general';
-import { IDynamicFieldConfigBlueprint } from '~admin/models/dynamicFields';
 import { findIndex, sortBy } from 'lodash';
 import { isInt } from 'neo4j-driver';
 import { extractSingleFilterFromObject } from '~helpers/extractFiltersFromObject';
 import { BaseTreeModel } from '~models/generic.model';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
-import { BaseModel } from '../../models/base.model';
-import { store } from '~root/state';
 import { fromRecordToModel } from '~helpers/fromRecordToModel';
+import { RecordUpdateFailedException } from "~shared/exceptions/record-update-failed-exception";
 
-export enum DeleteType {
+
+export enum TreeDeleteType {
   DELETE_CHILDREN = 'DELETE_CHILDREN',
   MOVE_CHILDREN_TO_PARENT = 'MOVE_CHILDREN_TO_PARENT',
   MOVE_CHILDREN_TO_ROOT = 'MOVE_CHILDREN_TO_ROOT',
@@ -213,28 +212,52 @@ export class BaseNeoTreeService extends BaseNeoService {
     );
   }
 
-  async toTree() {
+  async toTree( filters: IGenericObject = {}, rels: IBaseNeoServiceRelationships[] = [], parentId: string = null) {
     //cypher query to collect all top level categories and their children
+    const modelName = this.model.modelName;
+    let relQuery = '';
+    if (rels.length > 0) {
+      relQuery = rels.map((rel, idx) => {
+        const fromWay = rel?.relationshipProps?.fromWay ? '<-' : '-';
+        const toWay = rel?.relationshipProps?.toWay ? '->' : '-';
+        let relFilter = '';
+        if (rel?.relationshipProps?.filter) {
+          const {key, value} = extractSingleFilterFromObject(rel.relationshipProps.filter);
+          relFilter = `{${key}: '${value}'}`;
+        }
+
+        return `${rel.relationshipProps && rel.relationshipProps.isOptional ? 'OPTIONAL' : ''} MATCH (a)${fromWay}[r${idx}:${rel.id}]${toWay}(rel${idx}:${rel.name} ${relFilter})`;
+      }).join('\n');
+    }
 
     const query = `
-    MATCH (a:${this.model.modelName})
-    OPTIONAL MATCH (a)-[r:HAS_CHILD*1..5]->(b:ProductCategory) where a.slug <> b.slug
+    MATCH (a:${modelName})
+    ${relQuery}
+    OPTIONAL MATCH (a)-[r:HAS_CHILD*]->(b:${modelName}) where a.slug <> b.slug
     OPTIONAL MATCH (a)<-[r1:HAS_CHILD]-(p) where p.slug <> a.slug
     
     return a as category, collect(distinct b) as children, p as parent ORDER BY a.slug
     `;
 
     const res = await this.neo.readWithCleanUp(query, {});
+
     if (!res || res.length === 0) {
       return [];
     }
 
-    const elements = res.map((r: any) => {
+    let elements = res.map((r: any) => {
+      let iterationParentId  = (r.parent && r.parent.uuid) || null;
+      if (parentId && (r.parent && r.parent.uuid) && r.parent.uuid === parentId) {
+        iterationParentId = null;
+        r.parent = undefined;
+      }
+      r.category = fromRecordToModel(r.category, this.model);
       return {
         ...r.category,
-        ...{ children: r.children, parent: r.parent, parentId: (r.parent && r.parent.uuid) || null },
+        ...{ children: r.children, parent: r.parent, parentId: iterationParentId },
       };
     });
+
 
     const nest = (items, id = null) =>
       items
@@ -243,6 +266,7 @@ export class BaseNeoTreeService extends BaseNeoService {
           ...item,
           children: nest(items, item.uuid),
         }));
+
 
     return nest(elements);
   }
@@ -327,9 +351,8 @@ export class BaseNeoTreeService extends BaseNeoService {
   async moveNode(filter: IBaseFilter, parentFilter?: IBaseFilter) {
     const f = extractSingleFilterFromObject(filter);
     const p = parentFilter ? extractSingleFilterFromObject(parentFilter) : null;
-    console.log(p, parentFilter);
 
-    const session = this.neo.getDriver().session();
+        const session = this.neo.getDriver().session();
 
     try {
       const tx = session.beginTransaction();
@@ -344,7 +367,7 @@ export class BaseNeoTreeService extends BaseNeoService {
 
       if (p) {
         const addNewRelationshipQuery = `
-      MATCH (node:${this.model.modelName}), (newParent:${this.model.modelName})
+      MATCH (node), (newParent)
       WHERE node.${f.key} =~ $filterValue AND newParent.${p.key} =~ $parentFilterValue
       CREATE (newParent)-[:HAS_CHILD]->(node)
     `;
@@ -377,11 +400,11 @@ export class BaseNeoTreeService extends BaseNeoService {
     return result;
   }
 
-  async deleteNode(uuid: string, deleteType: DeleteType = DeleteType.DELETE_CHILDREN) {
+  async deleteNode(uuid: string, deleteType: TreeDeleteType = TreeDeleteType.DELETE_CHILDREN) {
     // In case of deleting node with its children
     //
 
-    if (deleteType === DeleteType.DELETE_CHILDREN) {
+    if (deleteType === TreeDeleteType.DELETE_CHILDREN) {
       const query = `
       MATCH (n:${this.model.modelName} {uuid: $uuid})
       OPTIONAL MATCH (n)-[:HAS_CHILD*]->(child)
@@ -392,7 +415,7 @@ export class BaseNeoTreeService extends BaseNeoService {
       return;
     }
 
-    if (deleteType === DeleteType.MOVE_CHILDREN_TO_PARENT) {
+    if (deleteType === TreeDeleteType.MOVE_CHILDREN_TO_PARENT) {
       const query = `
     MATCH (n:${this.model.modelName} {uuid: $uuid})
     OPTIONAL MATCH (n)-[:HAS_CHILD]->(child)
@@ -408,7 +431,7 @@ export class BaseNeoTreeService extends BaseNeoService {
       return;
     }
 
-    if (deleteType === DeleteType.MOVE_CHILDREN_TO_ROOT) {
+    if (deleteType === TreeDeleteType.MOVE_CHILDREN_TO_ROOT) {
       const query = `
       MATCH (n:${this.model.modelName} {uuid: $uuid})
       DETACH DELETE n
@@ -419,5 +442,23 @@ export class BaseNeoTreeService extends BaseNeoService {
     }
 
     throw new Error(`Invalid delete type: ${deleteType}`);
+  }
+
+  async saveOrder(items: Partial<BaseTreeModel>[]) {
+    const query = `
+    UNWIND $items as item
+    MATCH (n:${this.model.modelName} {uuid: item.uuid})
+    SET n.order = item.order
+    `;
+
+    try {
+      await this.neo.write(query, { items });
+    }
+    catch (e) {
+      throw new RecordUpdateFailedException(`Failed to update order for ${this.model.modelName}}`, '100.1', e);
+    }
+
+    return true;
+
   }
 }
