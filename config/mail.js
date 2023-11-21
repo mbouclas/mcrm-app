@@ -1,4 +1,5 @@
 module.exports = {
+  viesDir: undefined,
   from: {
     mail: 'mailer@mcrm.io',
     name: 'Mailer'

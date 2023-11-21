@@ -42,12 +42,14 @@ export class ContactFormsService {
 /*    try {
       html = await ViewEngine.renderFile(ContactFormsService.config.contactForm.template, job.data);
     } catch (e) {
+
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }*/
 
     try {
-      html = await maizzleRenderer(ContactFormsService.config.contactForm.template, {config: getStoreProperty('configs.store'), data: job.data })
+      const mailConfig = getStoreProperty('configs.mail').mail;
+      html = await maizzleRenderer(ContactFormsService.config.contactForm.template, {config: getStoreProperty('configs.store'), data: job.data }, mailConfig.viewsDir)
     } catch (e) {
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });

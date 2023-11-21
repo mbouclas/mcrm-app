@@ -32,10 +32,16 @@ export class ProductVariantService extends BaseNeoService {
         r = await hooks.updateAfter(r);
       }
 
-      const product = await new ProductService().findOne({ sku: record.sku }, ['*']);
+      let product;
+      if (record.sku) {
+        product = await new ProductService().findOne({ sku: record.sku }, ['*']);
+      } else {
+        // partial update
+        const v = await this.findOne({ uuid }, ['*']) as ProductVariantModel;
+        product = await new ProductService().findOne({ sku: v.sku }, ['*']);
+      }
 
       SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, product);
-
       return r;
     }
     catch (e) {

@@ -2,6 +2,7 @@ const { resolve } = require("path");
 module.exports = {
   name: 'MCRM',
   storeUrl: process.env.BASE_URL,
+  adminUrl: `${process.env.BASE_APP_URL}`,
   storeLogo: '',
   VAT: 19,
   quickCheckout: true,
@@ -9,23 +10,28 @@ module.exports = {
   orderStatuses: [
     {
       id: 1,
-      label: 'started',
+      label: 'Started',
+      value: 'started'
     },
     {
       id: 2,
-      label: 'processing',
+      label: 'Processing',
+      value: 'processing',
     },
     {
       id: 3,
-      label: 'shipped',
+      label: 'Shipped',
+      value: 'shipped',
     },
     {
       id: 4,
-      label: 'completed',
+      label: 'Completed',
+      value: 'completed',
     },
     {
       id: 5,
-      label: 'cancelled',
+      label: 'Cancelled',
+      value: 'cancelled',
     },
   ],
   users: {
@@ -60,6 +66,10 @@ module.exports = {
     }
   },
   notifications: {
+    workers: {
+      customer: null,
+      admin: null,
+    },
     email: {
       from: {
         mail: 'mailer@mcrm.io',
@@ -69,31 +79,25 @@ module.exports = {
         mail: 'mailer@mcrm.io',
         name: 'Mailer'
       },
+      cc: [],
+      viewsDir: undefined,
       order: {
         admin: {
-          created: {
+          '1': {
             subject: 'New order',
             template: 'emails/notifications/admin/orders/order-created.liquid'
           },
-          updated: {
-            subject: 'Order updated',
-            template: 'emails/notifications/admin/orders/order-updated.liquid'
-          },
-          cancelled: {
-            subject: 'Order cancelled',
-            template: 'emails/notifications/admin/orders/order-cancelled.liquid'
-          }
         },
         customer: {
-          created: {
+          1: {
             subject: 'New order',
             template: 'emails/notifications/customer/orders/order-created.liquid'
           },
-          updated: {
+          2: {
             subject: 'Order updated',
             template: 'emails/notifications/customer/orders/order-updated.liquid'
           },
-          cancelled: {
+          5: {
             subject: 'Order cancelled',
             template: 'emails/notifications/customer/orders/order-cancelled.liquid'
           }

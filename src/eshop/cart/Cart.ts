@@ -678,7 +678,7 @@ export class Cart implements OnModuleInit, ICart {
 
   public getConditionsByTarget(target: string): Condition[] {
     return this.conditions.filter((c => {
-      return c.getTarget() === target;
+      return typeof c.target === 'function' && c.getTarget() === target;
     }));
   }
 

@@ -9,7 +9,7 @@ export class OrderListeners {
 
   @OnEvent(OrderEventNames.orderStatusChanged)
   async orderStatusChanged({uuid, status}: {uuid: string, status: number}) {
-    console.log('--------------------', uuid, status);
+    console.log('***** Order Listener', uuid, status);
   }
 
   @OnEvent(OrderEventNames.orderCreated)

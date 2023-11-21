@@ -30,10 +30,18 @@ export interface IEmailFromConfig {
   name: string;
 }
 
+export interface IEmailConfigWorkers {
+  admin: string;
+  customer: string;
+}
+
 export interface IEmailConfig {
+  workers: IEmailConfigWorkers;
   order: IOrderConfig;
   from: IEmailFromConfig;
   adminEmail: IEmailFromConfig;
+  cc: IEmailFromConfig[];
+  viewsDir: string;
 }
 export interface INotificationsConfig {
   email: IEmailConfig;

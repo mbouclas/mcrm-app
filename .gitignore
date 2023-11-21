@@ -46,3 +46,4 @@ client-code/**/*.ts
 backups/*
 updates/update-log.json
 material/*
+logs/*

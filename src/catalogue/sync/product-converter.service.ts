@@ -142,6 +142,7 @@ export class ProductConverterService extends BaseProductConverterService {
           slug: `${product.slug}-${slugify(variant.variantId, { lower: true })}`,
           price: variant.price,
           sku: variant.sku,
+          active: variant.active,
           variantId: variant.variantId,
           image,
           thumb,

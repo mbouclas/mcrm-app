@@ -21,6 +21,12 @@ import { CartItem } from '~eshop/cart/CartItem';
 import { getHooks } from "~shared/hooks/hook.decorator";
 import { SalesChannelsService } from "~sales-channels/sales-channels.service";
 
+export interface IOrderStatus {
+  id: number;
+  label: string;
+  value: string;
+}
+
 export class OrderModelDto {
   orderId?: string;
   userId?: string;

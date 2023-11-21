@@ -10,8 +10,9 @@ import { TranslationsModule } from './translations/translations.module';
 import { MailLogModule } from './mail-log/mail-log.module';
 import { SettingsModule } from './settings/settings.module';
 import { ContactFormsModule } from './contact-forms/contact-forms.module';
+import { PreviewsModule } from './previews/previews.module';
 
 @Module({
-  imports: [EditableRegionsModule, RedirectsModule, FormBuilderModule, FormLogModule, MediaLibraryModule, MenuModule, LocaleModule, TranslationsModule, MailLogModule, SettingsModule, ContactFormsModule]
+  imports: [EditableRegionsModule, RedirectsModule, FormBuilderModule, FormLogModule, MediaLibraryModule, MenuModule, LocaleModule, TranslationsModule, MailLogModule, SettingsModule, ContactFormsModule, PreviewsModule]
 })
 export class WebsiteModule {}

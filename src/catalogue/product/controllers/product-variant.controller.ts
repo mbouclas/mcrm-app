@@ -56,9 +56,7 @@ export class ProductVariantController {
   @Patch(`:uuid`)
   async update(@Body() body: IGenericObject, @Param('uuid') uuid: string) {
     try {
-      const variant = await new ProductVariantService().update(uuid, body);
-
-      return variant;
+      return await new ProductVariantService().update(uuid, body);
     } catch (e) {
       throw new FailedUpdate();
     }

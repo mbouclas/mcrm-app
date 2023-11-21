@@ -1,0 +1,15 @@
+<x-customer src="views/layouts/customer.html">
+<p class="dark:text-gray-500">
+    Hi {{user.firstName}},
+</p>
+<a href="{{ config.storeUrl }}user/verify?token={{ user.confirmToken }}" target="_blank"
+   class="px-6 py-2 mt-4 text-sm font-medium tracking-wider text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80"
+>Click here to verify your email address</a>
+
+<p>
+    If you can't click the link, please copy and paste the following link into your browser:
+</p>
+<p>
+    {{ config.storeUrl }}user/verify?token={{ user.confirmToken }}
+</p>
+</x-customer>

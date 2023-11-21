@@ -2,7 +2,7 @@ import { Logger, Module, OnModuleInit } from "@nestjs/common";
 import { Neo4jModule } from "~neo4j/neo4j.module";
 import * as redisStore from 'cache-manager-redis-store';
 import { ElasticSearchModule } from "~es/elastic-search.module";
-import { HttpModule } from "@nestjs/axios";
+import { HttpModule, HttpService } from "@nestjs/axios";
 import { ModelSchematic } from "./schematics/model/model.schematic";
 import { ServiceSchematic } from "~shared/schematics/service/service.schematic";
 import { LazyModuleLoader, ModuleRef } from "@nestjs/core";
@@ -69,15 +69,18 @@ export enum SharedEventNames {
 export class SharedModule implements OnModuleInit {
   static eventEmitter: EventEmitter2;
   static moduleRef: ModuleRef;
+  static http: HttpService;
   static lazyModuleLoader: LazyModuleLoader;
   static readonly logger = new Logger(SharedModule.name);
   constructor(
     private m: ModuleRef,
     private lazyModuleLoader: LazyModuleLoader,
+    http: HttpService,
 
   ) {
     SharedModule.eventEmitter = AppModule.eventEmitter;
     SharedModule.lazyModuleLoader = lazyModuleLoader;
+    SharedModule.http = http;
   }
 
   onModuleInit(): any {

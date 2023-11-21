@@ -6,7 +6,7 @@ import { UserService } from "~user/services/user.service";
 import { UserModel } from "~user/models/user.model";
 import { MailQueueEventNames, MailQueueService } from "~root/mail/queues/mail.queue.service";
 import { Job, Queue } from "bullmq";
-import { projectRoot, ViewEngine } from "~root/main";
+import { ViewEngine } from "~root/main";
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 import { MailService } from "~root/mail/services/mail.service";
 import { sprintf } from "sprintf-js";
@@ -77,7 +77,8 @@ export class NotificationsService extends BaseNeoService {
    */
   async sendVerificationEmail(user: UserModel) {
     let html;
-    const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
+    const config = getStoreProperty('configs.store');
+    const storeConfig = {user, ...{config}};
 
     if (NotificationsService.config.user.created.customer.executor) {
       ExecutorsService.executorFromString(NotificationsService.config.user.created.customer.executor, false, true, [user] );
@@ -92,7 +93,7 @@ export class NotificationsService extends BaseNeoService {
     }*/
 
     try {
-      html = await maizzleRenderer(NotificationsService.config.user.created.customer.template, storeConfig);
+      html = await maizzleRenderer(NotificationsService.config.user.created.customer.template, storeConfig, NotificationsService.config.email.viewsDir);
     }
     catch (e) {
       console.log(`Error rendering template ${NotificationsService.config.user.created.customer.template}`, e)
@@ -130,7 +131,7 @@ export class NotificationsService extends BaseNeoService {
     }*/
 
     try {
-      html = await maizzleRenderer(NotificationsService.config.user.verified.customer.template, storeConfig);
+      html = await maizzleRenderer(NotificationsService.config.user.verified.customer.template, storeConfig, NotificationsService.config.email.viewsDir);
     }
     catch (e) {
       console.log(`Error rendering template ${NotificationsService.config.user.verified.customer.template}`, e)
@@ -166,12 +167,13 @@ export class NotificationsService extends BaseNeoService {
     const config = NotificationsService.config.user.resetPassword.customer;
 
     try {
-      html = await maizzleRenderer(config.template, {...storeConfig, user: u, chars: u.forgotPasswordToken.split('')});
+      html = await maizzleRenderer(config.template, {...storeConfig, user: u, chars: u.forgotPasswordToken.split('')}, NotificationsService.config.email.viewsDir);
     }
     catch (e) {
       console.log(`Error rendering template ${config.template}`, e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
+
 
 /*    try {
       html = await ViewEngine.renderFile(config.template, { storeConfig, user: u });

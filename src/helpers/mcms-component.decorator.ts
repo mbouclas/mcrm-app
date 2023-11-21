@@ -6,7 +6,7 @@ import { BaseModel } from "~models/base.model";
 
 export interface IMcmsDiRegistryItem<T = any> {
     id: string;
-    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'provider'|'hook'|'patch'|'upgrade'|'driver'|'executor';
+    type: 'component'|'service'|'class'|'middleware'|'helper'|'controller'|'model'|'shippingMethodProvider'|'paymentMethodProvider'|'provider'|'hook'|'patch'|'upgrade'|'driver'|'executor' | 'worker';
     title?: string;
     description?: string;
     reference?: any;
