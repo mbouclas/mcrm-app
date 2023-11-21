@@ -42,7 +42,7 @@ src/submodules/*
 client-configs/*.js
 client-configs/*.json
 client-configs/*.ts
-client-code/**/*.ts
+client-code/*
 backups/*
 updates/update-log.json
 material/*
