@@ -232,7 +232,7 @@ export class Cart implements OnModuleInit, ICart {
       cart = await new CartService().findOne({ id });
       this.loadExistingCart(cart);
     } catch (e) {
-      console.log(e);
+      // console.log(e);
     }
 
     if (!cart) {

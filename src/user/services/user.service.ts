@@ -364,6 +364,14 @@ export class UserService extends BaseNeoService {
     RETURN *
     `;
 
+    groups = groups.map((group) => {
+      if (typeof group === 'string') {
+        return {uuid: group};
+      }
+
+      return group;
+    });
+
     try {
       await this.neo.write(query, {userId, groups});
     }

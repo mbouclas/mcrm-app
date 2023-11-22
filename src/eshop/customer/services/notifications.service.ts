@@ -21,8 +21,8 @@ export interface ICustomerJob {
 }
 
 enum NotificationsQueueEventNames {
-  created = 'sendVerificationEmail',
-  verified = 'sendWelcomeEmail',
+  created = 'sendWelcomeEmail',
+  verified = 'sendVerificationEmail',
   resetPassword = 'sendResetPasswordEmail',
   updatedPassword = 'sendUpdatedPasswordEmail',
 }
@@ -80,29 +80,22 @@ export class NotificationsService extends BaseNeoService {
     const config = getStoreProperty('configs.store');
     const storeConfig = {user, ...{config}};
 
-    if (NotificationsService.config.user.created.customer.executor) {
-      ExecutorsService.executorFromString(NotificationsService.config.user.created.customer.executor, false, true, [user] );
+    if (NotificationsService.config.user.verified.customer.executor) {
+      ExecutorsService.executorFromString(NotificationsService.config.user.verified.customer.executor, false, true, [user] );
       return ;
     }
 
-/*    try {
-      html = await ViewEngine.renderFile(NotificationsService.config.user.created.customer.template, storeConfig);
-    } catch (e) {
-      console.log(e);
-      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
-    }*/
-
     try {
-      html = await maizzleRenderer(NotificationsService.config.user.created.customer.template, storeConfig, NotificationsService.config.email.viewsDir);
+      html = await maizzleRenderer(NotificationsService.config.user.verified.customer.template, storeConfig, NotificationsService.config.viewsDir);
     }
     catch (e) {
-      console.log(`Error rendering template ${NotificationsService.config.user.created.customer.template}`, e)
+      console.log(`Error rendering template ${NotificationsService.config.user.verified.customer.template}`, e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
 
 
     try {
-      await NotificationsService.sendEmailToCustomer(user, html, sprintf(NotificationsService.config.user.created.customer.subject, {storeName: storeConfig.config.name}));
+      await NotificationsService.sendEmailToCustomer(user, html, sprintf(NotificationsService.config.user.verified.customer.subject, {user, storeName: storeConfig.config.name}));
     }
     catch (e) {
       console.log(e)
@@ -118,29 +111,24 @@ export class NotificationsService extends BaseNeoService {
   async sendWelcomeEmailToCustomer(user: UserModel) {
     let html;
     const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
-    if (NotificationsService.config.user.verified.customer.executor) {
-      ExecutorsService.executorFromString(NotificationsService.config.user.verified.customer.executor, false, true, [user] );
+
+    if (NotificationsService.config.user.created.customer.executor) {
+      ExecutorsService.executorFromString(NotificationsService.config.user.created.customer.executor, false, true, [user] );
       return ;
     }
 
-/*    try {
-      html = await ViewEngine.renderFile(NotificationsService.config.user.verified.customer.template, storeConfig);
-    } catch (e) {
-      console.log(e);
-      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
-    }*/
 
     try {
-      html = await maizzleRenderer(NotificationsService.config.user.verified.customer.template, storeConfig, NotificationsService.config.email.viewsDir);
+      html = await maizzleRenderer(NotificationsService.config.user.created.customer.template, storeConfig, NotificationsService.config.viewsDir);
     }
     catch (e) {
-      console.log(`Error rendering template ${NotificationsService.config.user.verified.customer.template}`, e)
+      console.log(`Error rendering template ${NotificationsService.config.user.created.customer.template}`, e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
 
 
     try {
-      await NotificationsService.sendEmailToCustomer(user, html, sprintf(NotificationsService.config.user.verified.customer.subject, {storeName: storeConfig.config.name}));
+      await NotificationsService.sendEmailToCustomer(user, html, sprintf(NotificationsService.config.user.created.customer.subject, {user, storeName: storeConfig.config.name}));
     }
     catch (e) {
       console.log(e)
@@ -167,7 +155,7 @@ export class NotificationsService extends BaseNeoService {
     const config = NotificationsService.config.user.resetPassword.customer;
 
     try {
-      html = await maizzleRenderer(config.template, {...storeConfig, user: u, chars: u.forgotPasswordToken.split('')}, NotificationsService.config.email.viewsDir);
+      html = await maizzleRenderer(config.template, {...storeConfig, user: u, chars: u.forgotPasswordToken.split('')}, NotificationsService.config.viewsDir);
     }
     catch (e) {
       console.log(`Error rendering template ${config.template}`, e)
@@ -200,14 +188,15 @@ export class NotificationsService extends BaseNeoService {
     let html;
     const storeConfig = {user, ...{config: getStoreProperty('configs.store')}};
     try {
-      html = await ViewEngine.renderFile(NotificationsService.config.user.verified.admin.template, storeConfig);
+      html = await maizzleRenderer(NotificationsService.config.user.created.admin.template, storeConfig, NotificationsService.config.viewsDir);
     } catch (e) {
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
     }
 
+
     try {
-      await NotificationsService.sendEmailToAdmin(user, html, sprintf(NotificationsService.config.user.verified.admin.subject, {storeName: storeConfig.config.name}));
+      await NotificationsService.sendEmailToAdmin(user, html, sprintf(NotificationsService.config.user.created.admin.subject, {storeName: storeConfig.config.name}));
     }
     catch (e) {
       console.log(e)

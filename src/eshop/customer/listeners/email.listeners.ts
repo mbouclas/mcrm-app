@@ -13,7 +13,7 @@ export class EmailListeners {
       return;
     }
 
-    await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'verified' } );
+    await NotificationsService.queue.add(NotificationsService.queueName, { user, type: 'created' } );
   }
 
   @OnEvent(UserService.userVerifiedEventName)

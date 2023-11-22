@@ -231,7 +231,7 @@ export class Condition {
     }
     catch (e) {
       if (e instanceof z.ZodError) {
-        console.log('--------------------------------',e.issues[0], e.issues[0].path)
+        // console.log('--------------------------------',e.issues[0], e.issues[0].path)
         throw new Error(e.issues[0].message);
       }
     }
