@@ -120,8 +120,7 @@ export class ShippingMethodModel extends BaseModel implements OnModuleInit {
       varName: 'settings',
       label: 'Settings',
       placeholder: 'Settings',
-      type: 'string',
-      isSortable: true,
+      type: 'json',
       group: 'main',
     },
     {

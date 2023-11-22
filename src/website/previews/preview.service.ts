@@ -110,8 +110,9 @@ export class PreviewService {
   async generatePreviewUrl(modelName: string, itemId: string) {
     const serviceContainer = McmsDiContainer.findOne({id: `${modelName}Service`});
     if (!serviceContainer) {
-      throw new Error(`Could not find service container for ${modelName}`);
+      return this.config.baseUrl;
     }
+
     const model = await new serviceContainer.reference().findOne({uuid: itemId});
 
     try {

@@ -43,40 +43,7 @@ export class ShippingMethodService extends BaseNeoService {
     return item;
   }
 
-  async store(record: ShippingModelDto, userId?: string) {
-    const { providerName, settingsFields, ...rest } = record;
-    const settingsFieldKeys = Object.keys(settingsFields);
 
-    const providerContainer = McmsDiContainer.get({
-      id: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)}Provider`,
-    });
-
-    const provider: IShippingMethodProvider = new providerContainer.reference();
-
-    const allowedSettingsFields = provider.getFields();
-
-    const allowedSettingsKeys = allowedSettingsFields.map((field) => field.varName);
-
-    const notAllowedFound = settingsFieldKeys.find((settingsField) => !allowedSettingsKeys.includes(settingsField));
-
-    if (notAllowedFound) {
-      throw new Error(`Unsupported key: ${notAllowedFound}`);
-    }
-
-    const providerSettings = JSON.stringify({
-      providerName,
-      settingsFields,
-    });
-
-    const r = await super.store(
-      {
-        ...rest,
-        providerSettings,
-      },
-      userId,
-    );
-    return { ...r, providerSettings: JSON.parse(providerSettings) };
-  }
 
   async update(uuid: string, record: ShippingModelDto, userId?: string) {
     const r = await super.update(uuid, record, userId);

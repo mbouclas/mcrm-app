@@ -473,6 +473,7 @@ export class BaseNeoService {
         ${firstTimeQuery}
         WITH ${withPropagate}`;
 
+
     if (options?.clearExistingRelationships) {
       const uniqueRels = [...new Set(relationships.map((item) => item.name))];
       uniqueRels.forEach((rel) => {

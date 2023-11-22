@@ -40,7 +40,7 @@ export class ShippingMethodController {
     return await new ShippingMethodService().store(body);
   }
 
-  @Delete()
+  @Delete(':id')
   async delete(@Param('id') uuid: string) {
     return await new ShippingMethodService().delete(uuid);
   }

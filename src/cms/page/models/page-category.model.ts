@@ -116,6 +116,7 @@ export class PageCategoryModel extends BaseModel {
       placeholder: 'Seo',
       type: 'nested',
       group: 'seo',
+      saveAsJson: true,
       default: false,
       fields: [
         {
