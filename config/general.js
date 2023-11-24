@@ -1,12 +1,12 @@
 const { resolve } = require("path");
-
+const os = require("os");
 module.exports = {
   previewServer: {
     location: process.env.ASTRO_SITE_PATH,
     baseUrl: process.env.ASTRO_SITE_PREVIEW_URL,
     scripts: {
-      dev: 'npm.cmd run dev',
-      dumpData: 'npm.cmd run dump:data',
+      dev: os.platform() === 'win32' ? 'npm.cmd run dev' : 'npm run dev',
+      dumpData: os.platform() === 'win32' ? 'npm.cmd run dump:data' : 'npm run dump:data',
     }
   },
   backups: {
