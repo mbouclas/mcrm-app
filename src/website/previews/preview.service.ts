@@ -119,6 +119,7 @@ export class PreviewService {
       const permalink = new PermalinkBuilderService().build(modelName, model);
       return `${this.config.baseUrl}${permalink}`;
     } catch (e) {
+      console.log(e)
       throw new CouldNotGenerateUrlException('COULD_NOT_GENERATE_PREVIEW_URL', '1500.5', e);
     }
 

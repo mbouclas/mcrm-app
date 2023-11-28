@@ -24,8 +24,11 @@ export class PageModel extends BaseModel implements OnModuleInit {
   public slug;
 
   async onModuleInit() { }
+  constructor() {
+    super();
 
-
+    this.loadModelSettingsFromConfig();
+  }
 
   public static displayedColumns = ['title', 'category'];
 
@@ -45,17 +48,26 @@ export class PageModel extends BaseModel implements OnModuleInit {
         rel: 'HAS_IMAGE',
         alias: 'thumbRelationship',
         model: 'Image',
-        modelAlias: 'thumb',
+        modelAlias: 'thumbRel',
         type: 'normal',
         isCollection: true,
         addRelationshipData: true,
         defaultProperty: 'name',
         postProcessing: async (record: Record<any, any>, model: PageModel) => {
-          if (!record.thumb || !Array.isArray(record.thumb) || record.thumb.length === 0) {
+          if (typeof record.thumb === 'object' && !Array.isArray(record.thumb)) {
             return record;
           }
 
-          record.thumb = record.thumb
+          if (!record.thumb && Array.isArray(record.thumbRel) && record.thumbRel.length > 0) {
+            record.thumb = {};
+          }
+
+          if (!Array.isArray(record.thumbRel) || record.thumbRel.length === 0) {
+            record.thumbRel = [];
+          }
+
+
+          record.thumb = record.thumbRel
             .filter((image) => image.relationship && image.relationship.type === 'main')
             .map((image) => ({
               ...image.model,
@@ -69,8 +81,21 @@ export class PageModel extends BaseModel implements OnModuleInit {
               },
             }));
 
-          if (record.thumb.length === 0) {
+          if (Array.isArray(record.thumb) && record.thumb.length > 0) {
             record.thumb = record.thumb[0];
+            delete record.thumbRel;
+            return record
+          }
+
+          if (!record.thumb || !Array.isArray(record.thumbRel) || record.thumbRel.length === 0) {
+            record.thumb = {};
+            return record;
+          }
+
+          // legacy support for string thumbs
+          if (record.thumb && typeof record.thumb === 'string' && record.thumb.indexOf('{"url":') === -1) {
+            record.thumb = {url: record.thumb};
+            return record;
           }
 
           return record;

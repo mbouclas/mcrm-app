@@ -11,8 +11,8 @@ export class PreviewController {
 /*    setTimeout(async () => {
       const s = new PreviewService();
       try {
-        const res = await s.checkIfPreviewServerIsRunning();
-        // const res = await s.generatePreviewUrl('Product','97ff6edd-af46-4b66-8af2-189be6efcac4');
+        // const res = await s.checkIfPreviewServerIsRunning();
+        const res = await s.generatePreviewUrl('Page','d698ba22-bc53-44a5-8a0c-3ef55d43f13a');
         console.log(res)
       }
       catch (e) {
