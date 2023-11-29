@@ -51,7 +51,7 @@ export class UserModel extends BaseModel {
         alias: 'levelRelationship',
         type: 'normal',
         match: 'exact',
-        isCollection: false,
+        isCollection: true,
         rel: 'HAS_ROLE',
         postProcessing: async (record: Record<any, any>, model: UserModel) => {
           if (!record.levelRel || !Array.isArray(record.role)) {

@@ -79,7 +79,7 @@ export class PageService extends BaseNeoService {
 
   async find(params: IGenericObject = {}, rels: string[] = []): Promise<IPagination<PageModel>> {
     let res;
-    console.log(rels)
+
     try {
       res = await super.find(params, rels);
     } catch (e) {
