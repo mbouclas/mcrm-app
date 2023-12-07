@@ -4,6 +4,7 @@ export interface IBaseModelEs {
   id: string;
   title: string;
   slug: string;
+  active: boolean;
   description: string;
   description_short?: string;
   createdAt: Date;

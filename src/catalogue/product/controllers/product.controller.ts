@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Session, Get, Delete, Param, Query, Patch } from '@nestjs/common';
-import { ProductService } from '~catalogue/product/services/product.service';
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import { IGenericObject } from '~models/general';
 import { SessionData } from 'express-session';
 import { store } from '~root/state';
@@ -22,6 +22,7 @@ import { validateData } from '~helpers/validateData';
 import { ConditionService } from '~setting/condition/services/condition.service';
 import { IsArray, IsNotEmpty } from "class-validator";
 import { IBulkUpdateRecord, IBulkUpdateRelationshipRecord } from "~shared/services/base-neo.service";
+import { SharedModule } from "~shared/shared.module";
 
 class PostedBulkStatusDto {
   @IsArray()
@@ -81,7 +82,10 @@ export class ProductController {
 
   @Patch('bulk/update')
   async bulkStatus(@Body() body: PostedBulkStatusDto) {
-    return await new ProductService().bulkUpdate(body.records);
+    const res = await new ProductService().bulkUpdate(body.records);
+    SharedModule.eventEmitter.emit(ProductEventNames.bulkUpdate, body.records.map(r => r.uuid));
+
+    return res;
   }
 
   @Patch('bulk/category')

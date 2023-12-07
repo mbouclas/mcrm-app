@@ -20,6 +20,7 @@ export class ProductVariantModel extends BaseModel {
   public sku: string;
   public variantId: string;
   public thumb: IBaseImageCopy
+  public price: number;
 
 
   public static modelConfig: INeo4jModel = {

@@ -32,6 +32,7 @@ export class ProductConverterService extends BaseProductConverterService {
 
     result.sku = product.sku;
     result.slug = product.slug;
+    result.active = product.active;
     result.title = product.title;
     result.id = product.uuid;
     result.price = product.price;

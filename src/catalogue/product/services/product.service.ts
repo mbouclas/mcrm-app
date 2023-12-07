@@ -66,6 +66,7 @@ export enum ProductEventNames {
   productCreated = 'productCreated',
   productUpdated = 'productUpdated',
   productDeleted = 'productDeleted',
+  bulkUpdate = 'bulkUpdate',
 }
 
 @McmsDi({
@@ -207,7 +208,7 @@ export class ProductService extends BaseNeoService {
         r = await hooks.updateAfter(r);
       }
 
-      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, record);
+      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, { uuid, ...record });
 
       return r;
     } catch (e) {

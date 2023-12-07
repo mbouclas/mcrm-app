@@ -34,6 +34,19 @@ export class ProductEvents {
     }
   }
 
+  @OnEvent(ProductEventNames.bulkUpdate)
+  async onBulkUpdate(ids: string[]) {
+    const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
+    for (const id of ids) {
+      try {
+        await s.one(id, true);
+      }
+      catch (e) {
+        console.log(`PRODUCT_UPDATE EVENT: Error syncing product ${id} with ES`, e.message);
+      }
+    }
+  }
+
   @OnEvent(ProductEventNames.productDeleted)
   async onProductDeleted(uuid: string) {
     const s = new ElasticSearchService(ElasticSearchModule.moduleRef);

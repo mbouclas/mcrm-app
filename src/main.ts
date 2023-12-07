@@ -18,6 +18,7 @@ import * as helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { defaultNeo4JConfig } from '~root/neo4j/neo4j.module';
 import { Neo4jService } from '~root/neo4j/neo4j.service';
+import * as bodyParser from 'body-parser';
 
 
 
@@ -142,6 +143,9 @@ async function bootstrap() {
     }),
   );
 
+
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit:50000 }));
   app.use(cookieParser());
   app.use(passport.initialize());
   app.use(passport.session());

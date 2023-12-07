@@ -27,6 +27,7 @@ export class ProductModel extends BaseModel implements OnModuleInit {
   public slug;
   public sku;
   public uuid: string;
+  public active: boolean = false;
 
 
 

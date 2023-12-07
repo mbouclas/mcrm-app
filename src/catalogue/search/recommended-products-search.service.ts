@@ -63,6 +63,7 @@ export class RecommendedProductsSearchService extends BaseNeoService {
 
     try {
       const res = await this.neo.readWithCleanUp(query);
+
       const recommendations = [];
       for (const r of res) {
         const p = r.product;

@@ -17,6 +17,8 @@ import { CouldNotAttachUserToCartException } from "~eshop/cart/exceptions/could-
 import { BaseModel } from "~models/base.model";
 import { CouldNotAttachModelToCartException } from "~eshop/cart/exceptions/could-not-attach-model-to-cart.exception";
 import { Condition } from "~eshop/cart/Condition";
+import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
+import { ProductVariantModel } from "~catalogue/product/models/product-variant.model";
 
 export interface ICartItem {
   uuid?: string;
@@ -188,7 +190,9 @@ export class CartService extends BaseNeoService {
 
     let price = product.price;
     if (variantId) {
-      const variant = ProductService.findVariant(product, { uuid: variantId });
+      // const variant = ProductService.findVariant(product, { uuid: variantId });
+      const variant = await new ProductVariantService().findOne({ uuid: variantId }, ['thumb']) as ProductVariantModel;
+      console.log(variant)
       thumb = typeof variant.thumb === 'string' ? variant.thumb : variant.thumb.url;
       price = variant.price;
       sku = variant.sku;
