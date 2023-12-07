@@ -3,9 +3,10 @@ import {
   ImportTemplateField,
   McrmImportTemplate
 } from "~catalogue/import/decorators/import-template-registry.decorator";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import { ImageService } from "~image/image.service";
 import { Injectable } from "@nestjs/common";
+import { SharedModule } from "~shared/shared.module";
 const crypto = require('crypto')
 
 export interface IInputImage {
@@ -115,6 +116,8 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
     catch (e) {
       console.log(`Error executing product variant image update query`, e);
     }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return {
       success: true,

@@ -118,6 +118,14 @@
          "slug": { "type": "text" }
        }
      },
+     "related": {
+       "dynamic": true,
+       "properties": {
+         "uuid": { "type": "text" },
+         "title": { "type": "text" },
+         "slug": { "type": "text" }
+       }
+     },
      "properties": {
        "type": "nested",
        "properties": {

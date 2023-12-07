@@ -6,6 +6,7 @@ import {
 } from "../../updates/add-modules-config-file-to-client-configs.update";
 import { UpdateEsMappingsForVariantsUpdate } from "../../updates/update-es-mappings-for-variants.update";
 import { AddStatusToEsProductIndexUpdate } from "~updates/add-status-to-es-product-index.update";
+import { UpdateEsMappingsForRelatedUpdate } from "~updates/update-es-mappings-for-related.update";
 
 
 @Module({
@@ -14,7 +15,8 @@ import { AddStatusToEsProductIndexUpdate } from "~updates/add-status-to-es-produ
     TestPatch,
     AddModulesConfigFileToClientConfigsUpdate,
     UpdateEsMappingsForVariantsUpdate,
-    AddStatusToEsProductIndexUpdate
+    AddStatusToEsProductIndexUpdate,
+
   ]
 })
 export class UpdateModule implements OnApplicationBootstrap {

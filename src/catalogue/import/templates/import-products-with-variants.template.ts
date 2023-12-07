@@ -18,7 +18,7 @@ import { IPropertyValueWithProperty, PropertyService } from "~catalogue/property
 import { groupBy, find, uniqBy, uniq } from "lodash";
 import { SalesChannelsService } from "~sales-channels/sales-channels.service";
 import { store } from "~root/state";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import { SharedModule } from "~shared/shared.module";
 import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
 import { ImageService } from "~image/image.service";
@@ -348,6 +348,8 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
 
     // go for the individual processing
     await this.importToDb(products);
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return Promise.resolve({
       success: true,

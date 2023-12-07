@@ -124,19 +124,19 @@ export class ImportController {
 
     const handler = new container.reference(settings) as BaseImportService;
 
-    if (immediateExecution) {
-      try {
-        await handler.backupDb();
-      }
-      catch (e) {
-        throw new HttpImportException({
-          error: e.message,
-          code: e.getCode(),
-          statusCode: 500,
-          reason: e.message,
-        });
-      }
+    try {
+      await handler.backupDb();
+    }
+    catch (e) {
+      throw new HttpImportException({
+        error: e.message,
+        code: e.getCode(),
+        statusCode: 500,
+        reason: e.message,
+      });
+    }
 
+    if (immediateExecution) {
       try {
         return await handler.process(file);
       }

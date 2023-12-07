@@ -4,8 +4,9 @@ import {
   McrmImportTemplate
 } from "~catalogue/import/decorators/import-template-registry.decorator";
 import { Injectable } from "@nestjs/common";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import { IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
+import { SharedModule } from "~shared/shared.module";
 
 
 @McrmImportTemplate({
@@ -41,6 +42,8 @@ export class ChangeProductStatusTemplateService extends BaseImportService {
     catch (e) {
       console.log(`Error executing product status update query`, e);
     }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return {
       success: true,

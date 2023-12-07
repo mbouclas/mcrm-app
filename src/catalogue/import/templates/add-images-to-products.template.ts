@@ -6,7 +6,8 @@ import {
 import { Injectable } from "@nestjs/common";
 import crypto from "crypto";
 import { ImageService } from "~image/image.service";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
+import { SharedModule } from "~shared/shared.module";
 
 interface IInputImage {
   sku: string;
@@ -107,6 +108,8 @@ export class AddImagesToProductsTemplate extends BaseImportService {
     catch (e) {
       console.log(`Error executing product image update query`, e);
     }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return {
       success: true,

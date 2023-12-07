@@ -67,6 +67,7 @@ export enum ProductEventNames {
   productUpdated = 'productUpdated',
   productDeleted = 'productDeleted',
   bulkUpdate = 'bulkUpdate',
+  productImportDone = 'productImportDone',
 }
 
 @McmsDi({

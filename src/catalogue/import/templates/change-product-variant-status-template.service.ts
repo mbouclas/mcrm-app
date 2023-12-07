@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { BaseImportService } from "~catalogue/import/services/base-import.service";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import {  IImportProcessorFieldMap } from "~catalogue/import/services/base-processor";
 import {
   ImportTemplateField,
@@ -8,6 +8,7 @@ import {
 } from "~catalogue/import/decorators/import-template-registry.decorator";
 import { ErrorDuringImportException } from "~catalogue/import/exceptions/error-during-import.exception";
 import { Job } from "bullmq";
+import { SharedModule } from "~shared/shared.module";
 
 
 @McrmImportTemplate({
@@ -58,6 +59,8 @@ export class ChangeProductVariantStatusTemplate extends BaseImportService {
       console.log(`Error executing product variant status update query`, e);
       throw new ErrorDuringImportException(`ERROR_DURING_IMPORT`, `1700.1`, {message: e.message });
     }
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return {
       success: true,

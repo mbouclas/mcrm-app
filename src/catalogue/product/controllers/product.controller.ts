@@ -251,7 +251,7 @@ export class ProductController {
           await new ProductService().detachFromModelById(body.sourceUuid, destinationUuid, 'related');
         }
       }
-
+      SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, { uuid: body.sourceUuid });
       return { success: true };
     } catch (e) {
       throw new FailedToRelate();

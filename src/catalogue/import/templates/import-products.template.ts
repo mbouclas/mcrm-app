@@ -14,7 +14,7 @@ import { z } from "zod";
 import { ProductCategoryModel } from "~catalogue/product/models/product-category.model";
 import { PropertyModel } from "~catalogue/property/models/property.model";
 import { IPropertyValueWithProperty, PropertyService } from "~catalogue/property/services/property.service";
-import { ProductService } from "~catalogue/product/services/product.service";
+import { ProductEventNames, ProductService } from "~catalogue/product/services/product.service";
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 import { ProductCategoryService } from "~catalogue/product/services/product-category.service";
 import slug from "slug";
@@ -385,6 +385,8 @@ export class ImportProductsTemplate extends BaseImportService {
 
 
     await this.importToDb(products);
+
+    SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
     return Promise.resolve({
       success: true,

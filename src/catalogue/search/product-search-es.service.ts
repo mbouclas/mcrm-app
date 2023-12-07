@@ -105,6 +105,13 @@ export class ProductSearchEsService {
     },
   ];
 
+  protected filterFields = [
+    {
+      name: "active",
+      type: "boolean"
+    }
+  ];
+
   constructor(
     protected es: ElasticSearchService,
   ) {
@@ -204,6 +211,14 @@ export class ProductSearchEsService {
           found.type === "simple" ? q.addTermFilter(key, val) : q.addNestedFilter(nestedValueQuery, val);
         });
       }
+    }
+
+    // look for filter fields that do not have aggregations. Should be booleans more or less
+    for (let key in args.queryParameters) {
+      const found = this.filterFields.find(field => field.name === key);
+      if (!found) {continue;}
+
+      q.addTermFilter(key, args.queryParameters[key]);
     }
 
     const res = await q.search(args.limit, args.page);

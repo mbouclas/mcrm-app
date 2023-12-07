@@ -57,4 +57,15 @@ export class ProductEvents {
       console.log(`PRODUCT_DELETE EVENT: Error deleting product ${uuid} from ES`, e.message);
     }
   }
+
+  @OnEvent(ProductEventNames.productImportDone)
+  async onProductImportDone() {
+    const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
+    try {
+      await s.all();
+    }
+    catch (e) {
+      console.log(`PRODUCT_IMPORT_DONE EVENT: Error syncing products with ES`, e.message);
+    }
+  }
 }

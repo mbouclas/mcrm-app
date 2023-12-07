@@ -94,13 +94,21 @@ export class ProductConverterService extends BaseProductConverterService {
     }
 
     if (Array.isArray(product['related'])) {
-      result['related'] = product['related'].map((related) => ({
-        uuid: related.uuid,
-        title: related.title,
-        slug: related.slug,
-        description: related.description,
-        thumb: related.thumb || null,
-      }));
+      result['related'] = product['related'].map((related) => {
+        let relatedThumb = null;
+        if (related.thumb && typeof related.thumb === 'string') {
+          relatedThumb = related.thumb;
+        } else if (related.thumb && typeof related.thumb === 'object') {
+          relatedThumb = related.thumb.url;
+        }
+        return {
+          uuid: related.uuid,
+          title: related.title,
+          slug: related.slug,
+          description: related.description,
+          thumb: relatedThumb,
+        };
+        });
 
     }
 
