@@ -21,6 +21,7 @@ export class PageCategoryService extends BaseNeoTreeService {
     this.changeLog = new ChangeLogService();
   }
 
+/*
   @OnEvent('app.loaded')
   async onAppLoaded() {
     const s = new PageCategoryService();
@@ -32,6 +33,7 @@ export class PageCategoryService extends BaseNeoTreeService {
     // const r = await s.addChildToParent({slug: 'winter'}, {slug: 'test'})
     // console.log(r)
   }
+*/
 
   // Need to use this.model
   async getCategoriesByModel(model: string,  filter: IBaseFilter) {

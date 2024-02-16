@@ -122,6 +122,13 @@ export class MenuItemModel extends BaseTreeModel {
       group: 'main',
     },
     {
+      varName: 'itemId',
+      label: 'Item ID',
+      placeholder: 'Item ID',
+      type: 'text',
+      group: 'hidden',
+    },
+    {
       varName: 'link',
       label: 'Link',
       placeholder: 'Link',

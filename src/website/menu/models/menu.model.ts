@@ -42,7 +42,10 @@ export class MenuModel extends BaseModel {
           // This query returns top level items only. Let's build a tree
           for (let idx = 0; idx < record.menuItem.length; idx++) {
             let item = record.menuItem[idx];
-            if (!item['itemId']) {continue}
+            if (!item['itemId']) {
+              console.log(item)
+              continue;
+            }
 
             record.menuItem[idx] = await service.getParentAndChildren(item.uuid);
 

@@ -22,7 +22,7 @@ export class PersonService extends BaseNeoService {
   protected relationships = [];
   protected moduleName = 'crm';
   private modelName = 'Person';
-  protected model: typeof PersonModel;
+
 
   constructor() {
     super();

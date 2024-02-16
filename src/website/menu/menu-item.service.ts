@@ -46,6 +46,10 @@ export class MenuItemService extends BaseNeoTreeService {
       model['permalink'] = new PermalinkBuilderService().build(model['model'], model);
     }
 
+    if (!model['order']) {
+      // await this.neo.readWithCleanUp(`MATCH (m:Menu {uuid: $menuId})-[:HAS_CHILD]->(i:MenuItem) RETURN count(i) as count`, {menuId})
+    }
+
 
     try {
       res = await this.store(model);
@@ -110,11 +114,13 @@ export class MenuItemService extends BaseNeoTreeService {
    * @param type
    */
   async toMenuItem(modelName: string, body: IGenericObject, type: 'object' | 'custom' = 'object') {
-    const model = new MenuItemModel().toModel({ ...body, ...{model: modelName} });
+    const model = new MenuItemModel().toModel({ ...{model: modelName}, ...body });
+
     model['model'] = modelName;
     model.slugifyProperty('title', 'slug');
     model['permalink'] = new PermalinkBuilderService().build(modelName, model);
     model['type'] = type;
+    model['itemId'] = body.uuid;
 
     return model.toObject();
   }
