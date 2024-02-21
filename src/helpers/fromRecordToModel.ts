@@ -41,8 +41,9 @@ export const fromRecordToModel = (resItem: IGenericObject, model: typeof BaseMod
     }
 
     // Handles nested fields that are saved in the db as a json string
-    if (fieldType === 'nested' && modelField.saveAsJson) {
+    if (fieldType === 'nested' && modelField.saveAsJson && typeof resItem[modelFieldName] === 'string') {
       newResItem[modelFieldName] = safeParseJSON(resItem[modelFieldName]);
+
     }
 
     if (fieldType === 'repeater') {

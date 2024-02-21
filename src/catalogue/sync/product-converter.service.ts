@@ -48,6 +48,7 @@ export class ProductConverterService extends BaseProductConverterService {
     result['length'] = product['length'];
     result['diameter'] = product['diameter'];
     result['width'] = product['width'];
+    result['seo'] = product['seo'];
 
     if (product['thumb']) {
       result['thumb'] = Array.isArray(product['thumb']) ? product['thumb'][0] : product['thumb'];

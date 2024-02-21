@@ -617,7 +617,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
-          settings: {bindTo: 'title'},
         },
         {
           varName: 'description',
@@ -626,7 +625,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
-          settings: {bindTo: 'description'},
         },
         {
           varName: 'keywords',
@@ -643,7 +641,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
-          settings: {bindTo: 'title'},
         },
         {
           varName: 'og_image',
@@ -660,7 +657,6 @@ export class ProductModel extends BaseModel implements OnModuleInit {
           type: 'text',
           group: 'hidden',
           default: false,
-          settings: {bindTo: 'description'},
         },
       ],
     },
