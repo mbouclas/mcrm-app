@@ -247,8 +247,9 @@ export class ProductService extends BaseNeoService {
    * Variants are included in the product model but are not shown on search results
    * @param uuid
    * @param propertyValues
+   * @param duplicateVariants
    */
-  async generateVariantsFromProperty(uuid: string, propertyValues: string[], duplicateVariants) {
+  async generateVariantsFromProperty(uuid: string, propertyValues: string[], duplicateVariants: IGenericObject) {
     const product = await this.findOne({ uuid });
     const propertyService = new PropertyService();
     // group propertyValues by properties to create unique arrays to get the permutations
@@ -272,6 +273,7 @@ export class ProductService extends BaseNeoService {
       }
     }
 
+    SharedModule.eventEmitter.emit(ProductEventNames.productUpdated, {uuid});
     return this;
   }
 
@@ -339,7 +341,7 @@ export class ProductService extends BaseNeoService {
 
     const variantUuid = res['uuid'];
     // add relationship to the property value and the property
-    const relQuery = `
+/*    const relQuery = `
     UNWIND $propertyValues as propertyValue
     MATCH (variant:ProductVariant {uuid: $variantUuid})
     MATCH (propValue:PropertyValue {uuid:propertyValue.uuid})<-[:HAS_VALUE]-(property:Property {uuid: propertyValue.propertyUuid})
@@ -351,13 +353,44 @@ export class ProductService extends BaseNeoService {
     ON CREATE SET  r2.updatedAt = datetime(), r2.createdAt = datetime()
     ON MATCH SET   r2.updatedAt = datetime()
     return *;
+    `;*/
+    const propertyValueFound = propertyValues.find(p => p.name === variantName);
+    const propertyValue = {...propertyValueFound, propertyUuid: propertyValueFound.property.uuid};
+    const setQuery = [];
+    if (propertyValueFound.property.type === 'color') {
+      setQuery.push(`variant.color = $propertyValue.code`);
+    }
+
+    const relQuery = `
+    MATCH (variant:ProductVariant {uuid: $variantUuid}) ${setQuery.length > 0 ? `SET ${setQuery.join(', ')}` : ''}
+    WITH *
+    MATCH (propValue:PropertyValue {uuid:$propertyValue.uuid})<-[:HAS_VALUE]-(property:Property {uuid: $propertyValue.propertyUuid})
+    MERGE (variant)-[r:HAS_PROPERTY_VALUE]->(propValue)
+    ON CREATE SET  r.updatedAt = datetime(), r.createdAt = datetime()
+    ON MATCH SET   r.updatedAt = datetime()
+    WITH *
+    MERGE (variant)-[r2:HAS_PROPERTY]->(property)
+    ON CREATE SET  r2.updatedAt = datetime(), r2.createdAt = datetime()
+    ON MATCH SET   r2.updatedAt = datetime()
+    WITH *
+    MATCH (product:Product {uuid: $productUuid})
+    MERGE (product)-[rp1:HAS_PROPERTY_VALUE]->(propValue)
+    ON CREATE SET  rp1.updatedAt = datetime(), rp1.createdAt = datetime()
+    ON MATCH SET   rp1.updatedAt = datetime()
+    WITH *
+    MERGE (product)-[rp2:HAS_PROPERTY]->(property)
+    ON CREATE SET  rp2.updatedAt = datetime(), rp2.createdAt = datetime()
+    ON MATCH SET   rp2.updatedAt = datetime()
+    return *;
     `;
-console.log(relQuery, variantUuid, propertyValues.map(p => ({uuid: p.uuid, propertyUuid: p.property.uuid})))
+
 
     try {
       await this.neo.write(relQuery, {
         variantUuid,
         propertyValues: propertyValues.map(p => ({uuid: p.uuid, propertyUuid: p.property.uuid})),
+        propertyValue,
+        productUuid: product['uuid'],
       });
     }
     catch (e) {

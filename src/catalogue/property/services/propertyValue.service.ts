@@ -47,7 +47,7 @@ export class PropertyValueService extends BaseNeoService {
   async searchValues(name: string): Promise<PropertyValueModel> {
     const query = `
     MATCH (p: Property)-[:HAS_VALUE]->(pv: PropertyValue)
-    WHERE pv.name CONTAINS '${name}'
+    WHERE pv.name =~ '(?i).*${name}.*'
     RETURN pv, collect(p) as p;
   `;
 

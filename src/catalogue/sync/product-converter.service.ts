@@ -62,6 +62,7 @@ export class ProductConverterService extends BaseProductConverterService {
         let ret;
 
         property['values'].forEach((value) => {
+
           ret = {
             propertyUuid: property.uuid,
             propertyName: property.title,

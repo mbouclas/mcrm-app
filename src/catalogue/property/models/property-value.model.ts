@@ -100,7 +100,7 @@ export class PropertyValueModel extends BaseModel {
       varName: 'name',
       label: 'Name',
       type: 'text',
-      model: 'CartCondition',
+      model: 'PropertyValue',
       filterType: 'partial',
       isInSimpleQuery: true,
     },
