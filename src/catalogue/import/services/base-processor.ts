@@ -62,7 +62,12 @@ export class BaseProcessorService {
       createReadStream(file.path)
         .pipe(csv({}))
         .on('data', (data) => {
-          const processedRow = this.transformRow(data, idx === 0);
+          const row = {};
+          for (let key in data) {
+            row[key.trim()] = data[key].trim();
+          }
+
+          const processedRow = this.transformRow(row, idx === 0);
 
           if (processedRow.isInvalid) {
             this.invalidRows.push({id: idx, row: data, fields: processedRow.invalidFields});

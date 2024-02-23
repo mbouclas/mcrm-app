@@ -121,11 +121,10 @@ export class ImportController {
 
     const settings = typeof body.settings === 'object' ? body.settings : {};
 
-
     const handler = new container.reference(settings) as BaseImportService;
 
     try {
-      await handler.backupDb();
+      // await handler.backupDb();
     }
     catch (e) {
       throw new HttpImportException({

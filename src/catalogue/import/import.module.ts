@@ -23,6 +23,7 @@ import { ImportProductsWithVariantsTemplate } from "~catalogue/import/templates/
 import { ImportProductsTemplate } from "~catalogue/import/templates/import-products.template";
 import { AddImagesToProductsTemplate } from "~catalogue/import/templates/add-images-to-products.template";
 import { UpdateProductStatusTemplate } from "~catalogue/import/templates/update-product-status.template";
+import { ImportColorsTemplate } from "~catalogue/import/templates/import-colors.template";
 
 @Module({
   providers: [
@@ -42,6 +43,7 @@ import { UpdateProductStatusTemplate } from "~catalogue/import/templates/update-
     ImportProductsTemplate,
     AddImagesToProductsTemplate,
     UpdateProductStatusTemplate,
+    ImportColorsTemplate,
   ],
   imports: [
     MulterModule.registerAsync({

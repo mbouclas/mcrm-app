@@ -132,8 +132,6 @@ export class BaseImportService {
     if (Array.isArray(this.fieldMap) && this.fieldMap.length > 0) {
       this.processor.setFieldMap(this.fieldMap);
     }
-
-
   }
 
   async backupDb() {
