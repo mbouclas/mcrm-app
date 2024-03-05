@@ -124,7 +124,7 @@ export class ImportController {
     const handler = new container.reference(settings) as BaseImportService;
 
     try {
-      // await handler.backupDb();
+      await handler.backupDb();
     }
     catch (e) {
       throw new HttpImportException({

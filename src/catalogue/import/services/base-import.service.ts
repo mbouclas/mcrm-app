@@ -69,7 +69,9 @@ export class BaseImportService {
   fieldMap: IImportProcessorFieldMap[] = [];
   static fieldMap: IImportProcessorFieldMap[] = [];
   processor: BaseProcessorService = new BaseProcessorService();
-  settings: Partial<IBaseImportServiceSettings> = {};
+  settings: Partial<IBaseImportServiceSettings> = {
+    delimiter: ','
+  };
 
 
   async processArray(...args: any[]): Promise<any> {

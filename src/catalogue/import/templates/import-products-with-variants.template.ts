@@ -54,9 +54,11 @@ export const settings: Partial<IBaseImportServiceSettings> = {
   skipExistingProducts: true,
   skipExistingProductVariants: true,
   imageProcessorTemplate: 'AddImagesToVariantsTemplate',
+  separator: ',',
 };
 
 export const settingsSchema = z.object({
+  separator: z.string().describe(`json:{"label": "Separator", "placeholder": "Separator", "hint": "The character used to separate values in the CSV file", "default": ","}`),
   skipExistingProducts: z.boolean().describe(`json:{"label": "Skip existing products", "placeholder": "Skip existing products", "hint": "Skip importing products that already exist", "default": true}`),
   skipExistingProductVariants: z.boolean().describe(`json:{"label": "Skip existing product variants", "placeholder": "Skip existing product variants", "hint": "Skip importing product variants that already exist", "default": true}`),
 

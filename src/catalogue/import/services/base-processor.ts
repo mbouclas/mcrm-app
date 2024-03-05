@@ -41,6 +41,12 @@ export class BaseProcessorService {
   protected fieldMap: IImportProcessorFieldMap[] = [];
   results = [];
   invalidRows = [];
+  separator = ',';
+
+  public setSeparator(separator: string) {
+    this.separator = separator;
+    return this;
+  }
 
   public setFieldMap(fields: IImportProcessorFieldMap[]) {
     this.fieldMap = fields;
@@ -60,7 +66,7 @@ export class BaseProcessorService {
       let idx = 0;
 
       createReadStream(file.path)
-        .pipe(csv({}))
+        .pipe(csv({separator: this.separator}))
         .on('data', (data) => {
           const row = {};
           for (let key in data) {
