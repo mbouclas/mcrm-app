@@ -98,8 +98,8 @@ async function bootstrap() {
   app.use(helmet({ contentSecurityPolicy: {useDefaults: true, directives : {
         defaultSrc: ["'self'"],
         fontSrc: ["'self'", "'unsafe-inline'", "data:", 'https://site-assets.fontawesome.com', 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'https://res.cloudinary.com'],
-        scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
+        imgSrc: ["'self'", 'https://res.cloudinary.com', "'unsafe-inline'"],
+        scriptSrc: ["'self'","'unsafe-inline'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net'],
         frameSrc: ["'self'"],
       }} }));
