@@ -104,6 +104,7 @@ async function bootstrap() {
         imgSrc: ["'self'", "'unsafe-inline'", 'https://res.cloudinary.com'],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
+        styleSrcElem: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         frameSrc: ["'self'"],
       }
     }
