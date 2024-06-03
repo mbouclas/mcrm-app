@@ -95,14 +95,19 @@ async function bootstrap() {
 
   app.useGlobalFilters(new NotFoundExceptionFilter())
 
-  app.use(helmet({ contentSecurityPolicy: {useDefaults: true, directives : {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
         defaultSrc: ["'self'"],
         fontSrc: ["'self'", "'unsafe-inline'", "data:", 'https://site-assets.fontawesome.com', 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'https://res.cloudinary.com', "'unsafe-inline'"],
-        scriptSrc: ["'self'","'unsafe-inline'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net'],
+        imgSrc: ["'self'", "'unsafe-inline'", 'https://res.cloudinary.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         frameSrc: ["'self'"],
-      }} }));
+      }
+    }
+  }));
   app.use(compression());
   const oneMonth = 1000 * 60 * 60 * 24 * 30;
   app.use(
