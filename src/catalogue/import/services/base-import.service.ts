@@ -188,9 +188,15 @@ export class BaseImportService {
   }
 
   async worker(job: Job<Partial<IBaseImportJob>>) {
-    console.log(`Processing job ${job.id}`);
+    console.log(`Processing job ${job.id} with ${job.data.template} template`);
 
-    const handler = (new BaseImportService()).getHandler(job.data.template);
+    // const handler = (new BaseImportService(job.data.settings || {})).getHandler(job.data.template);
+    const container = ImportTemplateRegistry.get({id: job.data.template});
+    if (!container) {
+      throw new Error(`Could not find container for ${job.data.template}`);
+    }
+
+    const handler = new container.reference(job.data.settings) as BaseImportService;
 
     try {
       await handler.process(job.data.file);

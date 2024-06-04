@@ -379,7 +379,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
   }
 
   private async runExtraTransformations(res: IBaseProcessorResult) {
-
+    const invalidRows = [];
     const categories = {};
     this.categories.forEach(c => {
       categories[c['slug']] = c;
@@ -391,10 +391,12 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
       flatProperties[`${v.propertySlug}.${v.type === 'color' ? v.code : v.slug}`] = v;
     });
 
-    let isInvalid = false
-    const invalidFields = [];
+
+
 
     for (let idx = 0; res.data.length > idx; idx++) {
+      let isInvalid = false
+      const invalidFields = [];
       const rowData = res.data[idx];
       const data = {
         categories: [],
@@ -410,17 +412,18 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
 
           if (field.type === 'category' && typeof rowData[key] === 'string') {
             const separator = field.settings?.separator || ';';
-            const parts = rowData[key].split(separator).map(p => slug(p.trim(), {lower: true}));
+            const parts = rowData[key].split(separator).map(p => slug(p.trim(), {lower: true})).filter(p => p.length > 0);
 
 
-            data['categories'] = parts.map(p => {
+            data['categories'] = parts
+              .map(p => {
 
               const found = categories[slug(p, {lower: true})];
 
               if (!found) {
-                console.log(`1. Category ${p} not found`, Object.keys(categories).length);
+                console.log(`${rowData['sku']}. Category ${p} not found`, parts);
                 isInvalid = true;
-                invalidFields.push({key, value: p});
+                invalidFields.push({key, value: p, message: `${rowData['sku']}. Category ${p} not found`});
                 return null;
               }
 
@@ -437,9 +440,9 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
             if (foundValue) {
               data['properties'].push(foundValue);
             } else {
-              console.log(`2. Property ${key}.${rowData[key]} not found`, Object.keys(flatProperties).length);
+              console.log(`${idx}. Property ${key}.${rowData[key]} not found`, Object.keys(flatProperties).length);
               isInvalid = true;
-              invalidFields.push({ key, value: rowData[key] });
+              invalidFields.push({ key, value: rowData[key], message: `${rowData['sku']}. Property ${key}.${rowData[key]} not found` });
             }
 
           }
@@ -456,11 +459,13 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
       if (isInvalid) {
         res.isInvalid = true;
         res.invalidRows.push({id: rowData['sku'], row: idx, fields: invalidFields});
+        invalidRows.push({id: rowData['sku'], row: idx, fields: invalidFields})
       }
 
       res.data[idx] = Object.assign(res.data[idx], data);
     }
 
+console.log(invalidRows)
     return res;
   }
 

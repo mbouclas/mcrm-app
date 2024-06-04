@@ -90,8 +90,9 @@ export class ImportController {
     const res = await handler.analyze(file);
 
     res.data = res.data.slice(0, limit);
+    res['invalidRowsCount'] = res.invalidRows.length;
     if (res.invalidRows.length > 50) {
-      res['invalidRowsCount'] = res.invalidRows.length;
+
       res.invalidRows = res.invalidRows.slice(0, 50);
     }
     return {...res, file : { filename: file.filename, mimetype: file.mimetype }, fieldMap: handler.processor.getFieldMap(), ...{data: res.data}};

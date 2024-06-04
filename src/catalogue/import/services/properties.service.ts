@@ -119,9 +119,9 @@ export class PropertiesService implements OnApplicationBootstrap {
     MERGE (property)-[r1:HAS_VALUE]->(pv) ON CREATE SET r1.createdAt = datetime() ON MATCH SET r1.updatedAt = datetime()
     return *;
     `;
-
+console.log(query)
     try {
-      const res = await service.neo.write(query, { rows });
+      await service.neo.write(query, { rows });
     } catch (e) {
       console.log('Error importing property values', e);
     }

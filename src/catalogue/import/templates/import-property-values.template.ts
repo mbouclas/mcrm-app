@@ -62,10 +62,10 @@ export class ImportPropertyValuesTemplate extends BaseImportService {
       row.slug = slug(row.name, {lower: true});
     });
 
-
+    console.log('-----',this.settings)
     try {
       // It should be using the this.settings['propertySlug'] but it's not working.
-      await service.importPropertyValuesFromCsv({ slug: this['propertySlug'] }, res.data as PropertyValueModel[], this['matchKey']);
+      await service.importPropertyValuesFromCsv({ slug: this.settings['propertySlug'] || this['propertySlug'] }, res.data as PropertyValueModel[], this['matchKey']);
     }
     catch (e) {
       console.log(`Error importing values`, e);

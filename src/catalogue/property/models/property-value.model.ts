@@ -118,7 +118,14 @@ export class PropertyValueModel extends BaseModel {
       filterType: 'partial',
       isInSimpleQuery: true,
     },
-
+    {
+      varName: 'code',
+      label: 'Code',
+      type: 'text',
+      model: 'PropertyValue',
+      filterType: 'partial',
+      isInSimpleQuery: true,
+    },
     {
       varName: 'createdAt',
       label: 'Created At',
