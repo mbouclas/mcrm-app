@@ -321,6 +321,7 @@ export class Cart implements OnModuleInit, ICart {
   public getSubTotal(formatted = true) {
     // get the conditions that are meant to be applied
     // on the subtotal and apply it here before returning the subtotal
+
     const conditions = this.getConditionsByTarget('subtotal');
     this.resetAppliedConditionsByTarget('subtotal'); //reset so they will be properly filled
     // if there is no conditions, lets just return the sum
@@ -370,6 +371,7 @@ export class Cart implements OnModuleInit, ICart {
 
   public getShipping() {
     const condition = this.getConditionsByType('shipping');
+
     if (!condition || condition.length === 0) {
       return null;
     }
@@ -387,8 +389,8 @@ export class Cart implements OnModuleInit, ICart {
 
 
     // apply any conditions targeting shipping
-
     const shippingConditions = this.getConditionsByTarget('shipping');
+
 
     this.resetAppliedConditionsByTarget('shipping');
 
@@ -678,6 +680,10 @@ export class Cart implements OnModuleInit, ICart {
 
   public getConditionsByTarget(target: string): Condition[] {
     return this.conditions.filter((c => {
+      if (typeof c.target === 'string') {
+        return c.target === target;
+      }
+
       return typeof c.target === 'function' && c.getTarget() === target;
     }));
   }
@@ -805,6 +811,7 @@ export class Cart implements OnModuleInit, ICart {
     const conditions = this.getConditions();
 
     const foundIdx = this.getConditionIdx({uuid: condition.getId()});
+
     // only add the condition 1 time
     if (foundIdx > -1) {
       this.conditions[foundIdx] = condition;
@@ -837,7 +844,7 @@ export class Cart implements OnModuleInit, ICart {
    * @param target
    * @private
    */
-  private resetAppliedConditionsByTarget(target: string) {
+  resetAppliedConditionsByTarget(target: string) {
     this.appliedConditions
       .filter(c => c.target === target)
       .forEach(c => {

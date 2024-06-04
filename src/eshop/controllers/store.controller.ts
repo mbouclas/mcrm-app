@@ -16,6 +16,7 @@ import { AddressService } from "~eshop/address/services/address.service";
 import { RealIP } from "~helpers/real-ip.decorator";
 import { getHooks } from "~shared/hooks/hook.decorator";
 import BaseHttpException from "~shared/exceptions/base-http-exception";
+import { CustomerService } from "~eshop/customer/services/customer.service";
 
 
 export interface IStoreInitialQuery {
@@ -60,7 +61,14 @@ export class StoreController {
     }
 
     if (!session.user || !session.user['uuid']) {
-      return {success: false, message: 'User not set', error: 'USER_NOT_SET'};
+      if (body.billingInformation && body.billingInformation['email']) {
+        // create guest user
+        session.user = await (new CustomerService()).createCustomerFromGuest(body.billingInformation['email'], {
+          ...body.billingInformation, ...{type: 'BILLING'}
+        });
+      } else {
+        return {success: false, message: 'User not set', error: 'USER_NOT_SET'};
+      }
     }
 
     // const hooks = getStoreProperty("configs.store.order.hooks");

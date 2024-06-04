@@ -12,6 +12,7 @@ export class PropertyValueDto {
   image?: string;
   icon?: string;
   slug?: string;
+  propertyId?: string;
 }
 
 @Injectable()
@@ -57,6 +58,9 @@ export class PropertyValueService extends BaseNeoService {
   }
 
   async store(record: PropertyValueDto, userId?: string, rels = []) {
+    if (record.propertyId) {
+      rels.push({ id: record.propertyId, name: 'property' });
+    }
     const r = await super.store(record, userId, rels);
     return r;
   }

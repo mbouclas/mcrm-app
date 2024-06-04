@@ -112,7 +112,7 @@ export class BaseProcessorService {
 
       if (field.required && !rowData[key]) {
         isInvalid = true;
-        console.log(`Field ${key} is required`, rowData);
+        console.log(`**** Field ${key} is required`, rowData);
 
         invalidFields.push({key, value: rowData});
         return;

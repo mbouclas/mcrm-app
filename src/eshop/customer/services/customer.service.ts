@@ -15,7 +15,12 @@ import { RoleService } from "~user/role/services/role.service";
 import { UserExistsException } from "~user/exceptions/user-exists.exception";
 import { UserGroupService } from "~eshop/user-group/user-group.service";
 import { UserGroupModel } from "~eshop/user-group/user-group.model";
-const crypto = require('crypto');
+import { IAddress } from '~root/eshop/models/checkout';
+import { randomStringGenerator } from "@nestjs/common/utils/random-string-generator.util";
+import { tokenGenerator } from "~helpers/tokenGenerator";
+import { AddressService } from "~eshop/address/services/address.service";
+
+const crypto = require("crypto");
 
 export class CustomerModelDto {
   userId?: string;
@@ -25,6 +30,7 @@ export class CustomerModelDto {
 
 @Injectable()
 export class CustomerService extends BaseNeoService {
+
   protected changeLog: ChangeLogService;
   protected eventEmitter: EventEmitter2;
 
@@ -95,6 +101,9 @@ export class CustomerService extends BaseNeoService {
 
   async createCustomer(customer: Partial<UserModel>, role?: string) {
     const authService = new AuthService();
+    if (!customer.password) {
+      customer.password = tokenGenerator();
+    }
     const hashedPassword = await authService.hasher.hashPassword(customer.password);
     const userService = new UserService();
     let found;
@@ -166,5 +175,41 @@ export class CustomerService extends BaseNeoService {
     }
 
     return user;
+  }
+
+  async createCustomerFromGuest(email: string, address: IAddress) {
+    let user;
+    // try to find the user in case of a returning guest
+    try {
+      user = await (new UserService()).findOne({ email });
+
+      return user;
+    }
+    catch (e) {
+
+    }
+
+    try {
+      user = await this.createCustomer({
+        email,
+        firstName: address.firstName,
+        lastName: address.lastName
+      });
+
+    }
+    catch (e) {
+      console.log(`Error creating customer: ${e.message}`, e);
+    }
+
+    try {
+
+      await (new AddressService()).attachAddressToUser(address, user.uuid, address.type.toUpperCase() as unknown as any);
+    }
+     catch (e) {
+      console.log(`Error attaching address to user: ${e.message}`, e);
+     }
+
+
+     return user;
   }
 }

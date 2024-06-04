@@ -88,6 +88,7 @@ export class ImportController {
     const handler = new container.reference({ settings }) as BaseImportService;
 
     const res = await handler.analyze(file);
+
     res.data = res.data.slice(0, limit);
     if (res.invalidRows.length > 50) {
       res['invalidRowsCount'] = res.invalidRows.length;

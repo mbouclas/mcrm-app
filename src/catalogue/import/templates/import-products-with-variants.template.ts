@@ -226,6 +226,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
 
   async analyze(file: Partial<Express.Multer.File>): Promise<IBaseProcessorResult> {
     let res = await super.analyze(file);
+
     if (res.invalidRows.length > 0) {
       return res;
     }
@@ -294,7 +295,6 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
    */
   async process(file: Partial<Express.Multer.File>) {
     let res: IProcessedResult = await this.analyze(file);
-
 
     const productsGrouped = groupBy(res.data, 'sku');// Object, key is sku, value is array of variants
     let products: any[] = [];
@@ -418,7 +418,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
               const found = categories[slug(p, {lower: true})];
 
               if (!found) {
-                // console.log(`Category ${p} not found`, Object.keys(categories).length);
+                console.log(`1. Category ${p} not found`, Object.keys(categories).length);
                 isInvalid = true;
                 invalidFields.push({key, value: p});
                 return null;
@@ -437,6 +437,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
             if (foundValue) {
               data['properties'].push(foundValue);
             } else {
+              console.log(`2. Property ${key}.${rowData[key]} not found`, Object.keys(flatProperties).length);
               isInvalid = true;
               invalidFields.push({ key, value: rowData[key] });
             }

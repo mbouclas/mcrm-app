@@ -24,6 +24,7 @@ import { ImportProductsTemplate } from "~catalogue/import/templates/import-produ
 import { AddImagesToProductsTemplate } from "~catalogue/import/templates/add-images-to-products.template";
 import { UpdateProductStatusTemplate } from "~catalogue/import/templates/update-product-status.template";
 import { ImportColorsTemplate } from "~catalogue/import/templates/import-colors.template";
+import { ImportPropertyValuesTemplate } from "~catalogue/import/templates/import-property-values.template";
 
 @Module({
   providers: [
@@ -44,6 +45,7 @@ import { ImportColorsTemplate } from "~catalogue/import/templates/import-colors.
     AddImagesToProductsTemplate,
     UpdateProductStatusTemplate,
     ImportColorsTemplate,
+    ImportPropertyValuesTemplate,
   ],
   imports: [
     MulterModule.registerAsync({

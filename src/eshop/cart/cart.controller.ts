@@ -1,11 +1,12 @@
 import { Controller, Get, Put, Post, Session, Body, Delete, Param, Patch, Req } from "@nestjs/common";
 import { CartService, ICartItem } from "~eshop/cart/cart.service";
-import { IGenericObject } from '~models/general';
+import { IGenericObject, IPagination } from "~models/general";
 import { ISessionData } from "~shared/models/session.model";
 import { ConditionService } from "~setting/condition/services/condition.service";
 import { Condition, IConditionArgsConfig } from "~eshop/cart/Condition";
 import { IsNotEmpty } from "class-validator";
 import { ShippingMethodService } from "~eshop/shipping-method/services/shipping-method.service";
+import { IShippingMethod } from "~eshop/models/checkout";
 
 
 export class AddToCartDto {
@@ -41,6 +42,7 @@ export class CartController {
     for (const condition of conditions.data) {
       session.cart.condition(new Condition(condition as unknown as IConditionArgsConfig));
     }
+
   }
 
   @Get('get')
@@ -159,6 +161,7 @@ export class CartController {
     const shippingMethod = await new ShippingMethodService().findOne({uuid: body.id});
     const appliedShippingMethod = session.cart.getShipping();
     if (appliedShippingMethod && appliedShippingMethod.uuid === shippingMethod.uuid) {
+
       return session.cart.toObject();
     }
 
@@ -169,7 +172,7 @@ export class CartController {
       await session.cart.save();
       return session.cart.toObject();
     }
-
+    session.cart.resetAppliedConditionsByTarget('shipping');
     // now add this method to the cart as a condition
     session.cart.addCartCondition(new Condition({
       uuid: shippingMethod.uuid,
