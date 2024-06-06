@@ -37,6 +37,7 @@ import { UserModel } from "~user/models/user.model";
 import { RoleModel } from "~user/role/models/role.model";
 import { CustomerService } from "~eshop/customer/services/customer.service";
 import { UserGroupService } from "~eshop/user-group/user-group.service";
+import { OnEvent } from "@nestjs/event-emitter";
 const crypto = require('crypto');
 
 
@@ -71,6 +72,24 @@ export class RegularUserController {
     @Inject(OAUTH2) private server: OAuth2Server,
 
   ) {
+
+  }
+
+  @OnEvent('app.loaded')
+  async onLoad() {
+    const data = {
+      "email": "aasd3asd@sqd.asd",
+      "userInfo": {
+        "email": "aasd3asd@sqd.asd",
+        "phone": "sdasd",
+        "firstName": "as",
+        "lastName": "asd",
+        "terms": true
+      },
+      "jciue": false
+    };
+
+    const user = await (new UserService()).registerGuestUser(data.email, data.userInfo, false);
 
   }
 
@@ -245,9 +264,8 @@ export class RegularUserController {
 
     // register the guest user and add it to the session
     const service = new UserService();
-    let user;
     try {
-      user = await service.registerGuestUser(data.email, data.userInfo);
+      session.user = await service.registerGuestUser(data.email, data.userInfo, false);
     } catch (e) {
       return {
         email: data.email,
@@ -257,7 +275,7 @@ export class RegularUserController {
       }
     }
 
-    session.user = user;
+
 
     // SharedModule.eventEmitter.emit(CartService.userReadyToAttachEventName, {userId: user.uuid, cart: session.cart});
     return {

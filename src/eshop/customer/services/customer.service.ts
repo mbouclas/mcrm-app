@@ -99,7 +99,7 @@ export class CustomerService extends BaseNeoService {
     return r;
   }
 
-  async createCustomer(customer: Partial<UserModel>, role?: string) {
+  async createCustomer(customer: Partial<UserModel>, role?: string, sendNotificationOnCreate = true) {
     const authService = new AuthService();
     if (!customer.password) {
       customer.password = tokenGenerator();
@@ -133,7 +133,7 @@ export class CustomerService extends BaseNeoService {
       confirmToken,
       type: "guest",
       active: customer['active'] || false
-    });
+    }, undefined, [], sendNotificationOnCreate);
 
 
   } catch (e) {
@@ -190,11 +190,12 @@ export class CustomerService extends BaseNeoService {
     }
 
     try {
+      console.log('1111111111111')
       user = await this.createCustomer({
         email,
         firstName: address.firstName,
         lastName: address.lastName
-      });
+      }, null, false);
 
     }
     catch (e) {

@@ -255,7 +255,7 @@ export class BaseNeoService {
     return this.createPaginationObject(results, limit, page, pages, total, skip);
   }
 
-  async store(record: IGenericObject, userId?: string, relationships?: IBaseNeoServiceRelationships[]): Promise<any> {
+  async store(record: IGenericObject, userId?: string, relationships?: IBaseNeoServiceRelationships[], sendNotificationOnCreate = true): Promise<any> {
     const uuid = v4();
     const query = `CREATE (${this.model.modelConfig.select} {tempUuid: $uuid, createdAt: datetime()})`;
 
@@ -301,7 +301,7 @@ export class BaseNeoService {
       console.log('Query Error 501', e);
     }
 
-    if (this.constructor['createdEventName']) {
+    if (this.constructor['createdEventName'] && sendNotificationOnCreate) {
       this.eventEmitter.emit(this.constructor['createdEventName'], ret);
     }
 

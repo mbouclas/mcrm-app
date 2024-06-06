@@ -62,7 +62,7 @@ export class UserService extends BaseNeoService {
     this.mail = new MailService();
   }
 
-  @OnEvent('app.loaded')
+/*  @OnEvent('app.loaded')
   async onAppLoaded() {
     // const s = new UserService();
     // const r = await s.findOne({email: 'mbouclas@gmail.com'}, ['*']);
@@ -70,7 +70,7 @@ export class UserService extends BaseNeoService {
     // const r = await s.store({email: 'bobo@gmail.com', firstName: 'Bozo', lastName: 'Bobos'});
     // const r = await s.update('5e43d24c-a96f-4f1c-a1d1-fb6b46b1823f',{password: await this.generatePasswordHash('magicj')});
     // console.log(r)
-  }
+  }*/
 
   @OnEvent(UserService.createdEventName)
   async onStore(user: UserModel) {
@@ -105,16 +105,21 @@ export class UserService extends BaseNeoService {
 
 
 
-  async store(record: UserModelDto, userId?: string, relationships:IBaseNeoServiceRelationships[] = []) {
+  async store(record: UserModelDto, userId?: string, relationships:IBaseNeoServiceRelationships[] = [], sendNotificationOnCreate = true) {
     if (!record.type) {record.type = 'user';}
-    const r = await super.store(record, userId, relationships);
+    const r = await super.store(record, userId, relationships, sendNotificationOnCreate);
 
     if (record.type === 'guest') {
-      this.eventEmitter.emit('guest.user.created', r);
+      if (sendNotificationOnCreate) {
+        this.eventEmitter.emit('guest.user.created', {...r, ...{sendNotificationOnCreate}});
+      }
       return r;
     }
 
-    this.eventEmitter.emit('user.created', r);
+    if (sendNotificationOnCreate) {
+      this.eventEmitter.emit('user.created', r);
+    }
+
     return r;
   }
 
@@ -203,14 +208,14 @@ export class UserService extends BaseNeoService {
     return user['role'].filter((role) => role.level > 2).length > 0;
   }
 
-  async registerGuestUser(email: string, userInfo?: IGenericObject) {
+  async registerGuestUser(email: string, userInfo?: IGenericObject, sendNotificationOnCreate = true) {
     try {
 
       return await this.store({ email, ...userInfo, type: 'guest' }, null, [{
         id: 'guest',
         name: 'role',
         searchKey: 'name',
-      }]);
+      }], sendNotificationOnCreate);
     }
     catch (e) {
       throw new CouldNotSaveGuestUserException(e.message, '100.6');
