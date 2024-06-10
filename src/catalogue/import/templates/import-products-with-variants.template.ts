@@ -23,6 +23,7 @@ import { SharedModule } from "~shared/shared.module";
 import { ImportProductPhotosService } from "~catalogue/import/services/import-product-photos.service";
 import { ImageService } from "~image/image.service";
 import { TagService } from "~tag/services/tag.service";
+import { HttpService } from "@nestjs/axios";
 const slug = require('slug');
 
 interface IDataFormat extends IBaseProcessorSchema {
@@ -144,6 +145,15 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
     priceOnRequestFlag: "P.O.R."
   })
   public price: number;
+
+  @ImportTemplateField({
+    name: "por",
+    importFieldName: "por",
+    required: false,
+    type: "boolean",
+    description: "P.O.R flag. Should be a boolean",
+  })
+  public por: boolean;
 
   @ImportTemplateField({
     name: "image",
@@ -844,6 +854,8 @@ console.log(invalidRows)
   }
 
   private async handleImages(products: any[]) {
+
+
     // make it a common function cause it will be used by other importers as well
     let template = ImportTemplateRegistry.findOne({id: this.settings.imageProcessorTemplate ? this.settings.imageProcessorTemplate : 'AddImagesToVariantsTemplate'});
     const provider = template.reference;
@@ -873,12 +885,14 @@ console.log(invalidRows)
     }
 
     if (Array.isArray(res.missing)) {
-      // push to the queue
-      SharedModule.eventEmitter.emit(ImportProductPhotosService.importPhotosStartEventName, res.missing.map(item => ({...item, ...{
-        model: 'ProductVariant',
+      // process image
+      const s = new ImportProductPhotosService(new HttpService());
+      await s.processData(res.missing.map(item => ({...item, ...{
+          model: 'ProductVariant',
           itemFilter: {[primaryKey]: item[primaryKey]},
           type: 'main'
-      }})));
+        }})));
+
     }
 
 

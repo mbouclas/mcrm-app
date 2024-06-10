@@ -90,6 +90,8 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
       console.log(`Error executing image assignment query`, e);
     }
 
+    // Upload to cloudinary
+
     return {
       success: true,
       rowsProcessed: res.length,

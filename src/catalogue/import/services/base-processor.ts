@@ -140,6 +140,7 @@ export class BaseProcessorService {
         // Some products may have a special flag that asks the customer to contact for info "priceOnRequestFlag"
         // ignoring the price field will make sure that this product won't show on the price range results
         data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null : parseFloat(rowData[key]);
+        data['por'] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]);
       }
 
       if (field.type === 'variantId') {

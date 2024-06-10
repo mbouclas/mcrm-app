@@ -191,7 +191,7 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     });
   }
 
-  private async processData(input: Partial<IImageImportSchema>[]) {
+  public async processData(input: Partial<IImageImportSchema>[]) {
     for (let idx = 0; input.length > idx; idx++) {
       const item = input[idx];
       try {

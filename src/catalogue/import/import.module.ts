@@ -1,10 +1,10 @@
-import { Logger, Module, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
+import { Inject, Logger, Module, OnApplicationBootstrap, OnModuleInit } from "@nestjs/common";
 import { ImportQueueService } from './services/import-queue.service';
 import { ImportService } from './services/import.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { ImportController } from './controllers/import.controller';
 import { ImportTemplateController } from './controllers/import-template.controller';
-import { resolve } from 'path';
+import { join, resolve } from "path";
 import { BaseProcessorService } from '~catalogue/import/services/base-processor';
 import { CsvProcessorService } from '~catalogue/import/services/csv-processor.service';
 import { PropertiesService } from '~catalogue/import/services/properties.service';
@@ -25,6 +25,11 @@ import { AddImagesToProductsTemplate } from "~catalogue/import/templates/add-ima
 import { UpdateProductStatusTemplate } from "~catalogue/import/templates/update-product-status.template";
 import { ImportColorsTemplate } from "~catalogue/import/templates/import-colors.template";
 import { ImportPropertyValuesTemplate } from "~catalogue/import/templates/import-property-values.template";
+import { DeleteVariantsTemplate } from "~catalogue/import/templates/delete-variants.template";
+import { WINSTON_MODULE_PROVIDER, WinstonModule } from "nest-winston";
+import  { Logger as WinstonLogger } from 'winston';
+import { logToFile } from "~helpers/log-to-file";
+const winston = require('winston');
 
 @Module({
   providers: [
@@ -46,6 +51,7 @@ import { ImportPropertyValuesTemplate } from "~catalogue/import/templates/import
     UpdateProductStatusTemplate,
     ImportColorsTemplate,
     ImportPropertyValuesTemplate,
+    DeleteVariantsTemplate,
   ],
   imports: [
     MulterModule.registerAsync({
@@ -53,17 +59,26 @@ import { ImportPropertyValuesTemplate } from "~catalogue/import/templates/import
         dest: resolve(require('path').resolve('./'), './upload'),
       }),
     }),
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.File({ filename: join(__dirname, '../../', 'logs', 'imports.log') }),
+      ]
+    }),
   ],
   controllers: [ImportController, ImportTemplateController],
 })
 export class ImportModule implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(ImportModule.name);
 
-  constructor() { }
+  constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logToFile: WinstonLogger) { }
 
   async onModuleInit() {
     this.logger.log('AppModule initialized');
   }
 
-  async onApplicationBootstrap() { }
+  async onApplicationBootstrap() {
+    setTimeout(() => {
+      logToFile().info('Testing', {module: ImportModule.name})
+    }, 3000)
+  }
 }

@@ -23,7 +23,7 @@ import { CommonModule } from './common/common.module';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
-import { resolve } from 'path';
+import { join, resolve } from "path";
 import { store } from './state';
 import { ModelsService } from '~admin/services/models.service';
 import { AuthMiddleware } from './auth/middleware/auth.middleware';
