@@ -4,9 +4,9 @@ import { Logger as WinstonLogger } from "winston";
 
 const winston = require('winston');
 
-export function logToFile(): WinstonLogger {
+export function logToFile(fileName?: string): WinstonLogger {
   // new file with date time as filename
-  const fileName = `${new Date().toISOString().replace(/:/g, '-')}`
+  fileName =  fileName ? `${fileName}-${new Date().toISOString().replace(/:/g, '-')}` : `${new Date().toISOString().replace(/:/g, '-')}`
   return winston.createLogger({
     transports: [
 

@@ -56,12 +56,14 @@ export const settings: Partial<IBaseImportServiceSettings> = {
   skipExistingProductVariants: true,
   imageProcessorTemplate: 'AddImagesToVariantsTemplate',
   separator: ',',
+  porValue: 'P.O.R.'
 };
 
 export const settingsSchema = z.object({
   separator: z.string().describe(`json:{"label": "Separator", "placeholder": "Separator", "hint": "The character used to separate values in the CSV file", "default": ","}`),
   skipExistingProducts: z.boolean().describe(`json:{"label": "Skip existing products", "placeholder": "Skip existing products", "hint": "Skip importing products that already exist", "default": true}`),
   skipExistingProductVariants: z.boolean().describe(`json:{"label": "Skip existing product variants", "placeholder": "Skip existing product variants", "hint": "Skip importing product variants that already exist", "default": true}`),
+  porValue: z.string().describe(`json:{"label": "POR Value", "placeholder": "POR Value", "hint": "The POR value", "default": "P.O.R."}`),
 
 });
 
@@ -205,19 +207,20 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
   protected properties: PropertyModel[] = [];
   protected propertyValues: IPropertyValueWithProperty[] = [];
 
-/*  @OnEvent('app.loaded')
+  /*@OnEvent('app.loaded')
   async onAppLoaded() {
     setTimeout(async () => {
       const dummyFile = {
         fieldname: 'file',
-        originalname: 'CLOTHING masterfile 2022.csv',
+        originalname: 'c871aa80db0616e0a4913b7b2a0ebfbe',
         encoding: '7bit',
         mimetype: 'text/csv',
         destination: 'I:\\Work\\mcms-node\\upload',
-        filename: '5eec2a19d0d945fe4ef30f4139ae0095',
-        path: 'I:\\Work\\mcms-node\\mcrm\\upload\\small-import.csv',
+        filename: 'c871aa80db0616e0a4913b7b2a0ebfb1',
+        path: 'I:\\Work\\mcms-node\\mcrm\\upload\\c871aa80db0616e0a4913b7b2a0ebfbe',
         size: 17760597,
       };
+
 
       try {
         const r = await new ImportProductsWithVariantsTemplate({
@@ -257,6 +260,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
       rowData['productCategory'] = rowData['categories'].map(c => {
         return this.categories.find(cat => cat['uuid'] === c);
       });
+      rowData['por'] = rowData['isPor'] || false;
     }
 
     res.validRows = res.data.length;
@@ -340,6 +344,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
             sku: product.sku,
             variantId,
             price: r.price || 0,
+            por: r['isPor'] || false,
             image: r.image || null,
             properties: r.properties,
           }));
@@ -475,7 +480,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
       res.data[idx] = Object.assign(res.data[idx], data);
     }
 
-console.log(invalidRows)
+
     return res;
   }
 
@@ -847,15 +852,13 @@ console.log(invalidRows)
         await imageService.linkToObject({uuid: variant['thumb'].uuid}, 'Product', dbProduct.uuid, 'main', {fromImport: true});
       }
       catch (e) {
-        console.log(`Could not find variant`, e);
+        console.log(`Could not find variant to assign image to`, e);
       }
     }
 
   }
 
   private async handleImages(products: any[]) {
-
-
     // make it a common function cause it will be used by other importers as well
     let template = ImportTemplateRegistry.findOne({id: this.settings.imageProcessorTemplate ? this.settings.imageProcessorTemplate : 'AddImagesToVariantsTemplate'});
     const provider = template.reference;
@@ -875,6 +878,7 @@ console.log(invalidRows)
     });
 
     // pass the images to the provider to handle them
+    // AddImagesToVariantsTemplate by default
     const service = new provider();
     let res;
     try {

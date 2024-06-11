@@ -16,6 +16,7 @@ export class ImageModel extends BaseModel implements OnModuleInit {
   public url: string;
   public uuid: string;
   public active: boolean;
+  public originalLocation: string;
   async onModuleInit() {
 
   }

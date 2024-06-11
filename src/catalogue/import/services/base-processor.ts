@@ -120,7 +120,7 @@ export class BaseProcessorService {
 
       data[field.name] = rowData[key];
 
-      if (field.type === 'boolean') {
+      if (field.type === 'boolean' && rowData[key]) {
         data[field.name] = ['true', '1', 'yes', 'y', 'on'].includes(rowData[key].toLowerCase());
       }
 
@@ -139,8 +139,8 @@ export class BaseProcessorService {
       if (field.type === 'price') {
         // Some products may have a special flag that asks the customer to contact for info "priceOnRequestFlag"
         // ignoring the price field will make sure that this product won't show on the price range results
-        data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null : parseFloat(rowData[key]);
-        data['por'] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]);
+        data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null: parseFloat(rowData[key]);
+        data['isPor'] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]);
       }
 
       if (field.type === 'variantId') {
@@ -150,7 +150,9 @@ export class BaseProcessorService {
 
       if (field.type === 'tag') {
         const separator = field.settings?.separator || ';';
-        data['tag'] = (rowData[key]) ? rowData[key].split(separator).map(t => t.trim()) : [];
+        data['tag'] = (rowData[key]) ? rowData[key].split(separator)
+          .filter(t => t.length > 0)
+          .map(t => t.trim()) : [];
       }
 
       if (field.isSlugFor) {
@@ -160,60 +162,6 @@ export class BaseProcessorService {
     });
 
 
-/*    Object.keys(rowData)
-      .forEach(key => {
-        const field = this.fieldMap.find(f => f.importFieldName === key.trim());
-        if (!field) {
-          isInvalid = true;
-          invalidFields.push({key, value: rowData[key]});
-          return;
-        }
-       // reject unknown fields
-
-/!*        if (!field[key]) {
-          return;
-        }*!/
-
-        if (field.required && !rowData[key]) {
-          isInvalid = true;
-          invalidFields.push({key, value: rowData[key]});
-          return;
-        }
-
-        data[field.name] = rowData[key];
-
-        if (field.type === 'boolean') {
-          data[field.name] = rowData[key].toLowerCase() === 'true';
-        }
-
-        if (field.type === 'image') {
-          data['image'] = rowData[key];
-        }
-
-        if (field.type === 'number') {
-          data[field.name] = parseInt(rowData[key]);
-        }
-
-        if (field.type === 'float') {
-          data[field.name] = parseFloat(rowData[key]);
-        }
-
-        if (field.type === 'price') {
-          // Some products may have a special flag that asks the customer to contact for info "priceOnRequestFlag"
-          // ignoring the price field will make sure that this product won't show on the price range results
-          data[field.name] = (typeof rowData[key] === 'string' && field.priceOnRequestFlag.trim() === rowData[key]) ? null : parseFloat(rowData[key]);
-        }
-
-        if (field.type === 'variantId') {
-          data['variantId'] = rowData[key];
-          data['variantSlug'] = slug(rowData[key], {trim: true, lower: true});
-        }
-
-        if (field.isSlugFor) {
-          data[field.isSlugFor] = slug(rowData[key], {trim: true, lower: true});
-        }
-
-      });*/
 
     return {
       data,

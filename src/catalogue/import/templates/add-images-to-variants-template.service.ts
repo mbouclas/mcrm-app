@@ -67,7 +67,6 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
       return  res.findIndex(d => d.hash === i.hash) === -1;
     });
 
-
     res.forEach(r => {
       r.imageId = r.image;
       r.imageUrl = JSON.stringify({url: r.imageUrl})

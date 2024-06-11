@@ -77,8 +77,6 @@ export class ImportModule implements OnModuleInit, OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    setTimeout(() => {
-      logToFile().info('Testing', {module: ImportModule.name})
-    }, 3000)
+
   }
 }

@@ -16,6 +16,8 @@ import { OnEvent } from "@nestjs/event-emitter";
 import { IGenericObject } from "~models/general";
 import { BaseNeoService } from "~shared/services/base-neo.service";
 import { extractFiltersFromObject, extractSingleFilterFromObject } from "~helpers/extractFiltersFromObject";
+import { Logger as WinstonLogger } from "winston";
+import { logToFile } from "~helpers/log-to-file";
 const crypto = require('crypto')
 
 export interface IImportPhotosFromEventSchema {
@@ -54,6 +56,8 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     },
   ];
 
+  protected static fileLogger: WinstonLogger;
+
   constructor(private readonly httpService: HttpService,) {
   }
 
@@ -72,6 +76,11 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
       console.log('Error processing photos', e);
     }
   }
+
+  public initializeLogger() {
+    ImportProductPhotosService.fileLogger = logToFile();
+  }
+
 
   async analyze(file: Express.Multer.File, limit?: number) {
     try {
@@ -192,6 +201,8 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
   }
 
   public async processData(input: Partial<IImageImportSchema>[]) {
+    this.initializeLogger();
+
     for (let idx = 0; input.length > idx; idx++) {
       const item = input[idx];
       try {
@@ -216,10 +227,13 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
       imageUrl = item.image;
     }
 
+    ImportProductPhotosService.fileLogger.info(`Importing Image ${imageUrl}`, {method: 'handlePhoto', imageUrl});
     // we won't be checking for existing images as this is not our responsibility
-    //download the image
+    //download the image and save it to the DB
     const image = await imageService.downloadImageFromUrl(imageUrl, null, true);
-    console.log(image)
+
+    ImportProductPhotosService.fileLogger.info(`Downloaded Image ${image.url} and saved to DB as ${image.imageId}`, {method: 'handlePhoto', imageId: image.imageId});
+
     const {key, value} = extractSingleFilterFromObject(item.itemFilter);
     const queryResult = await new BaseNeoService().neo.readWithCleanUp(`
     MATCH(n:${item.model} {${key}:'${value}'}) return n.uuid as id

@@ -5,6 +5,7 @@ import { ProductModel } from "~catalogue/product/models/product.model";
 import { SyncEsService } from "~catalogue/sync/sync-es.service";
 import { ElasticSearchService } from "~es/elastic-search.service";
 import { ElasticSearchModule } from "~es/elastic-search.module";
+import * as process from "node:process";
 
 /**
  * Sync product with ES based on product events
@@ -60,6 +61,12 @@ export class ProductEvents {
 
   @OnEvent(ProductEventNames.productImportDone)
   async onProductImportDone() {
+    if (process.env.UPDATE_ES_AFTER_IMPORT === "false") {
+      return;
+    }
+
+    // send email to admin
+
     const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
     try {
       await s.all();

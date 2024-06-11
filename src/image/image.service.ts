@@ -57,6 +57,33 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
     const provider = McmsDiContainer.get({ id: ImageService.config.provider });
     ImageService.provider = new provider.reference;
     ImageService.provider.setConfig(ImageService.config.cloudinary);
+
+/*    setTimeout(async () => {
+      const dummyFile = {
+        fieldname: 'file',
+        originalname: 'website masterfile 2024 makito (2).csv',
+        encoding: '7bit',
+        mimetype: 'text/csv',
+        destination: 'I:\\Work\\mcms-node\\upload',
+        filename: 'website masterfile 2024 makito (2).csv',
+        path: 'I:\\Work\\mcms-node\\mcrm\\upload\\small-import.csv',
+        size: 17760597,
+      };
+      const s = new ImageService();
+      const found = await s.findByOriginalUrl('https://makito.es/WebRoot/Store/Shops/Makito/634A/944E/AEF3/312C/1A48/0A6E/0397/C0EC/1011-006-P.jpg')
+      console.log(found)
+    }, 1000)*/
+  }
+
+  async findByOriginalUrl(url: string) {
+    try {
+      const newHash = crypto.createHash("md5").update(url).digest("hex");
+
+      return this.findOne({ originalLocation: newHash }) as Promise<ImageModel>;
+    }
+    catch (e) {
+      return null;
+    }
   }
 
   async delete(uuid: string, userId?: string) {
@@ -64,6 +91,7 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
     await super.delete(uuid);
     SharedModule.eventEmitter.emit(ImageEventNames.IMAGE_DELETED, image);
     ImageService.provider.deleteResource(image);
+
     return { success: true };
   }
 
@@ -285,6 +313,12 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
    * @param makeItPermanent //Saves it on cloudinary and the DB. If false returns the original url
    */
   async downloadImageFromUrl(url: string, filename: string = null, makeItPermanent = false): Promise<IDownloadFromImageFromUrlResponse> {
+    try {
+      const found = await this.findByOriginalUrl(url);
+      return { filename, url: found.url, hash: found.originalLocation, imageId: found.uuid };
+    } catch (e) {
+
+    }
 
     filename = filename || resolve(join( './', 'upload', basename(url)));
     const response = await fetch(url);
@@ -301,6 +335,7 @@ export class ImageService extends BaseNeoService implements OnModuleInit {
 
     }
 
+    // push to cloudinary
     try {
       const res = await this.handle(filename, 'remote', {
         fromImport: true, originalFilename: basename(url),

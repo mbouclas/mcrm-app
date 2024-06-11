@@ -11,7 +11,12 @@ export class EditableRegionController {
   @Get('/:layoutName/:regionId')
   async getRegion(@Param('layoutName') layoutName: string, @Param('regionId') regionId: string) {
     try {
-      return await new EditableRegionsService().findOne({layout: layoutName, region: regionId});
+      const res = await new EditableRegionsService().findOne({layout: layoutName, region: regionId});
+      if (typeof res['items'] === 'string') {
+        res['items'] = JSON.parse(res['items']);
+      }
+
+      return res;
     }
     catch (e) {
       return { success: false, message: e.message };
