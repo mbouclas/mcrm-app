@@ -394,8 +394,15 @@ export class RegularUserController {
     const userService = new UserService();
     const user = await userService.findOne({ email: session.user.email }, ["address", "role"]);
 
-    if (!userService.isGuest(user)) {
+    if (!user && !userService.isGuest(user)) {
       return { success: false, message: "Could not get user details", reason: "500.9.1" };
+    } else if (user && !userService.isGuest(user)) {
+      return {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        address: user.address
+      }
     }
 
     return user;
