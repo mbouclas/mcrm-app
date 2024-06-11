@@ -230,19 +230,24 @@ export class ImportProductPhotosService implements OnApplicationBootstrap {
     ImportProductPhotosService.fileLogger.info(`Importing Image ${imageUrl}`, {method: 'handlePhoto', imageUrl});
     // we won't be checking for existing images as this is not our responsibility
     //download the image and save it to the DB
-    const image = await imageService.downloadImageFromUrl(imageUrl, null, true);
+    try {
+      const image = await imageService.downloadImageFromUrl(imageUrl, null, true);
 
-    ImportProductPhotosService.fileLogger.info(`Downloaded Image ${image.url} and saved to DB as ${image.imageId}`, {method: 'handlePhoto', imageId: image.imageId});
+      ImportProductPhotosService.fileLogger.info(`Downloaded Image ${image.url} and saved to DB as ${image.imageId}`, {method: 'handlePhoto', imageId: image.imageId});
 
-    const {key, value} = extractSingleFilterFromObject(item.itemFilter);
-    const queryResult = await new BaseNeoService().neo.readWithCleanUp(`
+      const {key, value} = extractSingleFilterFromObject(item.itemFilter);
+      const queryResult = await new BaseNeoService().neo.readWithCleanUp(`
     MATCH(n:${item.model} {${key}:'${value}'}) return n.uuid as id
     `, {});
 
-    const id = queryResult[0].id
+      const id = queryResult[0].id
 
-     await imageService.linkToObject({uuid: image.imageId}, item.model, id, item.type || 'main', {fromImport: true});
-    return image;
-
+      await imageService.linkToObject({uuid: image.imageId}, item.model, id, item.type || 'main', {fromImport: true});
+      return image;
+    }
+    catch (e) {
+      logToFile(`image-download-error`).error(`Error processing image ${imageUrl}`, e);
+      console.log(`Error processing image ${imageUrl}`, e);
+    }
   }
 }
