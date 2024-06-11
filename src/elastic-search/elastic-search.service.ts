@@ -584,6 +584,7 @@ export class ElasticSearchService implements OnApplicationShutdown {
         // console.log(item)
       }
 
+
       const res = {
         key: item.key,
         doc_count: item.doc_count,

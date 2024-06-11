@@ -23,7 +23,7 @@ module.exports = {
       slugPattern : '/product/%(uuid)s/%(slug)s'
     },
     ProductCategory: {
-      slugPattern : '/category/%(slug)s'
+      slugPattern : '/products/%(slug)s'
     },
     Page: {
       slugPattern : '/page/%(slug)s'

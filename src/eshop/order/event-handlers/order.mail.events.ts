@@ -10,6 +10,7 @@ import { MailService } from "~root/mail/services/mail.service";
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { maizzleRenderer } from "~helpers/maizzle.renderer";
+import { sprintf } from "sprintf-js";
 
 export enum MailTypes {
   orderCreated = 'orderCreated',
@@ -38,6 +39,7 @@ export class OrderMailEvents implements OnModuleInit {
   protected handlers = {
     orderStatusChanged: this.orderStatusChangedHandler,
     orderAttachedToNodes: this.orderAttachedToNodesHandler,
+    orderCreated: this.orderCreatedHandler,
   };
 
   async onModuleInit() {
@@ -58,15 +60,14 @@ export class OrderMailEvents implements OnModuleInit {
 
   @OnEvent('app.loaded')
   async onAppLoaded() {
-    try {
-      // const order = await (new OrderService()).findOne({orderId: 'c59f7d2d-0f1f-4cf5-a254-006e47ddefbb'}, ['*']);
-      // await (new OrderMailEvents()).onOrderAttachedToNodes(order);
-
-      OrderMailEvents.config = getStoreProperty('configs.store.notifications.email');
+    OrderMailEvents.config = getStoreProperty('configs.store.notifications.email');
+/*    try {
+      const order = await (new OrderService()).findOne({orderId: 'LDXI0EJE'}, ['*']);
+      await (new OrderMailEvents()).onOrderAttachedToNodes(order);
     }
     catch (e) {
       console.log(e)
-    }
+    }*/
 
     let adminWorker = this.adminMailProcessor;
     let customerWorker = this.customerMailProcessor;
@@ -95,11 +96,19 @@ export class OrderMailEvents implements OnModuleInit {
    * Triggered when order status changes. Send emails to the customer and the admin
    * @param uuid
    * @param status
+   * @param destination
    */
   @OnEvent(OrderEventNames.orderStatusChanged)
-  async orderStatusChanged({uuid, status}: {uuid: string, status: number}) {
-    const customerMailJob = await OrderMailEvents.customerQueue.add(OrderMailEvents.customerQueueName, { ...{uuid, status}, ...{type: MailTypes.orderStatusChanged} });
-    const adminMailJob = await OrderMailEvents.adminQueue.add(OrderMailEvents.adminQueueName, {  ...{uuid, status}, ...{type: MailTypes.orderStatusChanged} });
+  async orderStatusChanged({uuid, status, destination = ['admin', 'customer']}: {uuid: string, status: number, destination: string[]}) {
+
+    if (destination.includes('customer')) {
+      await OrderMailEvents.customerQueue.add(OrderMailEvents.customerQueueName, { ...{uuid, status}, ...{type: MailTypes.orderStatusChanged} });
+    }
+
+    if (destination.includes('admin')) {
+      await OrderMailEvents.adminQueue.add(OrderMailEvents.adminQueueName, {  ...{uuid, status}, ...{type: MailTypes.orderStatusChanged} });
+    }
+
   }
 
   @OnEvent(OrderEventNames.orderCreated)
@@ -133,8 +142,19 @@ export class OrderMailEvents implements OnModuleInit {
    */
   @OnEvent(OrderEventNames.orderAttachedToNodes)
   async onOrderAttachedToNodes(order: OrderModel) {
-    const customerMailJob = await OrderMailEvents.customerQueue.add(OrderMailEvents.customerQueueName, { order, ...{type: MailTypes.orderCreated} });
-    const adminMailJob = await OrderMailEvents.adminQueue.add(OrderMailEvents.adminQueueName, { order, ...{type: MailTypes.orderCreated} });
+    try {
+      await OrderMailEvents.customerQueue.add(OrderMailEvents.customerQueueName, { order, ...{type: MailTypes.orderCreated} });
+    }
+    catch (e) {
+      console.log(`Failed to send email to customer`,e);
+    }
+
+    try {
+      await OrderMailEvents.adminQueue.add(OrderMailEvents.adminQueueName, { order, ...{type: MailTypes.orderCreated} });
+    }
+    catch (e) {
+      console.log(`Failed to send email to admin`,e);
+    }
   }
 
   @OnEvent(OrderEventNames.orderPaid)
@@ -168,11 +188,13 @@ export class OrderMailEvents implements OnModuleInit {
       throw new Error(`Failed to render email template for order status changed: ${e.message}`);
     }
 
-    if (!html || !subject) {
-      return;
-    }
 
-    const order = await new OrderService().findOne({uuid: job.data.uuid}, ['*']);
+    if (!html || !subject) {
+      console.log(`No html or subject found for ${job.data.type}`);
+      throw new Error(`No html or subject found for ${job.data.type}`);
+    }
+    const uuid = (job.data.order) ? job.data.order.uuid : job.data.uuid;
+    const order = await new OrderService().findOne({uuid}, ['*']);
 
     try {
       const ms = new MailService();
@@ -231,14 +253,48 @@ export class OrderMailEvents implements OnModuleInit {
     }
   }
 
-  async orderStatusChangedHandler(data: Partial<IMailJob>, type: 'admin' | 'customer' = 'admin') {
+  async orderCreatedHandler(data: Partial<IMailJob>, type: 'admin' | 'customer' = 'admin') {
     const service = new OrderService();
-    const order = await service.findOne({uuid: data.uuid}, ['*']);
+
+    const order = await service.findOne({ uuid: data.order.uuid }, ['*']);
     const handlers = OrderMailEvents.config.order[type];
     const handler = handlers[order['status']];
 
     if (!handler || !handler.template) {
       throw new Error(`No handler found for order status ${order['status']}`);
+    }
+
+
+    let html;
+    try {
+      const viewsDir = OrderMailEvents.config.viewsDir;
+      const config = {order, ...{config: getStoreProperty('configs.store')}};
+      html = await maizzleRenderer(handler.template, config, viewsDir);
+    }
+    catch (e) {
+      throw new Error(`Failed to render email template for order created : ${e.message}`);
+    }
+
+    const config = getStoreProperty('configs.store');
+
+    const subject = sprintf(handler.subject, { storeName: config.name, order })
+
+    return { html, subject};
+  }
+
+  async orderStatusChangedHandler(data: Partial<IMailJob>, type: 'admin' | 'customer' = 'admin') {
+    const config = getStoreProperty('configs.store');
+    const status = config.orderStatuses.find(s => s.id === data['status']);
+
+    const service = new OrderService();
+    const order = await service.findOne({uuid: data.uuid}, ['*']);
+    const handlers = OrderMailEvents.config.order[type];
+
+    const handler = handlers[status.id.toString()];
+
+
+    if (!handler || !handler.template) {
+      throw new Error(`${type}. No handler found for order status ${order['status']}`);
     }
 
     let html;
@@ -248,12 +304,13 @@ export class OrderMailEvents implements OnModuleInit {
       html = await maizzleRenderer(handler.template, config, viewsDir);
     }
     catch (e) {
-      throw new Error(`Failed to render email template for order status changed: ${e.message}`);
+      throw new Error(`${type}. Failed to render email template for order status changed: ${e.message}`);
     }
 
 
+    const subject = sprintf(handler.subject, { storeName: config.name, order })
 
-    return { html, subject: handler.subject};
+    return { html, subject};
   }
 
   async orderAttachedToNodesHandler(data: Partial<IMailJob>) {

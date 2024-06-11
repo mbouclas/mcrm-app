@@ -173,7 +173,7 @@ export class OrderController {
     }
 
     new OrderService().notify(OrderEventNames.orderAttachedToNodes, order);
-
+    cart.clear();
     return order;
   }
 
@@ -290,7 +290,7 @@ export class OrderController {
   async updateStatus(@Body() body: { status: number }, @Param('uuid') uuid: string) {
     const service = new OrderService();
     await service.update(uuid, { status: body.status });
-    service.emit(OrderEventNames.orderStatusChanged, { uuid, status: body.status });
+    service.emit(OrderEventNames.orderStatusChanged, { uuid, status: body.status, destination: ['customer'] });
     return { success: true };
   }
 

@@ -184,19 +184,33 @@ export class ProductConverterService extends BaseProductConverterService {
 
     if (Array.isArray(product['productCategory'])) {
       result['categories'] = [];
-
+      result['breadcrumbs'] = [];
       const catService = new ProductCategoryService();
 
       for (let idx = 0; idx < product['productCategory'].length; idx++) {
+        result['breadcrumbs'][idx] = [];
         const category = product['productCategory'][idx];
         result.categories.push({
           uuid: category.uuid,
           title: category.title,
           slug: category.slug,
         });
+
+        result['breadcrumbs'][idx].push({
+          uuid: category.uuid,
+          title: category.title,
+          slug: category.slug,
+          model: category.model
+        })
         // Add any parent categories in the list. This way the front end can display products on every level and the counts from top to bottom of the tree will be more accurate
         const ancestors = await catService.findAncestors(category.uuid);
         ancestors.forEach((ancestor) => {
+          result['breadcrumbs'][idx].push({
+            uuid: ancestor.uuid,
+            title: ancestor.title,
+            slug: ancestor.slug,
+          });
+
           result.categories.push({
             uuid: ancestor.uuid,
             title: ancestor.title,
@@ -206,6 +220,11 @@ export class ProductConverterService extends BaseProductConverterService {
         // Add any children categories in the list. This way the front end can display products on every level and the counts from top to bottom of the tree will be more accurate
         const descendants = await catService.findDescendants(category.uuid);
         descendants.forEach((cat) => {
+          result['breadcrumbs'][idx].push({
+            uuid: cat.uuid,
+            title: cat.title,
+            slug: cat.slug,
+          })
           result.categories.push({
             uuid: cat.uuid,
             title: cat.title,
