@@ -4,6 +4,7 @@ import { ProductModule } from "~catalogue/product/product.module";
 import { SyncElasticSearchService } from "~catalogue/export/sync-elastic-search.service";
 import { ElasticSearchService } from "~es/elastic-search.service";
 import { ExportController } from './export.controller';
+import { ExportImages } from "~catalogue/export/export-images";
 
 
 @Module({
@@ -23,6 +24,10 @@ export class ExportModule {
     protected service: SyncElasticSearchService,
     protected es: ElasticSearchService,
   ) {
+  }
+
+  async onApplicationBootstrap() {
+
   }
 
   async onModuleInit() {
