@@ -132,6 +132,14 @@ export class CartConditionModel extends BaseModel implements OnModuleInit {
     },
 
     {
+      varName: 'active',
+      label: 'Active',
+      type: 'boolean',
+      model: 'CartCondition',
+      filterType: 'exact',
+      isInSimpleQuery: false,
+    },
+    {
       varName: 'createdAt',
       label: 'Created At',
       type: 'date',

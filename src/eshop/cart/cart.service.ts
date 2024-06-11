@@ -180,7 +180,7 @@ export class CartService extends BaseNeoService {
     let product, thumb, sku, slug;
 
     try {
-      product = await new ProductService().findOne({ uuid: id }, ['variants', 'cartCondition']);
+      product = await new ProductService().findOne({ uuid: id, active: true }, ['variants', 'cartCondition']);
       thumb = typeof product.thumb === 'string' ? product.thumb : product?.thumb?.url || '';
       sku = product.sku;
       slug = product.slug;
@@ -192,7 +192,7 @@ export class CartService extends BaseNeoService {
     if (variantId) {
       // const variant = ProductService.findVariant(product, { uuid: variantId });
       const variant = await new ProductVariantService().findOne({ uuid: variantId }, ['thumb']) as ProductVariantModel;
-      console.log(variant)
+
       thumb = typeof variant.thumb === 'string' ? variant.thumb : variant.thumb.url;
       price = variant.price;
       sku = variant.sku;
