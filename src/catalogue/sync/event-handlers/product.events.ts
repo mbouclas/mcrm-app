@@ -6,6 +6,9 @@ import { SyncEsService } from "~catalogue/sync/sync-es.service";
 import { ElasticSearchService } from "~es/elastic-search.service";
 import { ElasticSearchModule } from "~es/elastic-search.module";
 import * as process from "node:process";
+import { MailService } from "~root/mail/services/mail.service";
+import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
+import { NotificationsService } from "~eshop/customer/services/notifications.service";
 
 /**
  * Sync product with ES based on product events
@@ -61,11 +64,29 @@ export class ProductEvents {
 
   @OnEvent(ProductEventNames.productImportDone)
   async onProductImportDone() {
+
+
+    // send email to admin
+
+    const ms = new MailService();
+    try {
+
+      await ms.send({
+        from: `${NotificationsService.config.from.name} <${NotificationsService.config.from.mail}>`,
+        to: `${NotificationsService.config.adminEmail.name} <${NotificationsService.config.adminEmail.mail}>`,
+        subject: 'Import done',
+        html: `
+        Import operation complete.
+        `
+      });
+    } catch (e) {
+      console.log(e)
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.2', { error: e });
+    }
+
     if (process.env.UPDATE_ES_AFTER_IMPORT === "false") {
       return;
     }
-
-    // send email to admin
 
     const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
     try {

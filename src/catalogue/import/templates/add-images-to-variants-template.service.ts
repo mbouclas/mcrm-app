@@ -69,6 +69,7 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
 
     res.forEach(r => {
       r.imageId = r.image;
+      r.thumb = JSON.stringify({url: r.imageUrl, type: 'main', active: true, uuid: r.imageId})
       r.imageUrl = JSON.stringify({url: r.imageUrl})
     });
 
@@ -79,6 +80,8 @@ export class AddImagesToVariantsTemplateService extends BaseImportService {
     MERGE (n)-[r:HAS_IMAGE]->(i)
     ON CREATE SET r.createdAt = datetime(), r.type = 'main'
     ON MATCH SET r.updatedAt = datetime()
+    WITH row, n
+    SET n.thumb = row.thumb
     `;
 
 

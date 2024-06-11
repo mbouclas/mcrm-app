@@ -207,8 +207,9 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
   protected properties: PropertyModel[] = [];
   protected propertyValues: IPropertyValueWithProperty[] = [];
 
-  /*@OnEvent('app.loaded')
+/*  @OnEvent('app.loaded')
   async onAppLoaded() {
+
     setTimeout(async () => {
       const dummyFile = {
         fieldname: 'file',
@@ -221,6 +222,7 @@ export class ImportProductsWithVariantsTemplate extends BaseImportService {
         size: 17760597,
       };
 
+      // SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);
 
       try {
         const r = await new ImportProductsWithVariantsTemplate({
