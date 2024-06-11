@@ -101,7 +101,7 @@ async function bootstrap() {
       directives: {
         defaultSrc: ["'self'"],
         fontSrc: ["'self'", "'unsafe-inline'", "data:", 'https://site-assets.fontawesome.com', 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", "'unsafe-inline'", 'https://res.cloudinary.com'],
+        imgSrc: ["'self'", "'unsafe-inline'", 'https://res.cloudinary.com', 'https://makito.es/'],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", 'https://cdn.jsdelivr.net'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         styleSrcElem: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://site-assets.fontawesome.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
