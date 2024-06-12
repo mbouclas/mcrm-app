@@ -7,21 +7,22 @@ export class OtpInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>>
   {
     if (process.env.ENV === 'development') {
-      return next.handle();
+      // return next.handle();
     }
 
     const headers = context.switchToHttp().getRequest().headers;
-    let cashed;
+    let cached;
     try {
-      const cashed = await (new CacheService()).get(headers['x-otp-id']);
+      cached = await (new CacheService()).get(headers['x-otp-id']);
     }
     catch (e) {
-      return of({success: false, reason: 'Unauthorized', code: `500.3`});
+      return of({success: false, reason: 'Unauthorized', code: `500.3.1`});
     }
 
-    if (!cashed) return of({success: false, reason: 'Unauthorized', code: `500.3`});
 
-    if (cashed !== headers['x-otp']) return of({success: false, reason: 'Unauthorized', code: `500.4`});
+    if (!cached) return of({success: false, reason: 'Unauthorized', code: `500.3.2`});
+
+    if (cached !== headers['x-otp']) return of({success: false, reason: 'Unauthorized', code: `500.4`});
 
 
 

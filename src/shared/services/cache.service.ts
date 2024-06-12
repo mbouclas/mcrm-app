@@ -11,11 +11,13 @@ export class CacheService {
   }
 
   async put(key: string, value: any, expireInSeconds = 0) {
-    await this.redis.set(key, JSON.stringify(value));
+    const res = await this.redis.set(key, JSON.stringify(value));
 
     if (expireInSeconds > 0) {
       await this.redis.expire(key, expireInSeconds)
     }
+
+     return res;
   }
 
   async putAndReturnValue(key: string, value: any, expireInSeconds = 0) {
