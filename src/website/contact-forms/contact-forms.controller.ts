@@ -7,6 +7,7 @@ export class ContactFormsController {
   constructor(private readonly contactService: ContactFormsService) {
   }
   @Post()
+  @UseInterceptors(OtpInterceptor)
   async contactForm(@Body() data: any) {
     try {
       return await this.contactService.submitContactForm(data);

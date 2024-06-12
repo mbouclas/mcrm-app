@@ -13,7 +13,7 @@ export class AuthController {
     const id = v4();
     const hashedPassword = await authService.hasher.hashPassword(id);
 
-    await (new CacheService()).put(id, hashedPassword);
+    await (new CacheService()).put(id, hashedPassword, 10);
 
     return {
       success: true,
