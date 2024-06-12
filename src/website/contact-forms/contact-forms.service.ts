@@ -7,13 +7,27 @@ import { MailService } from "~root/mail/services/mail.service";
 import { SendEmailFailedException } from "~root/mail/exceptions/SendEmailFailed.exception";
 import { OnEvent } from "@nestjs/event-emitter";
 import { maizzleRenderer } from "~helpers/maizzle.renderer";
+import { ProductService } from "~catalogue/product/services/product.service";
 
-interface IMailJob {
+interface IMailJob<T> {
+  type: 'contact'|'requestPrice';
+  data: T;
+}
+
+export interface IContactForm {
   firstName: string;
   lastName: string;
   email: string;
   question: string;
   phone: string;
+}
+
+export interface IContactFormRequestPrice {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  productId: string;
 }
 
 @Injectable()
@@ -34,22 +48,16 @@ export class ContactFormsService {
     });
 
     ContactFormsService.queue.on('waiting', (job) => console.log(`${ContactFormsService.queueName}: ${job.id}  now waiting`));
-    MailQueueService.addWorker(this.contactFormWorker, ContactFormsService.queueName);
+    MailQueueService.addWorker(this.worker, ContactFormsService.queueName);
   }
 
-  async contactFormWorker(job: Job<IMailJob>) {
+  async contactFormRenderer(data: IContactForm) {
     let html;
-/*    try {
-      html = await ViewEngine.renderFile(ContactFormsService.config.contactForm.template, job.data);
-    } catch (e) {
-
-      console.log(e);
-      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
-    }*/
+    const mailConfig = getStoreProperty('configs.mail');
 
     try {
-      const mailConfig = getStoreProperty('configs.mail').mail;
-      html = await maizzleRenderer(ContactFormsService.config.contactForm.template, {config: getStoreProperty('configs.store'), data: job.data }, mailConfig.viewsDir)
+
+      html = await maizzleRenderer(mailConfig.contactForm.template, {config: getStoreProperty('configs.store'), data }, mailConfig.viewsDir)
     } catch (e) {
       console.log(e);
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
@@ -58,9 +66,9 @@ export class ContactFormsService {
     const ms = new MailService();
     try {
       await ms.send({
-        from: `${ContactFormsService.config.from.name} <${ContactFormsService.config.from.mail}>`,
-        to: `${ContactFormsService.config.adminEmail.name} <${ContactFormsService.config.adminEmail.mail}>`,
-        subject: ContactFormsService.config.contactForm.subject,
+        from: `${mailConfig.from.name} <${mailConfig.from.mail}>`,
+        to: `${mailConfig.adminEmail.name} <${mailConfig.adminEmail.mail}>`,
+        subject: mailConfig.contactForm.subject,
         html
       });
     } catch (e) {
@@ -69,9 +77,55 @@ export class ContactFormsService {
     }
   }
 
-  async submitContactForm(data: any) {
-    await ContactFormsService.queue.add(ContactFormsService.queueName, data );
+  async requestPriceRenderer(data: IContactFormRequestPrice) {
+    let html;
+    const mailConfig = getStoreProperty('configs.mail');
+    try {
 
+      html = await maizzleRenderer(mailConfig.requestPrice.template, {config: getStoreProperty('configs.store'), data }, mailConfig.viewsDir)
+    } catch (e) {
+      console.log(e);
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.1', { error: e });
+    }
+
+    const ms = new MailService();
+    try {
+      await ms.send({
+        from: `${mailConfig.from.name} <${mailConfig.from.mail}>`,
+        to: `${mailConfig.adminEmail.name} <${mailConfig.adminEmail.mail}>`,
+        subject: mailConfig.requestPrice.subject,
+        html
+      });
+    } catch (e) {
+      console.log(e)
+      throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.2', { error: e });
+    }
+  }
+
+  async worker(job: Job<IMailJob<IContactForm|IContactFormRequestPrice>>) {
+    const s = new ContactFormsService();
+    if (job.data.type === 'contact') {
+      await s.contactFormRenderer(job.data.data as IContactForm);
+    }
+    else if (job.data.type === 'requestPrice') {
+      await s.requestPriceRenderer(job.data.data as IContactFormRequestPrice);
+    }
+
+  }
+
+  async submitContactForm(data: any, type: 'contact'|'requestPrice' = 'contact') {
+    await ContactFormsService.queue.add(ContactFormsService.queueName, {type, data}  );
+
+    return { success: true, message: "Contact form submitted" };
+  }
+
+  async requestPrice(data: any) {
+    const product = await (new ProductService()).findOne({uuid: data.productId});
+    if (!product) {
+      return { success: false, message: "Product not found" };
+    }
+
+    await this.submitContactForm({ ...data, ...{product} },'requestPrice')
     return { success: true, message: "Contact form submitted" };
   }
 }
