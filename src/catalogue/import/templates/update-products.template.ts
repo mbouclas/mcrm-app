@@ -71,7 +71,7 @@ export class UpdateProductsTemplate extends BaseImportService {
 
     return Promise.resolve({
       success: true,
-      rowsProcessed: 0,
+      rowsProcessed: res.validRows,
     });
   }
 

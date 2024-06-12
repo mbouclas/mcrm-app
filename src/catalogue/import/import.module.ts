@@ -30,6 +30,7 @@ import { WINSTON_MODULE_PROVIDER, WinstonModule } from "nest-winston";
 import  { Logger as WinstonLogger } from 'winston';
 import { logToFile } from "~helpers/log-to-file";
 import { ImportRawImagesTemplate } from "~catalogue/import/templates/import-raw-images.template";
+import { BulkDeleteProductsTemplate } from "~catalogue/import/templates/bulk-delete-products.template";
 const winston = require('winston');
 
 @Module({
@@ -54,6 +55,7 @@ const winston = require('winston');
     ImportPropertyValuesTemplate,
     DeleteVariantsTemplate,
     ImportRawImagesTemplate,
+    BulkDeleteProductsTemplate,
   ],
   imports: [
     MulterModule.registerAsync({

@@ -6,7 +6,6 @@ import { PropertyModel } from '~catalogue/property/models/property.model';
 import * as process from "process";
 import { RecommendedProductsSearchService } from "~catalogue/search/recommended-products-search.service";
 import { BaseProductConverterService } from "~catalogue/sync/base-product-converter.service";
-import { getStoreProperty } from "~root/state";
 import { getHooks } from "~shared/hooks/hook.decorator";
 const slugify = require('slug');
 
@@ -35,7 +34,7 @@ export class ProductConverterService extends BaseProductConverterService {
     result.active = product.active;
     result.title = product.title;
     result.id = product.uuid;
-    result.price = product.price;
+    result.price = (product.price && typeof product.price === 'number' && product.price > 0) ? product.price : 0;
     result.salePrice = product.salePrice;
     result.description = product.description;
     result.description_short = product['description_short'];
@@ -151,7 +150,7 @@ export class ProductConverterService extends BaseProductConverterService {
           uuid: variant.uuid,
           title: variant.name && variant.name.length > 0 ? variant.name : product.title,
           slug: `${product.slug}-${slugify(variant.variantId, { lower: true })}`,
-          price: variant.price,
+          price: (variant.price && typeof variant.price === 'number' && variant.price > 0) ? variant.price : 0,
           sku: variant.sku,
           active: variant.active,
           variantId: variant.variantId,

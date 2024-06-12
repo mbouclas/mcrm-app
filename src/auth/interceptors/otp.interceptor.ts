@@ -7,7 +7,7 @@ export class OtpInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>>
   {
     if (process.env.ENV === 'development') {
-      // return next.handle();
+      return next.handle();
     }
 
     const headers = context.switchToHttp().getRequest().headers;

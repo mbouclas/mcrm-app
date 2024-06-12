@@ -56,9 +56,7 @@ const productSchema = z.object({
   sku: z
     .string({ required_error: errors.SKU_REQUIRED.code, invalid_type_error: errors.SKU_REQUIRED.code })
     .min(1, errors.SKU_REQUIRED.code),
-  description: z
-    .string({ required_error: errors.DESCRIPTION_REQUIRED.code, invalid_type_error: errors.DESCRIPTION_REQUIRED.code })
-    .min(5, errors.DESCRIPTION_REQUIRED.code),
+
 });
 
 @Controller('api/product')
