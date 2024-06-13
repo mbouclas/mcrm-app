@@ -16,11 +16,22 @@ export class SyncAllCommand {
     const service = new SyncEsService(
       new ElasticSearchService(ElasticSearchModule.moduleRef),
     );
-    const limit = args['limit'] ? parseInt(args['limit'] as string) : 40;
+    const limit = args['limit'] ? parseInt(args['limit'] as string) : 500;
+    const startTime = Date.now();
+
+    try {
+      await service.clearIndex();
+      _cli.success(`Clear old data`);
+    }
+    catch (e) {
+      console.log(`PRODUCT_IMPORT_DONE EVENT: Error clearing ES index`, e.message);
+    }
 
     try {
       await service.all(limit, true);
-      _cli.success(`Syncing all complete`);
+      const endTime = Date.now();
+      const timeInMinutes = (endTime - startTime) / 1000 / 60;
+      _cli.success(`Syncing all complete in ${timeInMinutes.toFixed(2)} minutes`);
     }
     catch (e) {
       console.error(`Sync one Failed : ${args.id}`, e.message);

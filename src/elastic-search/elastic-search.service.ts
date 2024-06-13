@@ -788,6 +788,12 @@ export class ElasticSearchService implements OnApplicationShutdown {
     return true;
   }
 
+  async bulkDelete(uuids: string[]) {
+    for (let idx = 0; uuids.length > idx; idx++) {
+      await this.deleteRecord(uuids[idx]);
+    }
+  }
+
   async deleteRecord(uuid: string) {
     try {
       await this.client.delete({

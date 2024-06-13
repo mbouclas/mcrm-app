@@ -7,6 +7,7 @@ import * as process from "process";
 import { RecommendedProductsSearchService } from "~catalogue/search/recommended-products-search.service";
 import { BaseProductConverterService } from "~catalogue/sync/base-product-converter.service";
 import { getHooks } from "~shared/hooks/hook.decorator";
+import { safeParseJSON } from "~helpers/safeParseJSON";
 const slugify = require('slug');
 
 export class ProductConverterService extends BaseProductConverterService {
@@ -47,7 +48,7 @@ export class ProductConverterService extends BaseProductConverterService {
     result['length'] = product['length'];
     result['diameter'] = product['diameter'];
     result['width'] = product['width'];
-    result['seo'] = product['seo'];
+    result['seo'] = (typeof product['seo'] === 'string') ? safeParseJSON(product['seo']) : product['seo'];
 
     if (product['thumb']) {
       result['thumb'] = Array.isArray(product['thumb']) ? product['thumb'][0] : product['thumb'];

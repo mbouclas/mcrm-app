@@ -8,6 +8,8 @@ import { BaseImportService } from "~catalogue/import/services/base-import.servic
 import { ProductVariantService } from "~catalogue/product/services/product-variant.service";
 import { SharedModule } from "~shared/shared.module";
 import { ProductEventNames } from "~catalogue/product/services/product.service";
+import { ElasticSearchService } from "~es/elastic-search.service";
+import { ElasticSearchModule } from "~es/elastic-search.module";
 
 @McrmImportTemplate({
   id: "DeleteVariantsTemplate",
@@ -42,6 +44,15 @@ export class DeleteVariantsTemplate extends BaseImportService {
     }
     catch (e) {
       console.log(`Error executing delete product variants query`, e);
+    }
+
+    // delete from elasticsearch
+    const es = new ElasticSearchService(ElasticSearchModule.moduleRef);
+    try {
+      await es.bulkDelete(res.data.map(row => row['sku']));
+    }
+    catch (e) {
+      console.log(`Error executing delete products from es`, e);
     }
 
     SharedModule.eventEmitter.emit(ProductEventNames.productImportDone);

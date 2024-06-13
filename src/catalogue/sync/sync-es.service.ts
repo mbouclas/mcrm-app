@@ -102,7 +102,8 @@ export class SyncEsService {
     const converter = this.getConverter(allProperties);
 
 
-    const firstQuery = await service.find({ limit }, this.rels);
+    const firstQuery = await service.find({ limit, active: true }, this.rels);
+
     for (let idx = 0; idx < firstQuery.data.length; idx++) {
       data.push(await converter.convert(firstQuery.data[idx] as ProductModel));
     }
@@ -110,13 +111,13 @@ export class SyncEsService {
     if (syncWithEs) {
       await this.syncWithEs(data);
     }
-
+console.log(`found ${firstQuery.pages} pages. ${firstQuery.total} total`);
     // now that we have the pagination info, we can loop through the pages
     // Start from 1 cause we've already processed the 1st page
     for (let idx = 1; firstQuery.pages > idx; idx++) {
       const page = idx + 1;
       console.log(`processing page ${page}`);
-      const res = await service.find({ limit, page }, this.rels);
+      const res = await service.find({ limit, page, active: true }, this.rels);
       console.log(`done with page ${page} - ${res.pages}, we now have ${data.length} items`);
       for (let idx = 0; idx < res.data.length; idx++) {
         res.data[idx] = (await converter.convert(res.data[idx] as ProductModel)) as unknown as any;
@@ -127,7 +128,7 @@ export class SyncEsService {
       }
       data = data.concat(res.data);
     }
-
+    console.log(data.length)
     return data;
   }
 
@@ -157,6 +158,25 @@ export class SyncEsService {
     }
 
     console.log(`Synced ${data.length} records with ES`);
+    return true;
+  }
+
+  async clearIndex() {
+
+    try {
+      await this.es.client.deleteByQuery({
+        index: this.esIndexName,
+        body: {
+          query: {
+            match_all: {},
+          },
+        },
+      });
+      console.log(`Cleared index ${this.esIndexName}`);
+    } catch (e) {
+      console.log(`Error clearing index ${this.esIndexName}`, e);
+    }
+
     return true;
   }
 }

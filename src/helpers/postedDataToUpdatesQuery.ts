@@ -2,6 +2,7 @@ import { findIndex } from 'lodash';
 import { IGenericObject } from '~models/general';
 import { LocationModel } from '~shared/models/location.model';
 import { IDynamicFieldConfigBlueprint } from '~models/dynamic-fields.model';
+import { sanitizeFieldsForJson } from "~helpers/safeParseJSON";
 const moment = require('moment');
 
 const slug = require('slug');
@@ -74,6 +75,7 @@ export function postedDataToUpdatesQuery(
         }
 
         if (field.type === 'nested' && field.saveAsJson) {
+          sanitizeFieldsForJson(postedFields[field.varName]);
           return `${modelAlias}.${fieldName} = '${JSON.stringify(postedFields[field.varName])}'`;
         }
 

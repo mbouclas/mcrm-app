@@ -64,13 +64,43 @@ export class ProductEvents {
 
   @OnEvent(ProductEventNames.productImportDone)
   async onProductImportDone() {
-
-
     // send email to admin
-
     const ms = new MailService();
-    try {
 
+
+    if (process.env.UPDATE_ES_AFTER_IMPORT === "false") {
+      try {
+        await ms.send({
+          from: `${NotificationsService.config.from.name} <${NotificationsService.config.from.mail}>`,
+          to: `${NotificationsService.config.adminEmail.name} <${NotificationsService.config.adminEmail.mail}>`,
+          subject: 'Import done',
+          html: `
+        Import operation complete.
+        `
+        });
+      } catch (e) {
+        console.log(e)
+        throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.2', { error: e });
+      }
+      return;
+    }
+    // drop everything?
+    const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
+    try {
+      await s.clearIndex();
+    }
+    catch (e) {
+      console.log(`PRODUCT_IMPORT_DONE EVENT: Error clearing ES index`, e.message);
+    }
+
+    try {
+      await s.all(500, true);
+    }
+    catch (e) {
+      console.log(`PRODUCT_IMPORT_DONE EVENT: Error syncing products with ES`, e.message);
+    }
+
+    try {
       await ms.send({
         from: `${NotificationsService.config.from.name} <${NotificationsService.config.from.mail}>`,
         to: `${NotificationsService.config.adminEmail.name} <${NotificationsService.config.adminEmail.mail}>`,
@@ -82,18 +112,6 @@ export class ProductEvents {
     } catch (e) {
       console.log(e)
       throw new SendEmailFailedException('FAILED_TO_SEND_EMAIL', '105.2', { error: e });
-    }
-
-    if (process.env.UPDATE_ES_AFTER_IMPORT === "false") {
-      return;
-    }
-
-    const s = new SyncEsService(new ElasticSearchService(ElasticSearchModule.moduleRef));
-    try {
-      await s.all();
-    }
-    catch (e) {
-      console.log(`PRODUCT_IMPORT_DONE EVENT: Error syncing products with ES`, e.message);
     }
   }
 }
