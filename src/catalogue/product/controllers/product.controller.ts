@@ -205,6 +205,15 @@ export class ProductController {
       throw new FailedUpdate();
     }
   }
+  @Patch(':uuid/status')
+  async changeStatus(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
+    try {
+      await new ProductService().update(uuid, { status: body.status });
+      return { success: true };
+    } catch (e) {
+      throw new FailedUpdate();
+    }
+  }
 
   @Post(':uuid/attach')
   async addToProduct(@Param('uuid') uuid: string, @Body() body: IGenericObject) {
