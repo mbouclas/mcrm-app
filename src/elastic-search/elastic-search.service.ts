@@ -808,4 +808,11 @@ export class ElasticSearchService implements OnApplicationShutdown {
 
     return true;
   }
+
+  async countRecords() {
+    console.log(this.index)
+    return this.client.count({
+      index: this.index
+    });
+  }
 }

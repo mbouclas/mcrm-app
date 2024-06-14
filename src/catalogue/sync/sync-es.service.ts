@@ -11,7 +11,12 @@ import { McmsDiContainer } from "~helpers/mcms-component.decorator";
 import { BaseProductConverterService } from "~catalogue/sync/base-product-converter.service";
 import { IPagination } from "~models/general";
 import { BaseModel } from "~models/base.model";
-
+import {groupBy, flatMap} from "lodash";
+import { logToFile } from "~helpers/log-to-file";
+function findDuplicates(arr) {
+  const grouped = groupBy(arr, 'sku');
+  return flatMap(grouped, group => (group.length > 1 ? group : []));
+}
 @Injectable()
 export class SyncEsService {
   protected esIndexName = process.env.ELASTIC_SEARCH_PRODUCT_INDEX_NAME;
@@ -21,7 +26,9 @@ export class SyncEsService {
   private readonly logger = new Logger(SyncEsService.name);
   protected rels = ['propertyValues', 'properties', 'productCategory', 'manufacturer', 'variants', 'images', 'thumb', 'tags', 'related'];
 
-  constructor(private es: ElasticSearchService) {}
+  constructor(public es: ElasticSearchService) {
+    es.setIndex(this.esIndexName);
+  }
 
   async onApplicationBootstrap() {
     // SyncModule.event.emit(SyncEsService.onSyncAllEvent, {limit: 40, saveOnEs: true})
@@ -94,6 +101,27 @@ export class SyncEsService {
     return item;
   }
 
+  async processBatch(page: number, limit: number, converter: any) {
+    const service = new ProductService();
+    const res = await service.find({ limit, page, active: true }, this.rels);
+    const data = [];
+
+    console.log(`Started syncing page ${page} of ${res.pages}`);
+    for (let idx = 0; res.data.length > idx; idx++) {
+      try {
+        const doc = await converter.convert(res.data[idx] as ProductModel);
+        // const doc = {...res.data[idx], ...{id: res.data[idx].uuid}};
+
+        data.push(doc);
+      } catch (e) {
+        console.log(`Error syncing ${res.data[idx]['uuid']}`, e);
+      }
+
+    }
+
+    return data;
+  }
+
   async all(limit = 40, syncWithEs = false): Promise<IProductModelEs[]> {
     let data = [];
     const service = new ProductService();
@@ -103,33 +131,87 @@ export class SyncEsService {
 
 
     const firstQuery = await service.find({ limit, active: true }, this.rels);
-
-    for (let idx = 0; idx < firstQuery.data.length; idx++) {
-      data.push(await converter.convert(firstQuery.data[idx] as ProductModel));
+    console.log(`*** Got ${firstQuery.total} items`);
+    const promises = [];
+    for (let idx = 0; firstQuery.pages > idx; idx++) {
+      promises.push(
+        this.processBatch(idx + 1, limit, converter)
+      );
     }
 
-    if (syncWithEs) {
-      await this.syncWithEs(data);
-    }
-console.log(`found ${firstQuery.pages} pages. ${firstQuery.total} total`);
-    // now that we have the pagination info, we can loop through the pages
-    // Start from 1 cause we've already processed the 1st page
-    for (let idx = 1; firstQuery.pages > idx; idx++) {
-      const page = idx + 1;
-      console.log(`processing page ${page}`);
-      const res = await service.find({ limit, page, active: true }, this.rels);
-      console.log(`done with page ${page} - ${res.pages}, we now have ${data.length} items`);
-      for (let idx = 0; idx < res.data.length; idx++) {
-        res.data[idx] = (await converter.convert(res.data[idx] as ProductModel)) as unknown as any;
-      }
 
-      if (syncWithEs) {
-        await this.syncWithEs(res.data as unknown as IProductModelEs[]);
-      }
-      data = data.concat(res.data);
-    }
-    console.log(data.length)
-    return data;
+
+    return  Promise.all(promises)
+      .then(async chunk => {
+        const all = [];
+        for (let idx = 0; idx < chunk.length; idx++) {
+          for (let idx2 = 0; idx2 < chunk[idx].length; idx2++) {
+            if (all.find(s => s.sku === chunk[idx][idx2].sku)) {
+              continue;
+            }
+            all.push(chunk[idx][idx2]);
+          }
+          // data = data.concat(chunk[idx]);
+        }
+
+        const dupes = findDuplicates(all);
+        console.log(`!!! Found ${dupes.length} duplicates in ${all.length}`);
+        logToFile('dupes').info(dupes.map(d => d.sku));
+
+        for (let idx = 0; idx < all.length; idx++) {
+          try {
+            const result = await this.es.client.update({
+              index: this.esIndexName,
+              id: all[idx]['id'],
+              body: {
+                doc: all[idx],
+                doc_as_upsert: true
+              }
+            });
+
+            if (result.result === "noop") {
+              // console.log(`**** ${idx}. Noop found ${all[idx]["sku"]}`, all[idx]["id"]);
+            }
+          }
+          catch (e) {
+            console.log(`**** Error syncing ${all[idx]["sku"]}`, all[idx]["id"], e);
+          }
+        }
+
+
+        return data;
+      })
+      .then(data => {
+        console.log(`Done with ${data.length} items`);
+        return data as IProductModelEs[];
+      });
+    /*
+        for (let idx = 0; idx < firstQuery.data.length; idx++) {
+          data.push(await converter.convert(firstQuery.data[idx] as ProductModel));
+        }
+
+        if (syncWithEs) {
+          await this.syncWithEs(data);
+        }
+    console.log(`found ${firstQuery.pages} pages. ${firstQuery.total} total`);
+        // now that we have the pagination info, we can loop through the pages
+        // Start from 1 cause we've already processed the 1st page
+        for (let idx = 1; firstQuery.pages > idx; idx++) {
+          const page = idx + 1;
+          console.log(`processing page ${page}`);
+          const res = await service.find({ limit, page, active: true }, this.rels);
+          console.log(`done with page ${page} - ${res.pages}, we now have ${data.length} items`);
+          for (let idx = 0; idx < res.data.length; idx++) {
+            res.data[idx] = (await converter.convert(res.data[idx] as ProductModel)) as unknown as any;
+          }
+
+          if (syncWithEs) {
+            await this.syncWithEs(res.data as unknown as IProductModelEs[]);
+          }
+          data = data.concat(res.data);
+        }
+        console.log(data.length)
+        return data;*/
   }
 
   async syncWithEs(data: IProductModelEs[]) {

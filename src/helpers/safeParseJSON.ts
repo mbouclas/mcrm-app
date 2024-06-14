@@ -2,7 +2,7 @@ export const safeParseJSON = (str: string) => {
   try {
     return JSON.parse(str);
   } catch (e) {
-    console.log(str, e)
+    // console.log(str, e)
     return str;
   }
 };

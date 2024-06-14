@@ -12,16 +12,26 @@ import { ElasticSearchModule } from "~es/elastic-search.module";
   args: { limit: { req: false } },
 })
 export class SyncAllCommand {
+
+  onApplicationBootstrap() {
+    setTimeout(async () => {
+      const s = new SyncAllCommand();
+      await s.handle({});
+    }, 3000)
+  }
+
   async handle(args: CommandArguments) {
+    const es = new ElasticSearchService(ElasticSearchModule.moduleRef);
     const service = new SyncEsService(
-      new ElasticSearchService(ElasticSearchModule.moduleRef),
+      es,
     );
-    const limit = args['limit'] ? parseInt(args['limit'] as string) : 500;
+
+    const limit = args['limit'] ? parseInt(args['limit'] as string) : 6000;
     const startTime = Date.now();
 
     try {
       await service.clearIndex();
-      _cli.success(`Clear old data`);
+      _cli.success(`Cleared old data`);
     }
     catch (e) {
       console.log(`PRODUCT_IMPORT_DONE EVENT: Error clearing ES index`, e.message);
